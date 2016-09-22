@@ -16,6 +16,8 @@ var PLocals={
     "usage": 2,
     "description":150
 }
+
+
 export function group(n:IHighLevelNode):number{
     if (n.definition&&n.definition()) {
         if (Locals[n.definition().nameId()]) {
@@ -29,6 +31,7 @@ export function group(n:IHighLevelNode):number{
     }
     return 10;
 }
+
 function isJoinable(n:IHighLevelNode){
     if (!n.isAttr()){
         return false;
