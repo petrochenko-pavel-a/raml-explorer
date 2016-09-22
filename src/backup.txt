@@ -1,0 +1,75 @@
+var tree=new workbench.TreeView("tree","Pallete");
+var input=[];
+for (var i=0;i<100;i++){
+    input.push("AA"+i);
+}
+tree.setInput(input)
+tree.setContentProvider(new workbench.ArrayContentProvider());
+tree.setLabelProvider({
+    label(x:any){
+        if (x.definition()){
+
+        }
+        return ""+x.name()+":"+x.property().nameId();
+    },
+    icon(x:any){
+        return "glyphicon glyphicon-unchecked"
+    }
+})
+var b:workbench.IWorkbenchPart={
+    searchable:true,
+    id(){return "b1"},
+    title(){return "Resources"},
+    init(h:workbench.IPartHolder){
+        var action={
+                title:"Hello",
+                    run(){
+                        if ((<any>action).checked){
+                            (<any>action).checked=false;
+                        }
+                        else {
+                            (<any>action).checked = true;
+                        }
+                        h.setToolbar({items:[action]})
+                        h.setViewMenu({items:[action]});
+            }
+        }
+        h.setViewMenu({
+            items:[
+                action,
+                {
+                    disabled:true,
+                    title:"Run"
+                }
+            ]
+        })
+        h.setContextMenu({
+            items:[
+                action,
+                { disabled:true,
+                    title:"Run"
+                }
+            ]
+        })
+        h.setToolbar({
+            items:[
+                action,
+                {
+                    disabled:true,
+                    title:"Run"
+                }
+            ]
+        })
+    },
+    onSearch(s:string){
+      console.log(s);
+      filter=s;
+      b.render(el);
+
+    },
+
+    render(e:Element){
+        el=e;
+        new Loading().render(e);
+    }
+}

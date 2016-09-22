@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>RAML Explorer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./bower_components/bootstrap-treeview/dist/bootstrap-treeview.min.css">
+    <script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="./bower_components/bootstrap-contextmenu/bootstrap-contextmenu.js"></script>
+    <script src="./bower_components/bootstrap-treeview/src/js/bootstrap-treeview.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <!-- Latest compiled and minified JavaScript -->
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            padding: 8px;
+            background-color: #F6F6F6;
+            box-sizing: border-box;
+        }
+
+        .split {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .content {
+            border: 1px solid #C0C0C0;
+            box-shadow: inset 0 1px 2px #e4e4e4;
+            background-color: #fff;
+        }
+
+        .gutter {
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-position: 50%;
+        }
+
+        .gutter.gutter-horizontal {
+            cursor: col-resize;
+            background-image: url('./bower_components/Split.js/grips/vertical.png');
+        }
+
+        .gutter.gutter-vertical {
+            cursor: row-resize;
+            background-image: url('./bower_components/Split.js/grips/horizontal.png');
+        }
+
+        .split.split-horizontal, .gutter.gutter-horizontal {
+            height: 100%;
+            float: left;
+        }
+    </style>
+</head>
+<body style="display: flex;flex-direction: column">
+<div style="height: 100%">
+    <div id="header" style="margin: 0;padding: 0;height: 50px"><h1>RAML2Java Annotations</h1></div>
+
+    <div id="rest" style="height: 90%">
+
+    </div>
+</div>
+</body>
+<script src="./bower_components/Split.js/split.js"></script>
+<script src="./lib/raml-1-parser.js"></script>
+<script src="bundle.js">
+</script>
+
+</html>

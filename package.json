@@ -1,0 +1,19 @@
+{
+  "name": "raml-explorer",
+  "version": "0.0.2",
+  "private": false,
+  "main": "dist/app.js",
+  "scripts": {
+    "compile": "rm -rf dist/ && ./node_modules/typescript/bin/tsc",
+    "build": "npm run compile",
+    "start": "budo ./dist/app.js  --serve bundle.js --live",
+    "build-production": "webpack --config webpack-production.config.js --progress --colors"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10"
+  },
+  "dependencies": {
+    "browser-request": "^0.3.3"
+
+  }
+}
