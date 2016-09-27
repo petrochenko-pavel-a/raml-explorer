@@ -218,7 +218,7 @@ class Pane implements IPartHolder{
         var searchId=nextId();
         var cmenu=`<div id='${cmenuId}'><ul class="dropdown-menu"  id="${cmenuInnerId}"role="menu"  aria-labelledby="${mid}"></ul></div>`;
         var cnt=`<div style='display: flex;flex-direction: column;height: 100%;width: 99.9%;margin-bottom:0px;overflow: hidden' class="panel panel-primary"><div id="${hid}" class="panel-heading" style="flex: 0 0 auto;display: flex"></div>
-        <div class="panel-body"  data-toggle="context" data-target="#${cmenuId}" style="flex: 1 1 auto;display: flex;overflow: scroll;margin: 0;padding: 0" ><div style="width: 100%" id="${bid}"></div>${cmenu}</div></div>`
+        <div class="panel-body"  data-toggle="context" data-target="#${cmenuId}" style="flex: 1 1 auto;display: flex;overflow: hidden;margin: 0;padding: 0" ><div style="width: 100%" id="${bid}"></div>${cmenu}</div></div>`
         this._part.element().innerHTML=cnt;
         var hel=document.getElementById(hid);
         var headerHtml= `<div style="display: flex;flex-direction: row;width: 100%"><div style="flex:1 1 auto">${this._v.title()}</div>`
@@ -512,7 +512,7 @@ export class TreeView extends ViewPart{
         var treeId=nextId();
         this.treeId=treeId;
         var view=this;
-        e.innerHTML=`<div id='${treeId}' style='width:100%;overflow: scroll;flex: 1 1 0; min-height: 50px;display: block'></div>`;
+        e.innerHTML=`<div id='${treeId}' style='width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block'></div>`;
         $('#'+treeId).treeview({data: this.getTree(),expandIcon:"glyphicon glyphicon-chevron-right",
             onNodeSelected:function (x) {
                var sel= $('#'+treeId).treeview("getSelected");

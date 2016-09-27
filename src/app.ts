@@ -6,8 +6,12 @@ import rv=require("./ramlTreeView")
 var page=new workbench.Page("rest");
 var details=new rv.RAMLDetailsView("Details","Details");
 //https://raw.githubusercontent.com/apiregistry/commons/master/commons.raml
-var r2j="https://raw.githubusercontent.com/OnPositive/aml/master/raml2java.raml"
-var ramlView=new rv.RAMLTreeView(r2j);
+var url="https://raw.githubusercontent.com/OnPositive/aml/master/raml2java.raml"
+var h=document.location.hash
+if (h&&h.length>1){
+    url=h.substr(1);
+}
+var ramlView=new rv.RAMLTreeView(url);
 
 page.addView(details,"*",100,workbench.Relation.LEFT);
 page.addView(ramlView,"Details",20,workbench.Relation.LEFT);
