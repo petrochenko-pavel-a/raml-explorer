@@ -4,8 +4,12 @@ var workbench = require("./workbench");
 var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
 var details = new rv.RAMLDetailsView("Details", "Details");
-var r2j = "https://raw.githubusercontent.com/OnPositive/aml/master/raml2java.raml";
-var ramlView = new rv.RAMLTreeView(r2j);
+var url = "https://raw.githubusercontent.com/OnPositive/aml/master/raml2java.raml";
+var h = document.location.hash;
+if (h && h.length > 1) {
+    url = h.substr(1);
+}
+var ramlView = new rv.RAMLTreeView(url);
 page.addView(details, "*", 100, workbench.Relation.LEFT);
 page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
 function initSizes() {
@@ -127,7 +131,7 @@ var Accordition = (function (_super) {
             var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\"><a>" + this.children[i].title() + "</a></h4>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
             templates.push(s);
         }
-        var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%;overflow: hidden\">\n             " + templates.join('') + "       \n        </div>";
+        var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%\">\n             " + templates.join('') + "       \n        </div>";
         e.innerHTML = content;
         for (var i = 0; i < this.children.length; i++) {
             var el = document.getElementById(bids[i]);
