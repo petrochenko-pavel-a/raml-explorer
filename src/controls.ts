@@ -62,6 +62,8 @@ export class Loading extends  Composite{
         e.innerHTML=`<div style="display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;"><div style="display: flex;flex-direction: row;justify-content: center"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>`
     }
 }
+
+
 export class Label extends Composite{
 
     constructor(title?:string,private content?:string){
@@ -79,6 +81,30 @@ export class Label extends Composite{
 }
 export class Accordition extends Composite{
 
+    public expand(c:IControl){
+        var index=this.children.indexOf(c);
+        this.expandIndex(index);
+    }
+
+    public expandIndex(index: number){
+        var bids=this.bids;
+        var gids=this.gids;
+        for (var j=0;j<bids.length;j++) {
+            if (j!=index) {
+                document.getElementById(bids[j]).style.display = "none";
+                document.getElementById(gids[j]).style.flex = null;
+                //document.getElementById(gids[j]).style.display = "none";
+            }
+            else{
+                document.getElementById(bids[j]).style.display = "flex";
+                document.getElementById(gids[j]).style.flex = "1 1 0";
+                document.getElementById(gids[j]).style.display = "flex";
+            }
+        }
+    }
+
+    private bids:string[]
+    private gids: string[]
     protected innerRender(e:Element){
         var topId=nextId();
 
@@ -117,27 +143,16 @@ export class Accordition extends Composite{
             //e.style.maxHeight="500px"
         }
         var i=0;
-
+        this.bids=bids;
+        this.gids=gids;
         headings.forEach(x=>{
             var panelId=bids[i];
             var containerId=gids[i]
             var k=i;
-            document.getElementById(x).onclick=function () {
-                for (var j=0;j<bids.length;j++) {
-                    if (j!=k) {
-                        document.getElementById(bids[j]).style.display = "none";
-                        document.getElementById(gids[j]).style.flex = null;
-                        //document.getElementById(gids[j]).style.display = "none";
-                    }
-                    else{
-                        document.getElementById(bids[j]).style.display = "flex";
-                        document.getElementById(gids[j]).style.flex = "1 1 0";
-                        document.getElementById(gids[j]).style.display = "flex";
-                    }
-                }
+            document.getElementById(x).onclick=()=> {
+                this.expandIndex(k);
             }
             i++;
         });
-
     }
 }

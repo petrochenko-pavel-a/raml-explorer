@@ -16,9 +16,8 @@ var globalId=0;
 function nextId(){
     return "split"+(globalId++);
 }
+
 declare function Split(a,b):void;
-
-
 
 export class LayoutPart implements ILayoutPart{
 
@@ -434,13 +433,35 @@ export class BasicSorter implements IComparator{
         return l1.localeCompare(l2);
     }
 }
+export interface INode{
+
+    nodes:INode[]
+
+    original: any;
+}
+
+function findNode(nodes:INode[],v:any){
+    for (var i=0;i<nodes.length;i++){
+        var ch=nodes[i];
+        if (ch.original===v){
+            return ch;
+        }
+        if (ch.nodes) {
+            var n=findNode(ch.nodes,v);
+            if (n){
+                return n;
+            }
+        }
+    }
+    return null;
+}
 export class TreeView extends ViewPart{
 
     treeId:string;
     contentProvider:ContentProviderProxy
     labelProvider:ILabelProvider
     input:any;
-
+    treeNodes:INode[];
     searchable=true;
 
     setSorter(s:IComparator){
@@ -457,6 +478,20 @@ export class TreeView extends ViewPart{
         this.refresh();
     }
 
+    select(model: any){
+        var n=findNode(this.treeNodes,model);
+        if (n) {
+            this.selection=[model];
+            this.refresh();
+        }
+    }
+    hasModel(model:any):boolean{
+        if (findNode(this.treeNodes,model)){
+            return true;
+        }
+        return false;
+    }
+
     onSearch(s:string){
         if (!this.treeId){
             return;
@@ -470,11 +505,11 @@ export class TreeView extends ViewPart{
             if (el.classList.contains("search-result")){
                 el.style.display ="inherit" ;
                 var id=el.attributes.getNamedItem("data-nodeid").value;
-                var rs=$('#tree').treeview("getParent",parseInt(id));
+                var rs=$('#'+this.treeId).treeview("getParent",parseInt(id));
                 parents[rs.nodeId]=true;
                 while (rs.parentId!==undefined){
                     parents[rs.parentId]=true;
-                    rs=$('#tree').treeview("getParent",rs.parentId);
+                    rs=$('#'+this.treeId).treeview("getParent",rs.parentId);
                     parents[rs.nodeId]=true;
                 }
             }
@@ -526,13 +561,13 @@ export class TreeView extends ViewPart{
     getTree(){
         if (this.input&&this.contentProvider&&this.labelProvider){
             var els=this.contentProvider.elements(this.input);
-            return els.map(x=>buildTreeNode(x,this.contentProvider,this.labelProvider,this.selection));
+            var nodes=els.map(x=>buildTreeNode(x,this.contentProvider,this.labelProvider,this.selection));
+            this.treeNodes=<INode[]>nodes;
+            return nodes;
         }
         return [];
     }
 }
-
-
 
 export enum Relation{
     LEFT,RIGHT,BOTTOM,TOP,STACk
@@ -597,3 +632,28 @@ export class Page{
     }
 }
 
+var w:any=window;
+
+interface UrlHandler{
+    (s:string):boolean
+}
+var handlers:UrlHandler[]=[]
+
+
+export function registerHandler(f:UrlHandler){
+    handlers.push(f);
+}
+export function unregisterHandler(f:UrlHandler){
+    handlers=handlers.filter(x=>x!==f);
+}
+
+w.Workbench={
+
+    open(url:string){
+        for (var i=0;i<handlers.length;i++){
+            if (handlers[i](url)){
+                return;
+            }
+        }
+    }
+}
