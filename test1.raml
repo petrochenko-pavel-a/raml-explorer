@@ -1,0 +1,15 @@
+#%RAML 1.0
+uses:
+ test: test.raml
+types:
+  A:
+   type: test.Person
+/q:
+   get:
+     queryParameters:
+       a:
+        required: true
+       b?:
+         type: number
+       c:
+        required: false

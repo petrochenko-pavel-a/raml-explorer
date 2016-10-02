@@ -5,10 +5,12 @@ export interface IProperty{
     isKey(): boolean
     range(): IType
     isRequired():boolean
+    local?:boolean
 }
 export interface IType{
     nameId():any
     properties():IProperty[]
+    facets():IProperty[]
     allProperties():IProperty[]
     isObject():boolean
     isArray(): boolean
@@ -22,15 +24,132 @@ export interface IType{
     adapters:any[];
 }
 
+export var root:IHighLevelNode
+export var libs:IHighLevelNode[];
+
+export function findById(id:string):IHighLevelNode{
+    var n=root.findById(id);
+    if (n){
+        return n;
+    }
+    var nodes:IHighLevelNode[]=[];
+    getUsedLibraries(root).forEach(x=>{
+        var rs=x.findById(id);
+        if (rs!=null){
+            nodes.push(rs);
+        }
+    })
+    if (nodes.length>0){
+        return nodes[0];
+    }
+}
 export function getDeclaration(n:IType,escP:boolean=true):IHighLevelNode{
     var ns=n.adapters[0].getDeclaringNode();
     if (ns) {
-        if (escP&&ns.property().nameId() === "properties" || ns.property().nameId() === "facets") {
+        if (escP&&ns.property()&&(ns.property().nameId() === "properties" || ns.property().nameId() === "facets")) {
             return null;
         }
     }
+    root.children().forEach(x=>{
+        if (x.property().nameId()=="types"){
+            if (x.name()==n.nameId()){
+                return x;
+            }
+        }
+    })
+    var libs=getUsedLibraries(root);
+    var options:IHighLevelNode[]=[]
+    libs.forEach(t=>{
+        t.children().forEach(x=>{
+            if (x.property().nameId()=="types"){
+                if (x.name()==n.nameId()){
+                    options.push(x);
+                }
+            }
+        })
+    })
+    if (options.length>0){
+        return options[0];
+    }
     return ns;
 }
+
+export function getUsedLibrary(usesNode:IHighLevelNode){
+    var path=usesNode.attr("value");
+    if (path) {
+        var u = (<any>usesNode).lowLevel().unit();
+        var ast=u.resolve(path.value()).highLevel();
+        return new ProxyNode(usesNode.name(),ast,ast.children());
+    }
+    return null;
+}
+export function getUsedLibraries(root:IHighLevelNode){
+    if (libs){
+        return libs;
+    }
+    var nodes:IHighLevelNode[]=[];
+    root.children().forEach(x=>{
+        if (x.property().nameId()=="uses"){
+            nodes.push(getUsedLibrary(x))
+        }
+    })
+    libs=nodes;
+    return nodes;
+}
+
+export class ProxyNode implements IHighLevelNode{
+
+
+    constructor(private _name:string,private  original:IHighLevelNode,private  _children:IHighLevelNode[]){
+
+    }
+
+
+    definition():IType{
+        return this.original.definition();
+    }
+    name(): string{
+        return this._name;
+    }
+    property(): IProperty{
+        return this.original.property();
+    }
+    children():IHighLevelNode[]{
+        return this._children;
+    }
+    elements():IHighLevelNode[]{
+        return this._children;
+    }
+    attrs():IHighLevelNode[]{
+        return [];
+    }
+    attr(name:string):IHighLevelNode{
+        return this.original.attr(name)
+    }
+    value() {
+        return null;
+    }
+    lowLevel() {
+        return this.original.lowLevel();
+    }
+    isAttr():boolean{
+        return false;
+    }
+    id(): string{
+        return null;
+    }
+    root():IHighLevelNode{
+        return this.original;
+    }
+    findById(id: string): IHighLevelNode{
+        return this.original.findById(id)
+    }
+    localType(): IType{
+        return null;
+    }
+}
+
+
 
 export function description(n:IType): string{
     var h=getDeclaration(n,false);
@@ -42,7 +161,10 @@ export function description(n:IType): string{
     }
     return "";
 }
-
+export function asObject(vl:IHighLevelNode){
+    var r=vl.lowLevel().dumpToObject();
+    return r
+}
 export interface IHighLevelNode{
     definition():IType
     name(): string
@@ -82,7 +204,8 @@ export function elementGroups(hl:IHighLevelNode):ElementGroups{
 export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void){
     RAML.Parser.loadApi(path).then(
         function (api) {
-            f(api.highLevel());
+            root=api.expand().highLevel()
+            f(root);
         }
     )
 }
@@ -90,21 +213,34 @@ export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void){
 export function subTypes(t:IType):IType[]{
     var n=getDeclaration(t);
     var result:IType[]=[];
-    if (n){
-        var root=n.root();
-        root.elements().forEach(x=>{
-            if (x.property().nameId()=="types"){
-                x.localType().superTypes().forEach(y=>{
-                    var rs=getDeclaration(y);
-                    if (rs==n){
-                        result.push(x.localType());
+
+    function extracted(cr) {
+        cr.elements().forEach(x=>{
+            if (x.property().nameId() == "types") {
+                x.localType().superTypes().forEach(y=> {
+                    var rs = getDeclaration(y);
+                    if (rs == n) {
+                        if (result.indexOf(x.localType())==-1) {
+                            result.push(x.localType());
+                        }
                     }
                 })
             }
         })
     }
+
+    if (n){
+        var cr=n.root();
+        extracted(cr);
+        extracted(root);
+        getUsedLibraries(root).forEach(l=>{
+            extracted(l)
+        })
+    }
     return result;
 }
+
+
 
 export class MergedNode implements IHighLevelNode{
 

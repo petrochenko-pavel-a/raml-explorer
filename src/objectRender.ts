@@ -36,44 +36,54 @@ export class Link{
     }
 }
 
-export interface IProperty<T>{
+export interface IColumn<T>{
     id():string;
     caption():string
-    render(o:T):string
+    render(o:T,rowId?:string):string
+    width?():string
 }
+
+export interface IRowStyleProvider<T>{
+    hidden(x:any):boolean
+}
+var mm=0;
 
 export class TableRenderer{
 
-    constructor(private _caption:string,private props:IProperty<any>[]){
+    constructor(private _caption:string, private props:IColumn<any>[], private st:IRowStyleProvider<any>){
 
     }
 
     render(hl:any[]){
         var result:string[]=[];
         var fp=this.props.filter(p=>{
-            return hl.filter(x=>p.render(x)).length>0
+            return hl.filter(x=><boolean><any>p.render(x)).length>0
         })
+
         hl.forEach(x=> {
-            result.push("<tr>")
+            var h=this.st.hidden(x)?"none":"table-row";
+            result.push(`<tr id="${"tr"+mm}" level="${x.level()}" style="display: ${h}" onclick="toggleRow('${"tr"+mm}')">`)
             fp.forEach(p=> {
                 result.push("<td>")
-                result.push(p.render(x))
+                result.push(p.render(x,"tr"+mm))
                 result.push("</td>")
             })
             result.push("</tr>")
+            mm=mm+1;
         })
         var header:string[]=[];
 
         header.push("<tr>")
         fp.forEach(p=> {
-            header.push("<th style='border-bottom: inherit;'>")
+            var cw=p.width?"width: "+p.width():"";
+            header.push(`<th style='border-bottom: inherit;${cw}'>`)
             header.push(p.caption())
             header.push("</th>")
         })
         header.push("</tr>")
 
         return `<div class="panel panel-default">
-            <div class="panel-heading">${this._caption}</div><div class="panel-body" style="padding: 0px"><div><table class="table table-striped" style="margin: 0px;">
+            <div class="panel-heading">${this._caption}</div><div class="panel-body" style="padding: 0px"><div><table class="table table-hover" style="margin: 0px">
             <caption style="height: 0px;display: none"></caption>
             <thead>${header.join("")}</thead>
             ${result.join("")}
@@ -81,27 +91,80 @@ export class TableRenderer{
             </div></div></div>`
     }
 }
+var w:any=window;
+w.toggleRow=function (id) {
+    var el=document.getElementById(id);
+    var nm=el.parentElement.getElementsByTagName("tr");
+    if (!document.getElementById("tricon" + id)){
+        return;
+    }
+    var vis=el.getAttribute("expanded");
+    var style="table-row"
+    if (vis=="true"){
+        style="none";
+        el.setAttribute("expanded","false")
+        document.getElementById("tricon"+id).classList.add("glyphicon-plus-sign")
+        document.getElementById("tricon"+id).classList.remove("glyphicon-minus-sign")
+    }
+    else{
+        el.setAttribute("expanded","true")
+        document.getElementById("tricon"+id).classList.remove("glyphicon-plus-sign")
+        document.getElementById("tricon"+id).classList.add("glyphicon-minus-sign")
+    }
+    var tn=false;
+    var ll=parseInt(el.getAttribute("level"));
+    for (var i=0;i<nm.length;i++){
+        var it=nm.item(i);
+        if (it==el){
+            tn=true;
+            continue;
+        }
+        if (tn){
+            var il=parseInt(it.getAttribute("level"));
+            if(il<=ll){
+                tn=false;
+            }
+            else {
+                if(il==ll+1||style=='none') {
+                    if (style=='none'){
+                        it.setAttribute("expanded","false")
+                    }
+                    it.style.display = style;
+                }
 
+            }
+        }
+    }
+}
 
 export function highlight(v:string):string{
     if (v.indexOf("http://")==0||v.indexOf("https://")==0){
         return `<a href="${v}">${v}</a>`
     }
-    return v;
+    if (!isNaN(parseFloat(v))){
+        return "<span style='color: purple'>"+v+"</span>"
+    }
+    if (!isNaN(parseInt(v))){
+        return "<span style='color: purple'>"+v+"</span>"
+    }
+    if (v=="true"||v=="false"){
+        return "<span style='color: blue'>"+v+"</span>"
+    }
+    return "<span style='color: darkred'>"+v+"</span>"
 }
 export function renderKeyValue(k:string,vl:any,small:boolean=false):string{
     //k=small?k:k.charAt(0).toUpperCase()+k.substr(1);
     var str=""+vl;
 
     vl=highlight(str)
-    if (str.length>50&&str.indexOf(' ')!=-1){
+    if (str.length>70&&str.indexOf('\n')!=-1){
         var res=`<h5 style="background: gainsboro">${k}: </h5><div>${vl}</div>`
         return res;
     }
     if (small){
-        return `<i>${k}: ${vl} </i>`
+        return `<i>${k}: ${vl}</i>`
     }
-    return `<h5>${k}: ${vl} </h5>`
+    return `<h5>${k}: ${vl}</h5>`
 }
 export function renderObj(v:any):string{
     if (Array.isArray(v)){

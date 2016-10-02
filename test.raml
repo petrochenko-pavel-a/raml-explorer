@@ -6,6 +6,9 @@ types:
     minLength: 2
     pattern: dddd
     example: "dddd"
+    (MyFavoriteAnnotation): h
+    facets:
+      link?: string
   Person:
     description: Single Person
     properties:
@@ -21,11 +24,28 @@ types:
         minLength: 4
         maxLength: 5
         default: "dddd"
+        enum: [dddd, ddd2]
+        (MyFavoriteAnnotation): h
       members?: Person[]
+  Q:
+      properties:
+        m: number
+        q?: Q
+        x:
+          description: this is person
+          type: Person
+          xml:
+              name: s
+              attribute: true
+      xml:
+        name: s
+        attribute: true
   BigGroup:
     type: [ Person, Group]
+    additionalProperties: true
     properties:
       subGroups: (Group | BigGroup [] | number)[]
+      /ee/: number
       fff:
         properties:
           x: number
@@ -38,6 +58,9 @@ types:
         items:
           properties:
             d: Url
-            x: Person
+            x:
+              description: this is person
+              type: Person
+            y: Person
     patternProperties:
       'dde': string

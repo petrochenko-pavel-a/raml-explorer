@@ -1,7 +1,7 @@
 
 
 import hl=require("./hl")
-import {IHighLevelNode} from "./hl";
+import {IHighLevelNode, IType, IProperty} from "./hl";
 import or=require("./objectRender")
 import nr=require("./nodeRender")
 
@@ -22,6 +22,10 @@ function escapeBuiltIn(n:string):string{
     if (n==="NumberType"){
         n="number"
     }
+    if (n==="IntegerType"){
+        n="integer"
+    }
+
     return n;
 }
 function renderTypeLink(x:hl.IType):string{
@@ -57,18 +61,32 @@ function renderTypeLink(x:hl.IType):string{
             }
         }
         name=escapeBuiltIn(name);
-        result.push("<b>"+name+"</b> ");
+        result.push("<span>"+name+"</span> ");
     }
     return result.join("");
 }
 
-class NameColumn implements or.IProperty<hl.IProperty>{
+class NameColumn implements or.IColumn<hl.IProperty>{
 
     id(){return "name"}
     caption(){return "Name"}
-    render(p:hl.IProperty){
+    width(){return "15em;"}
+    render(p:hl.IProperty,rowId?:string){
 
         var rs= p.nameId();
+        if (p instanceof WProperty){
+            var wp=<WProperty>p;
+            if (wp._children.length>0){
+                rs=`<span style="padding-left: ${wp.level()*20}px"></span><span id="${"tricon"+rowId}" class="glyphicon glyphicon-plus-sign" ></span> `+rs
+            }
+            else{
+                var st="glyphicon-record"
+                if (wp.recursive){
+                    st="glyphicon-repeat"
+                }
+                rs=`<span style="padding-left: ${wp.level()*20}px"></span><span class="glyphicon ${st}"></span> `+rs
+            }
+        }
         if (!p.isRequired()){
             rs+=" <small>(optional)</small>"
         }
@@ -84,10 +102,10 @@ var skipProps={
     "items": true
 }
 
-class Facets implements or.IProperty<hl.IProperty>{
+class Facets implements or.IColumn<hl.IProperty>{
 
     id(){return "name"}
-    caption(){return "Facets"}
+    caption(){return "Facets &amp; Annotations"}
     render(p:hl.IProperty){
         var decl=hl.getDeclaration(p.range(),false);
         var rs:string[]=[];
@@ -97,13 +115,16 @@ class Facets implements or.IProperty<hl.IProperty>{
                 if (skipProps[x.name()]) {
                     return;
                 }
-                rs.push(nr.renderNode(x,true));
+                rs.push(nr.renderNode(x,true)+"; ");
             });
         }
         return rs.join("");
     }
+    width(){
+        return "20em"
+    }
 }
-class Description implements or.IProperty<hl.IProperty>{
+class Description implements or.IColumn<hl.IProperty>{
 
     id(){return "description"}
     caption(){return "Description"}
@@ -112,23 +133,50 @@ class Description implements or.IProperty<hl.IProperty>{
         return hl.description(p.range());
     }
 }
-class Type implements or.IProperty<hl.IProperty>{
+class Type implements or.IColumn<hl.IProperty>{
 
     id(){return "description"}
     caption(){return "Type"}
     render(p:hl.IProperty){
-        return renderTypeLink(p.range());
+        var s=p.range();
+        if (p.local||(!s.nameId()&&!s.isArray()&&!s.isUnion())){
+            if (s.superTypes().length==1){
+                s=s.superTypes()[0]
+            }
+        }
+        return "<span style='white-space: nowrap;'>"+renderTypeLink(s)+"</span>";
         //return hl.description(p.range());
+    }
+
+    width(){
+        return "15em"
     }
 }
 class WProperty implements hl.IProperty{
 
-    constructor(private _orig:hl.IProperty,private _o:hl.IProperty){}
+    _children: hl.IProperty[]=[];
+    recursive:boolean=false;
+    local:boolean
+    constructor(private _orig:hl.IProperty,private _o:hl.IProperty){
+        if (_orig instanceof WProperty){
+            (<WProperty>_orig)._children.push(_o);
+        }
+        if (_o.local){
+            this.local=true;
+        }
+    }
+    level():number{
+        if (this._orig){
+            if (this._orig instanceof WProperty){
+                var wp=<WProperty>this._orig;
+                return wp.level()+1;
+            }
+        }
+        return 0;
+    }
 
     nameId():string {
-        if (!(this._orig instanceof  WProperty)) {
-            return "<span style='margin-left: 15px'>" + "" + this._o.nameId() + "</span>";
-        }
+        return this._o.nameId();
     }
 
     isKey():boolean {
@@ -144,21 +192,34 @@ class WProperty implements hl.IProperty{
     }
 }
 
-var expandProps = function (ps:hl.IProperty[]) {
-    var pm:hl.IProperty[] = [];
-    ps.forEach(x=> {
-        var ps = x.range().properties();
 
-        pm.push(x);
-        if (ps.length > 0) {
-            expandProps(ps).forEach(y=>pm.push(new WProperty(x, y)));
-        }
-        if (x.range().isArray()&&!x.range().nameId()){
-            var as=x.range().componentType().properties();
-            if (as.length>0){
-                expandProps(as).forEach(y=>pm.push(new WProperty(x, y)));
+var expandProps = function (ts:hl.IType[],ps:hl.IProperty[],parent?:hl.IProperty):WProperty[] {
+    var pm:WProperty[] = [];
+    ps.forEach(x=> {
+        x = new WProperty(parent, x);
+        pm.push(<WProperty>x);
+        var r = x.range();
+        if (ts.indexOf(r) == -1) {
+            ts.push(r);
+            if(r.isObject()) {
+                var ps = r.allProperties();
+                if (ps.length > 0) {
+                    expandProps(ts, ps, x).forEach(y=>pm.push(y));
+                }
             }
+            else if (x.range().isArray() && !x.range().nameId()) {
+
+                var as = x.range().componentType().allProperties();
+                if (as.length > 0) {
+                    expandProps(ts,as, x).forEach(y=>pm.push(y));
+                }
+            }
+            ts.pop();
         }
+        else{
+            (<WProperty>x).recursive=true;
+        }
+
     })
     return pm;
 };
@@ -170,12 +231,15 @@ export class TypeRenderer{
 
     render(h:IHighLevelNode):string{
         var at=h.localType();
+        if (h.property().nameId()=="annotationTypes"){
+            at=at.superTypes()[0];
+        }
         var result:string[]=[];
         result.push("<h3>"+at.nameId()+"</h3><hr>")
         result.push("<h5>Supertypes: "+renderTypeList(at.superTypes())+"</h5>")
         var desc=hl.description(at);
         if (desc){
-            result.push("<h5 style='display: inline'>Description: </h5>"+desc)
+            result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>"+desc+"</span>")
         }
         hl.prepareNodes(h.attrs()).forEach(x=> {
             if (skipProps[x.name()]) {
@@ -189,15 +253,86 @@ export class TypeRenderer{
                 result.push("<h5>Direct known subtypes: " + renderTypeList(st));
             }
         }
+        var ps=at.facets();
+        var nm="Facet declarations";
+        if (ps.length>0){
+            renderPropertyTable(nm,ps,result,at)
+        }
         if (at.isObject()){
-            result.push("<div style='padding-top: 10px'>")
-            var ps=at.allProperties();
-            var pm = expandProps(ps);
-            result.push(new or.TableRenderer("Properties",[new NameColumn(),new Description(), new Type(),new Facets()]).render(pm));
-            result.push("</div>")
+            ps=at.allProperties();
+            renderPropertyTable("Properties",ps,result,at)
+        }
+        if (at.isArray()){
+            var ct=at.componentType();
+            if (ct.isArray()){
+                result.push("Component type:")
+                result.push(renderTypeList([ct]).join(""));
+                ps=ct.allProperties();
+                renderPropertyTable("Component type properties",ps,result,at)
+            }
+        }
+        if (at.isUnion()){
+            result.push("Union options:")
+            result.push(renderTypeList([at]).join(""));
         }
         return result.join("");
     }
 }
+export function renderPropertyTable(name:string,ps:IProperty[],result:string[],at:IType){
+    result.push("<div style='padding-top: 10px'>")
+    var pm = expandProps([at],ps);
+    result.push(new or.TableRenderer(name,[new NameColumn(), new Type(),new Facets(),new Description()],{
 
+        hidden(c:WProperty){
+            return c.level()>0;
+        }
+    }).render(pm));
+    result.push("</div>")
+}
+
+export function renderParameters(name:string,ps:IHighLevelNode[],result:string[]){
+    if (ps.length==0){
+        return;
+    }
+    result.push("<div style='padding-top: 10px'>")
+    var pr:IProperty[]=[];
+    ps.forEach(x=>{
+        pr.push({
+            nameId():string{
+                if(x.name().charAt(x.name().length-1)=="?"){
+                    var r=x.attr("required");
+                    if (!r){
+                        return x.name().substr(0,x.name().length-1);
+                    }
+                }
+                return x.name();
+            },
+            isKey() {
+                return false;
+            },
+            local:true,
+            range() {
+                return x.localType();
+            },
+            isRequired(){
+                var r=x.attr("required");
+                if (r&&r.value()==="false"){
+                    return false;
+                }
+                if (r&&r.value()=="true"){
+                    return true;
+                }
+                return !(x.name().charAt(x.name().length-1)=="?");
+            }
+        })
+    })
+    var pm = expandProps([],pr);
+    result.push(new or.TableRenderer(name,[new NameColumn(), new Type(),new Facets(),new Description()],{
+
+        hidden(c:WProperty){
+            return c.level()>0;
+        }
+    }).render(pm));
+    result.push("</div>")
+}
 

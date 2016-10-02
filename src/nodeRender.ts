@@ -19,6 +19,13 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
     }
     if (vl){
         if (h.isAttr()){
+            if (typeof vl==="object"){
+                if (!Array.isArray(vl)) {
+                    vl=JSON.stringify(hl.asObject(vl),null,2);
+                    var svl=""+vl;
+                    vl=svl.substr(1,svl.length-1);
+                }
+            }
             res=or.renderKeyValue(h.property().nameId(),vl,small)
         }
         else {
@@ -26,6 +33,13 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
         }
     }
     else {
+        if (typeof vl==="string"){
+            return;
+        }
+        if (h.isAttr()){
+            res=or.renderKeyValue(h.property().nameId(),vl,small)
+            return res;
+        }
         var res = `<h5 style="background: gainsboro">${h.definition().nameId()}:</h5>`
         var ch=h.children();
         res+=renderNodes(ch);
@@ -34,7 +48,7 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
 }
 
 
-export class AttrProperty implements or.IProperty<IHighLevelNode>{
+export class AttrProperty implements or.IColumn<IHighLevelNode>{
 
     constructor(private _id:string,private _caption:string){}
 
