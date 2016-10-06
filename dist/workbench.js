@@ -4,6 +4,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var controls = require("./controls");
 var globalId = 0;
 function nextId() {
     return "split" + (globalId++);
@@ -533,3 +534,50 @@ w.Workbench = {
         }
     }
 };
+var AccorditionTreeView = (function (_super) {
+    __extends(AccorditionTreeView, _super);
+    function AccorditionTreeView(title) {
+        _super.call(this, title, title);
+        this.trees = [];
+    }
+    AccorditionTreeView.prototype.createTree = function (name) {
+        var tree = new TreeView(name, name);
+        this.customize(tree);
+        var view = this;
+        tree.addSelectionListener({
+            selectionChanged: function (z) {
+                view.onSelection(z);
+            }
+        });
+        return tree;
+    };
+    AccorditionTreeView.prototype.addTree = function (label, at) {
+        var types = this.createTree(label);
+        types.setInput(at);
+        this.control.add(types);
+        this.trees.push(types);
+    };
+    AccorditionTreeView.prototype.setSelection = function (o) {
+        for (var i = 0; i < this.trees.length; i++) {
+            if (this.trees[i].hasModel(o)) {
+                this.control.expand(this.trees[i]);
+                this.trees[i].select(o);
+            }
+        }
+    };
+    AccorditionTreeView.prototype.innerRender = function (e) {
+        if (!this.node) {
+            new controls.Loading().render(e);
+            this.load();
+        }
+        else {
+            var a = new controls.Accordition();
+            this.control = a;
+            this.trees = [];
+            this.customizeAccordition(a, this.node);
+            a.render(e);
+        }
+    };
+    return AccorditionTreeView;
+}(ViewPart));
+exports.AccorditionTreeView = AccorditionTreeView;

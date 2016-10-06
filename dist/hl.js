@@ -1,11 +1,13 @@
 "use strict";
+var root;
+var libs;
 function findById(id) {
-    var n = exports.root.findById(id);
+    var n = root.findById(id);
     if (n) {
         return n;
     }
     var nodes = [];
-    getUsedLibraries(exports.root).forEach(function (x) {
+    getUsedLibraries(root).forEach(function (x) {
         var rs = x.findById(id);
         if (rs != null) {
             nodes.push(rs);
@@ -24,14 +26,14 @@ function getDeclaration(n, escP) {
             return null;
         }
     }
-    exports.root.children().forEach(function (x) {
+    root.children().forEach(function (x) {
         if (x.property().nameId() == "types") {
             if (x.name() == n.nameId()) {
                 return x;
             }
         }
     });
-    var libs = getUsedLibraries(exports.root);
+    var libs = getUsedLibraries(root);
     var options = [];
     libs.forEach(function (t) {
         t.children().forEach(function (x) {
@@ -59,8 +61,8 @@ function getUsedLibrary(usesNode) {
 }
 exports.getUsedLibrary = getUsedLibrary;
 function getUsedLibraries(root) {
-    if (exports.libs) {
-        return exports.libs;
+    if (libs) {
+        return libs;
     }
     var nodes = [];
     root.children().forEach(function (x) {
@@ -68,7 +70,7 @@ function getUsedLibraries(root) {
             nodes.push(getUsedLibrary(x));
         }
     });
-    exports.libs = nodes;
+    libs = nodes;
     return nodes;
 }
 exports.getUsedLibraries = getUsedLibraries;
@@ -154,8 +156,9 @@ function elementGroups(hl) {
 exports.elementGroups = elementGroups;
 function loadApi(path, f) {
     RAML.Parser.loadApi(path).then(function (api) {
-        exports.root = api.expand().highLevel();
-        f(exports.root);
+        root = api.expand ? api.expand().highLevel() : api.highLevel();
+        libs = null;
+        f(root);
     });
 }
 exports.loadApi = loadApi;
@@ -179,8 +182,8 @@ function subTypes(t) {
     if (n) {
         var cr = n.root();
         extracted(cr);
-        extracted(exports.root);
-        getUsedLibraries(exports.root).forEach(function (l) {
+        extracted(root);
+        getUsedLibraries(root).forEach(function (l) {
             extracted(l);
         });
     }

@@ -4,54 +4,15 @@ import {Accordition, Label, Loading} from "./controls";
 import hl=require("./hl")
 import rv=require("./ramlTreeView")
 var page=new workbench.Page("rest");
-var details=new rv.RAMLDetailsView("Details","Details");
+import reg=require("./registryApp")
 //https://raw.githubusercontent.com/apiregistry/commons/master/commons.raml
-var url=document.location+"test1.raml"
+var url=""
 var h=document.location.hash
 if (h&&h.length>1){
     url=h.substr(1);
+    reg.showApi(url)
 }
-var ramlView=new rv.RAMLTreeView(url);
-
-page.addView(details,"*",100,workbench.Relation.LEFT);
-page.addView(ramlView,"Details",20,workbench.Relation.LEFT);
-var states:string[]=[];
-if (history&&history.pushState) {
-    window.onpopstate = function (event) {
-        if (states.length>0){
-            ramlView.openNodeById(states.pop());
-        }
-
-        //alert("location: " + document.location + ", state: " + JSON.stringify(event.state));
-    };
-
+else{
+    reg.init();
 }
-workbench.registerHandler((x:string)=>{
-    if (history.pushState) {
-        var node=ramlView.getSelection();
-        if (node&&node.length>0){
-            states.push(node[0].id())
-        }
-        history.pushState({page: x}, document.title, document.location.toString());
 
-    }
-    ramlView.openNodeById(x);
-    return true;
-})
-//page.addView(tree,"b1",50,workbench.Relation.BOTTOM);
-function initSizes(){
-    var h=document.getElementById("header").clientHeight+50;
-    document.getElementById("rest").setAttribute("style","height:"+(window.innerHeight-h)+"px");
-}
-initSizes();
-ramlView.addSelectionListener({
-    selectionChanged(v:any[]){
-        if (v.length>0) {
-            details.setSelection(v[0]);
-        }
-        else{
-            details.setSelection(null);
-        }
-    }
-})
-window.onresize=initSizes;

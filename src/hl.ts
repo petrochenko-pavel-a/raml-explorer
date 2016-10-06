@@ -24,8 +24,8 @@ export interface IType{
     adapters:any[];
 }
 
-export var root:IHighLevelNode
-export var libs:IHighLevelNode[];
+var root:IHighLevelNode
+var libs:IHighLevelNode[];
 
 export function findById(id:string):IHighLevelNode{
     var n=root.findById(id);
@@ -204,7 +204,8 @@ export function elementGroups(hl:IHighLevelNode):ElementGroups{
 export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void){
     RAML.Parser.loadApi(path).then(
         function (api) {
-            root=api.expand().highLevel()
+            root=api.expand?api.expand().highLevel():api.highLevel();
+            libs=null;
             f(root);
         }
     )

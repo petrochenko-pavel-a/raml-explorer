@@ -66,17 +66,17 @@ export class RAMLTreeProvider implements workbench.ITreeContentProvider{
     }
 }
 
-export class RAMLTreeView extends workbench.ViewPart{
+export class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:IHighLevelNode;
 
+
     constructor(private path:string)
     {
-        super("Overview","Overview")
+        super("Overview")
     }
 
-    createTree(name: string){
-        var tree=new workbench.TreeView(name,name);
+    protected customize(tree: workbench.TreeView) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label(x:any){
@@ -93,13 +93,6 @@ export class RAMLTreeView extends workbench.ViewPart{
                 return "glyphicon glyphicon-pencil"
             }
         })
-        var view=this;
-        tree.addSelectionListener({
-            selectionChanged(z:any[]){
-                view.onSelection(z);
-            }
-        })
-        return tree;
     }
 
     protected control:Accordition;
@@ -133,44 +126,35 @@ export class RAMLTreeView extends workbench.ViewPart{
         }
     }
 
-    public setSelection(o:any){
-        for(var i=0;i<this.trees.length;i++){
-            if (this.trees[i].hasModel(o)){
-                this.control.expand(this.trees[i]);
-                this.trees[i].select(o);
-            }
+    protected customizeAccordition(a: Accordition, node: any) {
+        var x=this.api.elements();
+        var libs=hl.getUsedLibraries(this.api);
+        var overview:string=nr.renderNodes(this.api.attrs());
+        if (overview.length>0) {
+            a.add(new Label("Generic Info", overview))
         }
+
+        var groups=hl.elementGroups(this.api);
+        this.renderArraySection("annotationTypes","Annotation Types",groups,libs);
+        this.renderArraySection("types","Types",groups,libs);
+        this.renderArraySection("resources","Resources",groups,libs);
+        var lt=null;
+    }
+    protected  load(){
+        hl.loadApi(this.path,api=>{
+            this.api=api;
+            this.node=api;
+            this.refresh();
+            showTitle(this.api)
+        })
     }
 
-    innerRender(e:Element) {
-        if (!this.api) {
-            new Loading().render(e);
-            hl.loadApi(this.path,api=>{
-                this.api=api;
+}
 
-                this.refresh();
-            })
+function showTitle(api:hl.IHighLevelNode){
+    hl.prepareNodes(api.attrs()).forEach(x=>{
+        if (x.name()=="(Title)"||x.name()=="title"){
+            document.getElementById("title").innerHTML=x.value();
         }
-        else{
-            var x=this.api.elements();
-            var libs=hl.getUsedLibraries(this.api);
-
-            var overview:string=nr.renderNodes(this.api.attrs());
-            var a = new Accordition();
-            this.control=a;
-            this.trees=[];
-            if (overview.length>0) {
-                a.add(new Label("Generic Info", overview))
-            }
-            var groups=hl.elementGroups(this.api);
-
-
-            this.renderArraySection("annotationTypes","Annotation Types",groups,libs);
-            this.renderArraySection("types","Types",groups,libs);
-            this.renderArraySection("resources","Resources",groups,libs);
-            var lt=null;
-            a.render(e);
-
-        }
-    }
+    })
 }

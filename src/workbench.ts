@@ -657,3 +657,69 @@ w.Workbench={
         }
     }
 }
+
+
+export abstract class AccorditionTreeView extends ViewPart{
+
+    protected node:any;
+
+    constructor(title:string)
+    {
+        super(title,title)
+    }
+
+
+    createTree(name: string){
+        var tree=new TreeView(name,name);
+        this.customize(tree);
+        var view=this;
+        tree.addSelectionListener({
+            selectionChanged(z:any[]){
+                view.onSelection(z);
+            }
+        })
+        return tree;
+    }
+
+
+
+    protected control:controls.Accordition;
+    protected trees:TreeView[]=[];
+
+    protected addTree(label:string, at:any){
+        var types=this.createTree(label);
+        types.setInput(at);
+
+        this.control.add(types)
+        this.trees.push(types)
+    }
+
+
+
+    public setSelection(o:any){
+        for(var i=0;i<this.trees.length;i++){
+            if (this.trees[i].hasModel(o)){
+                this.control.expand(this.trees[i]);
+                this.trees[i].select(o);
+            }
+        }
+    }
+    protected abstract load()
+    protected abstract customizeAccordition(root:controls.Accordition, node:any);
+    protected abstract customize(tree:TreeView);
+
+    innerRender(e:Element) {
+        if (!this.node) {
+            new controls.Loading().render(e);
+            this.load();
+        }
+        else{
+            var a = new controls.Accordition();
+            this.control=a;
+            this.trees=[];
+            this.customizeAccordition(a,this.node);
+            a.render(e);
+        }
+    }
+
+}

@@ -64,12 +64,11 @@ exports.RAMLTreeProvider = RAMLTreeProvider;
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
     function RAMLTreeView(path) {
-        _super.call(this, "Overview", "Overview");
+        _super.call(this, "Overview");
         this.path = path;
         this.trees = [];
     }
-    RAMLTreeView.prototype.createTree = function (name) {
-        var tree = new workbench.TreeView(name, name);
+    RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label: function (x) {
@@ -85,13 +84,6 @@ var RAMLTreeView = (function (_super) {
                 return "glyphicon glyphicon-pencil";
             }
         });
-        var view = this;
-        tree.addSelectionListener({
-            selectionChanged: function (z) {
-                view.onSelection(z);
-            }
-        });
-        return tree;
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
         var toRender = [];
@@ -119,41 +111,35 @@ var RAMLTreeView = (function (_super) {
             this.setSelection(node);
         }
     };
-    RAMLTreeView.prototype.setSelection = function (o) {
-        for (var i = 0; i < this.trees.length; i++) {
-            if (this.trees[i].hasModel(o)) {
-                this.control.expand(this.trees[i]);
-                this.trees[i].select(o);
-            }
+    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
+        var x = this.api.elements();
+        var libs = hl.getUsedLibraries(this.api);
+        var overview = nr.renderNodes(this.api.attrs());
+        if (overview.length > 0) {
+            a.add(new controls_1.Label("Generic Info", overview));
         }
+        var groups = hl.elementGroups(this.api);
+        this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        this.renderArraySection("types", "Types", groups, libs);
+        this.renderArraySection("resources", "Resources", groups, libs);
+        var lt = null;
     };
-    RAMLTreeView.prototype.innerRender = function (e) {
+    RAMLTreeView.prototype.load = function () {
         var _this = this;
-        if (!this.api) {
-            new controls_1.Loading().render(e);
-            hl.loadApi(this.path, function (api) {
-                _this.api = api;
-                _this.refresh();
-            });
-        }
-        else {
-            var x = this.api.elements();
-            var libs = hl.getUsedLibraries(this.api);
-            var overview = nr.renderNodes(this.api.attrs());
-            var a = new controls_1.Accordition();
-            this.control = a;
-            this.trees = [];
-            if (overview.length > 0) {
-                a.add(new controls_1.Label("Generic Info", overview));
-            }
-            var groups = hl.elementGroups(this.api);
-            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
-            this.renderArraySection("types", "Types", groups, libs);
-            this.renderArraySection("resources", "Resources", groups, libs);
-            var lt = null;
-            a.render(e);
-        }
+        hl.loadApi(this.path, function (api) {
+            _this.api = api;
+            _this.node = api;
+            _this.refresh();
+            showTitle(_this.api);
+        });
     };
     return RAMLTreeView;
-}(workbench.ViewPart));
+}(workbench.AccorditionTreeView));
 exports.RAMLTreeView = RAMLTreeView;
+function showTitle(api) {
+    hl.prepareNodes(api.attrs()).forEach(function (x) {
+        if (x.name() == "(Title)" || x.name() == "title") {
+            document.getElementById("title").innerHTML = x.value();
+        }
+    });
+}

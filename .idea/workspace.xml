@@ -2,9 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f79a17c3-d95e-468d-8419-12032fdd69b1" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/npm-debug.log" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/typescript-compiler.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/registryApp.ts" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/registryRender.ts" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bundle.js" afterPath="$PROJECT_DIR$/bundle.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dist/app.js" afterPath="$PROJECT_DIR$/dist/app.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dist/hl.js" afterPath="$PROJECT_DIR$/dist/hl.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dist/ramlTreeView.js" afterPath="$PROJECT_DIR$/dist/ramlTreeView.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dist/workbench.js" afterPath="$PROJECT_DIR$/dist/workbench.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.html" afterPath="$PROJECT_DIR$/index.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/app.ts" afterPath="$PROJECT_DIR$/src/app.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/controls.ts" afterPath="$PROJECT_DIR$/src/controls.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/hl.ts" afterPath="$PROJECT_DIR$/src/hl.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ramlTreeView.ts" afterPath="$PROJECT_DIR$/src/ramlTreeView.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/workbench.ts" afterPath="$PROJECT_DIR$/src/workbench.ts" />
     </list>
     <ignored path="raml-explorer.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -24,7 +35,108 @@
     <favorites_list name="raml-explorer" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="registryRender.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/registryRender.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="478">
+              <caret line="32" column="7" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="7" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="hl.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/hl.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="155">
+              <caret line="338" column="28" selection-start-line="338" selection-start-column="16" selection-end-line="338" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="app.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/app.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="306">
+              <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/index.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="656">
+              <caret line="66" column="66" selection-start-line="66" selection-start-column="66" selection-end-line="66" selection-end-column="66" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="registryApp.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/registryApp.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="410">
+              <caret line="31" column="23" selection-start-line="31" selection-start-column="23" selection-end-line="31" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ramlTreeView.ts" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/ramlTreeView.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="767">
+              <caret line="153" column="0" selection-start-line="153" selection-start-column="0" selection-end-line="153" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nodeRender.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/nodeRender.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="170">
+              <caret line="10" column="0" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
+              <folding>
+                <marker date="1475343199795" expanded="true" signature="1258:1279" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="workbench.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/workbench.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="340">
+              <caret line="74" column="29" selection-start-line="74" selection-start-column="4" selection-end-line="74" selection-end-column="29" />
+              <folding>
+                <marker date="1475544874763" expanded="true" signature="574:586" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="644:656" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="719:731" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="2525:2537" ph="..." />
+                <marker date="1475544874763" expanded="false" signature="5629:5726" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="5755:6058" ph="..." />
+                <marker date="1475544874763" expanded="false" signature="5802:5830" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="5927:5993" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6008:6019" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6188:6233" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6247:6260" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6338:6400" ph="..." />
+                <marker date="1475544874763" expanded="false" signature="6582:6596" ph="..." />
+                <marker date="1475544874763" expanded="false" signature="6661:6674" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6724:6763" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="6819:6838" ph="..." />
+                <marker date="1475544874763" expanded="true" signature="14762:14832" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -40,19 +152,21 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/controls.ts" />
-        <option value="$PROJECT_DIR$/index.html" />
-        <option value="$PROJECT_DIR$/src/workbench.ts" />
         <option value="$PROJECT_DIR$/src/type.ts" />
         <option value="$PROJECT_DIR$/test.raml" />
-        <option value="$PROJECT_DIR$/src/ramlTreeView.ts" />
         <option value="$PROJECT_DIR$/src/resourceRender.ts" />
-        <option value="$PROJECT_DIR$/src/app.ts" />
-        <option value="$PROJECT_DIR$/src/hl.ts" />
         <option value="$PROJECT_DIR$/src/nodeRender.ts" />
         <option value="$PROJECT_DIR$/src/objectRender.ts" />
         <option value="$PROJECT_DIR$/src/typeRender.ts" />
         <option value="$PROJECT_DIR$/test1.raml" />
+        <option value="$PROJECT_DIR$/src/controls.ts" />
+        <option value="$PROJECT_DIR$/src/workbench.ts" />
+        <option value="$PROJECT_DIR$/src/registryRender.ts" />
+        <option value="$PROJECT_DIR$/src/registryApp.ts" />
+        <option value="$PROJECT_DIR$/src/hl.ts" />
+        <option value="$PROJECT_DIR$/src/app.ts" />
+        <option value="$PROJECT_DIR$/index.html" />
+        <option value="$PROJECT_DIR$/src/ramlTreeView.ts" />
       </list>
     </option>
   </component>
@@ -62,10 +176,17 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="Bundled (Maven 3)" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="-8" />
     <option name="y" value="-8" />
-    <option name="width" value="2572" />
+    <option name="width" value="2564" />
     <option name="height" value="1416" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
@@ -75,7 +196,7 @@
     <OptionsSetting value="true" id="Update" />
     <OptionsSetting value="true" id="Status" />
     <OptionsSetting value="true" id="Edit" />
-    <ConfirmationsSetting value="0" id="Add" />
+    <ConfirmationsSetting value="2" id="Add" />
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectView">
@@ -94,7 +215,6 @@
     </navigator>
     <panes>
       <pane id="PackagesPane" />
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -127,9 +247,26 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="raml-explorer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="raml-explorer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="Scope">
+        <subPane subId="Project Files" />
+      </pane>
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -137,6 +274,10 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="js-jscs-nodeInterpreter" value="C:\Program Files\nodejs\node.exe" />
     <property name="nodejs_interpreter_path" value="C:/Program Files/nodejs/node" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
@@ -586,7 +727,8 @@
       <workItem from="1474916701359" duration="5639000" />
       <workItem from="1474998787477" duration="1078000" />
       <workItem from="1475013418896" duration="27000" />
-      <workItem from="1475013453683" duration="45979000" />
+      <workItem from="1475013453683" duration="46596000" />
+      <workItem from="1475533558918" duration="15256000" />
     </task>
     <task id="LOCAL-00001" summary="tes">
       <created>1474927592716</created>
@@ -637,42 +779,49 @@
       <option name="project" value="LOCAL" />
       <updated>1475421820958</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="most of rendering works fine, still need few adjustments to be complete.">
+      <created>1475422105870</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1475422105870</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="52723000" />
+    <option name="totallyTimeSpent" value="68596000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="2572" height="1416" extended-state="0" />
+    <frame x="-8" y="-8" width="2564" height="1416" extended-state="0" />
     <editor active="false" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25097427" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2213562" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="TypeScript" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17396496" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14816295" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="7" side_tool="false" content_ui="combo" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -704,8 +853,8 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="n#style#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#body#0;n#html#0;n#!!top" expanded="false" />
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -722,7 +871,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
           <caret line="9" column="32" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="32" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -741,40 +889,8 @@
         <state relative-caret-position="153">
           <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
           <folding>
-            <element signature="n#!!doc" expanded="true" />
+            <element signature="n#!!doc" expanded="false" />
             <marker date="1474916677641" expanded="true" signature="18166:18180" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="697">
-          <caret line="41" column="0" selection-start-line="41" selection-start-column="0" selection-end-line="41" selection-end-column="0" />
-          <folding>
-            <element signature="n#style#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/controls.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="99" column="48" selection-start-line="99" selection-start-column="48" selection-end-line="99" selection-end-column="48" />
-          <folding>
-            <marker date="1475127448883" expanded="true" signature="1119:1193" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="1207:1264" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="1604:1616" ph="..." />
-            <marker date="1475127448883" expanded="false" signature="2404:2470" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="2471:2898" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="2526:2625" ph="..." />
-            <marker date="1475127448883" expanded="false" signature="2665:2717" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="2734:2880" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="2779:2804" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="2830:2848" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="3010:3096" ph="..." />
-            <marker date="1475127448883" expanded="true" signature="3097:3154" ph="..." />
           </folding>
         </state>
       </provider>
@@ -783,15 +899,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/type.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="18" column="12" selection-start-line="18" selection-start-column="12" selection-end-line="18" selection-end-column="12" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -799,57 +906,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="18" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="30" column="32" selection-start-line="30" selection-start-column="32" selection-end-line="30" selection-end-column="32" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/workbench.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="565">
-          <caret line="285" column="19" selection-start-line="285" selection-start-column="3" selection-end-line="285" selection-end-column="19" />
-          <folding>
-            <marker date="1475127448949" expanded="true" signature="574:586" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="644:656" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="719:731" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="2525:2537" ph="..." />
-            <marker date="1475127448949" expanded="false" signature="5629:5726" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="5755:6058" ph="..." />
-            <marker date="1475127448949" expanded="false" signature="5802:5830" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="5927:5993" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6008:6019" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6188:6233" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6247:6260" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6338:6400" ph="..." />
-            <marker date="1475127448949" expanded="false" signature="6582:6596" ph="..." />
-            <marker date="1475127448949" expanded="false" signature="6661:6674" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6724:6763" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="6819:6838" ph="..." />
-            <marker date="1475127448949" expanded="true" signature="14762:14832" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/ramlTreeView.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="667">
-          <caret line="98" column="23" selection-start-line="98" selection-start-column="23" selection-end-line="98" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/hl.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="327">
-          <caret line="165" column="12" selection-start-line="165" selection-start-column="12" selection-end-line="165" selection-end-column="12" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -857,69 +913,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="238">
           <caret line="14" column="23" selection-start-line="14" selection-start-column="23" selection-end-line="14" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/resourceRender.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="558">
-          <caret line="64" column="18" selection-start-line="64" selection-start-column="18" selection-end-line="64" selection-end-column="18" />
-          <folding>
-            <marker date="1475253837702" expanded="true" signature="1114:3175" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/typeRender.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="813">
-          <caret line="324" column="16" selection-start-line="324" selection-start-column="16" selection-end-line="324" selection-end-column="16" />
-          <folding>
-            <marker date="1475343985174" expanded="true" signature="1915:1947" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="1927:1947" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="2239:2271" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="2650:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="3210:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="3413:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="3727:3747" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="4130:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="5604:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="6146:6161" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="6194:6208" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="6562:9189" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="7556:7573" ph="..." />
-            <marker date="1475343985174" expanded="true" signature="7997:8014" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/objectRender.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="410">
-          <caret line="161" column="19" selection-start-line="161" selection-start-column="19" selection-end-line="161" selection-end-column="19" />
-          <folding>
-            <element signature="n#!!doc" expanded="true" />
-            <marker date="1475343235198" expanded="true" signature="1273:1282" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1273:1284" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1273:1609" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1386:1472" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1613:1868" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1729:1752" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1758:1828" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="1921:2281" ph="..." />
-            <marker date="1475343235198" expanded="false" signature="2015:2027" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="2028:2275" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="2033:2269" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="2074:2085" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="2086:2250" ph="..." />
-            <marker date="1475343235198" expanded="false" signature="2116:2141" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="3896:3909" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="3990:4003" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="4086:4097" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="4144:4158" ph="..." />
-            <marker date="1475343235198" expanded="true" signature="4424:4445" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -939,15 +932,246 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/objectRender.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="440">
+          <caret line="161" column="19" selection-start-line="161" selection-start-column="19" selection-end-line="161" selection-end-column="19" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+            <marker date="1475343235198" expanded="true" signature="1273:1282" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="1273:1284" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="1729:1752" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="1921:2281" ph="..." />
+            <marker date="1475343235198" expanded="false" signature="2015:2027" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="2028:2275" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="2033:2269" ph="..." />
+            <marker date="1475343235198" expanded="false" signature="2074:2085" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="2086:2250" ph="..." />
+            <marker date="1475343235198" expanded="false" signature="2116:2141" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="3896:3909" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="3990:4003" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="4086:4097" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="4144:4158" ph="..." />
+            <marker date="1475343235198" expanded="true" signature="4424:4445" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/resourceRender.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="558">
+          <caret line="64" column="18" selection-start-line="64" selection-start-column="18" selection-end-line="64" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/type.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="1" selection-start-line="19" selection-start-column="1" selection-end-line="19" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/controls.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="850">
+          <caret line="159" column="0" selection-start-line="159" selection-start-column="0" selection-end-line="159" selection-end-column="0" />
+          <folding>
+            <marker date="1475536398711" expanded="true" signature="1119:1193" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="1207:1264" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="1604:1616" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="2404:2470" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3235:3301" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3302:3729" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3357:3456" ph="..." />
+            <marker date="1475536398711" expanded="false" signature="3496:3548" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3565:3711" ph="..." />
+            <marker date="1475536398711" expanded="false" signature="3610:3635" ph="..." />
+            <marker date="1475536398711" expanded="false" signature="3661:3679" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3841:3927" ph="..." />
+            <marker date="1475536398711" expanded="true" signature="3928:3985" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/typeRender.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="294" column="15" selection-start-line="294" selection-start-column="15" selection-end-line="294" selection-end-column="15" />
+          <folding>
+            <marker date="1475343985174" expanded="true" signature="1915:1947" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="1927:1947" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="2239:2271" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="2650:9189" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="3210:9189" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="3413:9189" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="3727:3747" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="6146:6161" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="6194:6208" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="7556:7573" ph="..." />
+            <marker date="1475343985174" expanded="true" signature="7997:8014" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/workbench.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="340">
+          <caret line="74" column="29" selection-start-line="74" selection-start-column="4" selection-end-line="74" selection-end-column="29" />
+          <folding>
+            <marker date="1475544874763" expanded="true" signature="574:586" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="644:656" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="719:731" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="2525:2537" ph="..." />
+            <marker date="1475544874763" expanded="false" signature="5629:5726" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="5755:6058" ph="..." />
+            <marker date="1475544874763" expanded="false" signature="5802:5830" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="5927:5993" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6008:6019" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6188:6233" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6247:6260" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6338:6400" ph="..." />
+            <marker date="1475544874763" expanded="false" signature="6582:6596" ph="..." />
+            <marker date="1475544874763" expanded="false" signature="6661:6674" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6724:6763" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="6819:6838" ph="..." />
+            <marker date="1475544874763" expanded="true" signature="14762:14832" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/registryApp.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="410">
+          <caret line="31" column="23" selection-start-line="31" selection-start-column="23" selection-end-line="31" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/registryRender.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="478">
+          <caret line="32" column="7" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="656">
+          <caret line="66" column="66" selection-start-line="66" selection-start-column="66" selection-end-line="66" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/nodeRender.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="524">
-          <caret line="31" column="35" selection-start-line="31" selection-start-column="35" selection-end-line="31" selection-end-column="35" />
+        <state relative-caret-position="170">
+          <caret line="10" column="0" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
           <folding>
             <marker date="1475343199795" expanded="true" signature="1258:1279" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/hl.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="155">
+          <caret line="338" column="28" selection-start-line="338" selection-start-column="16" selection-end-line="338" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ramlTreeView.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="767">
+          <caret line="153" column="0" selection-start-line="153" selection-start-column="0" selection-end-line="153" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>No facets are configured</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>core</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.6" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
   </component>
 </project>
