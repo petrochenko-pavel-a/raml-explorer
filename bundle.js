@@ -1,54 +1,19 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 var workbench = require("./workbench");
-var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
-var details = new rv.RAMLDetailsView("Details", "Details");
-var url = document.location + "test1.raml";
+var reg = require("./registryApp");
+var url = "";
 var h = document.location.hash;
 if (h && h.length > 1) {
     url = h.substr(1);
+    reg.showApi(url);
 }
-var ramlView = new rv.RAMLTreeView(url);
-page.addView(details, "*", 100, workbench.Relation.LEFT);
-page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
-var states = [];
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        if (states.length > 0) {
-            ramlView.openNodeById(states.pop());
-        }
-    };
+else {
+    reg.init();
 }
-workbench.registerHandler(function (x) {
-    if (history.pushState) {
-        var node = ramlView.getSelection();
-        if (node && node.length > 0) {
-            states.push(node[0].id());
-        }
-        history.pushState({ page: x }, document.title, document.location.toString());
-    }
-    ramlView.openNodeById(x);
-    return true;
-});
-function initSizes() {
-    var h = document.getElementById("header").clientHeight + 50;
-    document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
-}
-initSizes();
-ramlView.addSelectionListener({
-    selectionChanged: function (v) {
-        if (v.length > 0) {
-            details.setSelection(v[0]);
-        }
-        else {
-            details.setSelection(null);
-        }
-    }
-});
-window.onresize = initSizes;
 
-},{"./ramlTreeView":6,"./workbench":9}],2:[function(require,module,exports){
+},{"./registryApp":7,"./workbench":11}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -195,13 +160,15 @@ exports.Accordition = Accordition;
 
 },{}],3:[function(require,module,exports){
 "use strict";
+var root;
+var libs;
 function findById(id) {
-    var n = exports.root.findById(id);
+    var n = root.findById(id);
     if (n) {
         return n;
     }
     var nodes = [];
-    getUsedLibraries(exports.root).forEach(function (x) {
+    getUsedLibraries(root).forEach(function (x) {
         var rs = x.findById(id);
         if (rs != null) {
             nodes.push(rs);
@@ -220,14 +187,14 @@ function getDeclaration(n, escP) {
             return null;
         }
     }
-    exports.root.children().forEach(function (x) {
+    root.children().forEach(function (x) {
         if (x.property().nameId() == "types") {
             if (x.name() == n.nameId()) {
                 return x;
             }
         }
     });
-    var libs = getUsedLibraries(exports.root);
+    var libs = getUsedLibraries(root);
     var options = [];
     libs.forEach(function (t) {
         t.children().forEach(function (x) {
@@ -255,8 +222,8 @@ function getUsedLibrary(usesNode) {
 }
 exports.getUsedLibrary = getUsedLibrary;
 function getUsedLibraries(root) {
-    if (exports.libs) {
-        return exports.libs;
+    if (libs) {
+        return libs;
     }
     var nodes = [];
     root.children().forEach(function (x) {
@@ -264,7 +231,7 @@ function getUsedLibraries(root) {
             nodes.push(getUsedLibrary(x));
         }
     });
-    exports.libs = nodes;
+    libs = nodes;
     return nodes;
 }
 exports.getUsedLibraries = getUsedLibraries;
@@ -350,8 +317,9 @@ function elementGroups(hl) {
 exports.elementGroups = elementGroups;
 function loadApi(path, f) {
     RAML.Parser.loadApi(path).then(function (api) {
-        exports.root = api.expand().highLevel();
-        f(exports.root);
+        root = api.expand ? api.expand().highLevel() : api.highLevel();
+        libs = null;
+        f(root);
     });
 }
 exports.loadApi = loadApi;
@@ -375,8 +343,8 @@ function subTypes(t) {
     if (n) {
         var cr = n.root();
         extracted(cr);
-        extracted(exports.root);
-        getUsedLibraries(exports.root).forEach(function (l) {
+        extracted(root);
+        getUsedLibraries(root).forEach(function (l) {
             extracted(l);
         });
     }
@@ -821,12 +789,11 @@ exports.RAMLTreeProvider = RAMLTreeProvider;
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
     function RAMLTreeView(path) {
-        _super.call(this, "Overview", "Overview");
+        _super.call(this, "Overview");
         this.path = path;
         this.trees = [];
     }
-    RAMLTreeView.prototype.createTree = function (name) {
-        var tree = new workbench.TreeView(name, name);
+    RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label: function (x) {
@@ -842,13 +809,6 @@ var RAMLTreeView = (function (_super) {
                 return "glyphicon glyphicon-pencil";
             }
         });
-        var view = this;
-        tree.addSelectionListener({
-            selectionChanged: function (z) {
-                view.onSelection(z);
-            }
-        });
-        return tree;
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
         var toRender = [];
@@ -876,46 +836,161 @@ var RAMLTreeView = (function (_super) {
             this.setSelection(node);
         }
     };
-    RAMLTreeView.prototype.setSelection = function (o) {
-        for (var i = 0; i < this.trees.length; i++) {
-            if (this.trees[i].hasModel(o)) {
-                this.control.expand(this.trees[i]);
-                this.trees[i].select(o);
-            }
+    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
+        var x = this.api.elements();
+        var libs = hl.getUsedLibraries(this.api);
+        var overview = nr.renderNodes(this.api.attrs());
+        if (overview.length > 0) {
+            a.add(new controls_1.Label("Generic Info", overview));
         }
+        var groups = hl.elementGroups(this.api);
+        this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        this.renderArraySection("types", "Types", groups, libs);
+        this.renderArraySection("resources", "Resources", groups, libs);
+        var lt = null;
     };
-    RAMLTreeView.prototype.innerRender = function (e) {
+    RAMLTreeView.prototype.load = function () {
         var _this = this;
-        if (!this.api) {
-            new controls_1.Loading().render(e);
-            hl.loadApi(this.path, function (api) {
-                _this.api = api;
-                _this.refresh();
-            });
-        }
-        else {
-            var x = this.api.elements();
-            var libs = hl.getUsedLibraries(this.api);
-            var overview = nr.renderNodes(this.api.attrs());
-            var a = new controls_1.Accordition();
-            this.control = a;
-            this.trees = [];
-            if (overview.length > 0) {
-                a.add(new controls_1.Label("Generic Info", overview));
-            }
-            var groups = hl.elementGroups(this.api);
-            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
-            this.renderArraySection("types", "Types", groups, libs);
-            this.renderArraySection("resources", "Resources", groups, libs);
-            var lt = null;
-            a.render(e);
-        }
+        hl.loadApi(this.path, function (api) {
+            _this.api = api;
+            _this.node = api;
+            _this.refresh();
+            showTitle(_this.api);
+        });
     };
     return RAMLTreeView;
-}(workbench.ViewPart));
+}(workbench.AccorditionTreeView));
 exports.RAMLTreeView = RAMLTreeView;
+function showTitle(api) {
+    hl.prepareNodes(api.attrs()).forEach(function (x) {
+        if (x.name() == "(Title)" || x.name() == "title") {
+            document.getElementById("title").innerHTML = x.value();
+        }
+    });
+}
 
-},{"./controls":2,"./hl":3,"./nodeRender":4,"./resourceRender":7,"./typeRender":8,"./workbench":9}],7:[function(require,module,exports){
+},{"./controls":2,"./hl":3,"./nodeRender":4,"./resourceRender":9,"./typeRender":10,"./workbench":11}],7:[function(require,module,exports){
+"use strict";
+var workbench = require("./workbench");
+var rr = require("./registryRender");
+var rv = require("./ramlTreeView");
+function init() {
+    var page = new workbench.Page("rest");
+    var ramlView = new rr.RegistryView("API Registry");
+    page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
+    function initSizes() {
+        var h = document.getElementById("header").clientHeight + 50;
+        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
+    }
+    initSizes();
+    window.onresize = initSizes;
+}
+exports.init = init;
+function showApi(url) {
+    var page = new workbench.Page("rest");
+    var ramlView = new rv.RAMLTreeView(url);
+    var details = new rv.RAMLDetailsView("Details", "Details");
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
+    var states = [];
+    if (history && history.pushState) {
+        window.onpopstate = function (event) {
+            if (states.length > 0) {
+                ramlView.openNodeById(states.pop());
+            }
+            else {
+                init();
+            }
+        };
+    }
+    workbench.registerHandler(function (x) {
+        if (history.pushState) {
+            var node = ramlView.getSelection();
+            if (node && node.length > 0) {
+                states.push(node[0].id());
+            }
+            history.pushState({ page: x }, document.title, document.location.toString());
+        }
+        ramlView.openNodeById(x);
+        return true;
+    });
+    ramlView.addSelectionListener({
+        selectionChanged: function (v) {
+            if (v.length > 0) {
+                details.setSelection(v[0]);
+            }
+            else {
+                details.setSelection(null);
+            }
+        }
+    });
+}
+exports.showApi = showApi;
+
+},{"./ramlTreeView":6,"./registryRender":8,"./workbench":11}],8:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var workbench = require("./workbench");
+var ra = require("./registryApp");
+function loadData(url, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.send();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        c(JSON.parse(xhr.responseText), xhr.status);
+    };
+}
+var RegistryView = (function (_super) {
+    __extends(RegistryView, _super);
+    function RegistryView() {
+        _super.apply(this, arguments);
+    }
+    RegistryView.prototype.load = function () {
+        var _this = this;
+        loadData("https://raw.githubusercontent.com/apiregistry/registry/master/registry.json", function (data, s) {
+            console.log(data);
+            _this.node = data;
+            _this.refresh();
+        });
+    };
+    RegistryView.prototype.customizeAccordition = function (root, node) {
+        this.addTree("Libraries", node.libraries);
+        this.addTree("Apis", node.apis);
+        var v = this;
+        this.getHolder().setContextMenu({
+            items: [
+                { title: "Open", run: function () {
+                        var api = v.getSelection()[0];
+                        ra.showApi(api.location);
+                    } }
+            ]
+        });
+    };
+    RegistryView.prototype.customize = function (tree) {
+        tree.setContentProvider(new workbench.ArrayContentProvider());
+        tree.setLabelProvider({
+            label: function (e) {
+                if (e.name) {
+                    return e.name;
+                }
+                else {
+                    var c = Object.keys(e)[0];
+                    return c;
+                }
+            }
+        });
+    };
+    return RegistryView;
+}(workbench.AccorditionTreeView));
+exports.RegistryView = RegistryView;
+
+},{"./registryApp":7,"./workbench":11}],9:[function(require,module,exports){
 "use strict";
 var hl = require("./hl");
 var tr = require("./typeRender");
@@ -1008,7 +1083,7 @@ var ResponseRenderer = (function () {
 }());
 exports.ResponseRenderer = ResponseRenderer;
 
-},{"./hl":3,"./nodeRender":4,"./typeRender":8}],8:[function(require,module,exports){
+},{"./hl":3,"./nodeRender":4,"./typeRender":10}],10:[function(require,module,exports){
 "use strict";
 var hl = require("./hl");
 var or = require("./objectRender");
@@ -1337,13 +1412,14 @@ function renderParameters(name, ps, result) {
 }
 exports.renderParameters = renderParameters;
 
-},{"./hl":3,"./nodeRender":4,"./objectRender":5}],9:[function(require,module,exports){
+},{"./hl":3,"./nodeRender":4,"./objectRender":5}],11:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var controls = require("./controls");
 var globalId = 0;
 function nextId() {
     return "split" + (globalId++);
@@ -1873,5 +1949,52 @@ w.Workbench = {
         }
     }
 };
+var AccorditionTreeView = (function (_super) {
+    __extends(AccorditionTreeView, _super);
+    function AccorditionTreeView(title) {
+        _super.call(this, title, title);
+        this.trees = [];
+    }
+    AccorditionTreeView.prototype.createTree = function (name) {
+        var tree = new TreeView(name, name);
+        this.customize(tree);
+        var view = this;
+        tree.addSelectionListener({
+            selectionChanged: function (z) {
+                view.onSelection(z);
+            }
+        });
+        return tree;
+    };
+    AccorditionTreeView.prototype.addTree = function (label, at) {
+        var types = this.createTree(label);
+        types.setInput(at);
+        this.control.add(types);
+        this.trees.push(types);
+    };
+    AccorditionTreeView.prototype.setSelection = function (o) {
+        for (var i = 0; i < this.trees.length; i++) {
+            if (this.trees[i].hasModel(o)) {
+                this.control.expand(this.trees[i]);
+                this.trees[i].select(o);
+            }
+        }
+    };
+    AccorditionTreeView.prototype.innerRender = function (e) {
+        if (!this.node) {
+            new controls.Loading().render(e);
+            this.load();
+        }
+        else {
+            var a = new controls.Accordition();
+            this.control = a;
+            this.trees = [];
+            this.customizeAccordition(a, this.node);
+            a.render(e);
+        }
+    };
+    return AccorditionTreeView;
+}(ViewPart));
+exports.AccorditionTreeView = AccorditionTreeView;
 
-},{}]},{},[1]);
+},{"./controls":2}]},{},[1]);
