@@ -5,12 +5,10 @@ var page = new workbench.Page("rest");
 var reg = require("./registryApp");
 var url = "";
 var h = document.location.hash;
+reg.init();
 if (h && h.length > 1) {
     url = h.substr(1);
     reg.showApi(url);
-}
-else {
-    reg.init();
 }
 
 },{"./registryApp":7,"./workbench":11}],2:[function(require,module,exports){
@@ -82,7 +80,7 @@ var Label = (function (_super) {
     }
     Label.prototype.innerRender = function (e) {
         if (this.content) {
-            e.innerHTML = "<span style=\"padding: 5px\">" + this.content + "</span>";
+            e.innerHTML = "<span style=\"padding: 5px;overflow: auto\">" + this.content + "</span>";
         }
         else {
             e.innerHTML = "<span>" + this.title() + "</span>";
@@ -788,11 +786,18 @@ var RAMLTreeProvider = (function () {
 exports.RAMLTreeProvider = RAMLTreeProvider;
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
-    function RAMLTreeView(path) {
-        _super.call(this, "Overview");
+    function RAMLTreeView(path, title) {
+        if (title === void 0) { title = "Overview"; }
+        _super.call(this, title);
         this.path = path;
         this.trees = [];
     }
+    RAMLTreeView.prototype.setUrl = function (url) {
+        this.path = url;
+        this.node = null;
+        this.api = null;
+        this.refresh();
+    };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
@@ -809,6 +814,14 @@ var RAMLTreeView = (function (_super) {
                 return "glyphicon glyphicon-pencil";
             }
         });
+    };
+    RAMLTreeView.prototype.innerRender = function (e) {
+        if (this.path == "") {
+            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
+        }
+        else {
+            _super.prototype.innerRender.call(this, e);
+        }
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
         var toRender = [];
@@ -874,10 +887,27 @@ function showTitle(api) {
 var workbench = require("./workbench");
 var rr = require("./registryRender");
 var rv = require("./ramlTreeView");
+var ramlView = new rv.RAMLTreeView("");
+var details = new rv.RAMLDetailsView("Details", "Details");
+var regView = new rr.RegistryView("API Registry");
 function init() {
     var page = new workbench.Page("rest");
-    var ramlView = new rr.RegistryView("API Registry");
+    var rtv = new rv.RAMLTreeView("");
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
     page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
+    regView.addSelectionListener({
+        selectionChanged: function (v) {
+            if (v.length > 0) {
+                if (v[0].location) {
+                    ramlView.setUrl(v[0].location);
+                }
+            }
+            else {
+                details.setSelection(null);
+            }
+        }
+    });
     function initSizes() {
         var h = document.getElementById("header").clientHeight + 50;
         document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
@@ -886,44 +916,41 @@ function init() {
     window.onresize = initSizes;
 }
 exports.init = init;
-function showApi(url) {
-    var page = new workbench.Page("rest");
-    var ramlView = new rv.RAMLTreeView(url);
-    var details = new rv.RAMLDetailsView("Details", "Details");
-    page.addView(details, "*", 100, workbench.Relation.LEFT);
-    page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
-    var states = [];
-    if (history && history.pushState) {
-        window.onpopstate = function (event) {
-            if (states.length > 0) {
-                ramlView.openNodeById(states.pop());
-            }
-            else {
-                init();
-            }
-        };
+ramlView.addSelectionListener({
+    selectionChanged: function (v) {
+        if (v.length > 0) {
+            details.setSelection(v[0]);
+        }
+        else {
+            details.setSelection(null);
+        }
     }
-    workbench.registerHandler(function (x) {
-        if (history.pushState) {
-            var node = ramlView.getSelection();
-            if (node && node.length > 0) {
-                states.push(node[0].id());
-            }
-            history.pushState({ page: x }, document.title, document.location.toString());
+});
+var states = [];
+if (history && history.pushState) {
+    window.onpopstate = function (event) {
+        if (states.length > 0) {
+            ramlView.openNodeById(states.pop());
         }
-        ramlView.openNodeById(x);
-        return true;
-    });
-    ramlView.addSelectionListener({
-        selectionChanged: function (v) {
-            if (v.length > 0) {
-                details.setSelection(v[0]);
-            }
-            else {
-                details.setSelection(null);
-            }
+        else {
+            init();
         }
-    });
+    };
+}
+workbench.registerHandler(function (x) {
+    if (history.pushState) {
+        var node = ramlView.getSelection();
+        if (node && node.length > 0) {
+            states.push(node[0].id());
+        }
+        history.pushState({ page: x }, document.title, document.location.toString());
+    }
+    ramlView.openNodeById(x);
+    return true;
+});
+function showApi(url) {
+    ramlView.setUrl(url);
+    regView.setSelectedUrl(url);
 }
 exports.showApi = showApi;
 
@@ -946,6 +973,16 @@ function loadData(url, c) {
         c(JSON.parse(xhr.responseText), xhr.status);
     };
 }
+var RegistryDetailsView = (function (_super) {
+    __extends(RegistryDetailsView, _super);
+    function RegistryDetailsView() {
+        _super.apply(this, arguments);
+    }
+    RegistryDetailsView.prototype.innerRender = function (e) {
+    };
+    return RegistryDetailsView;
+}(workbench.ViewPart));
+exports.RegistryDetailsView = RegistryDetailsView;
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
@@ -959,7 +996,11 @@ var RegistryView = (function (_super) {
             _this.refresh();
         });
     };
+    RegistryView.prototype.setSelectedUrl = function (url) {
+        this.url = url;
+    };
     RegistryView.prototype.customizeAccordition = function (root, node) {
+        var _this = this;
         this.addTree("Libraries", node.libraries);
         this.addTree("Apis", node.apis);
         var v = this;
@@ -971,6 +1012,20 @@ var RegistryView = (function (_super) {
                     } }
             ]
         });
+        if (this.url != null) {
+            var selection = null;
+            node.libraries.forEach(function (x) {
+                if (x.location == _this.url) {
+                    selection = x;
+                }
+            });
+            var view = this;
+            if (selection) {
+                setTimeout(function () {
+                    view.setSelection(selection);
+                }, 100);
+            }
+        }
     };
     RegistryView.prototype.customize = function (tree) {
         tree.setContentProvider(new workbench.ArrayContentProvider());
@@ -1286,9 +1341,11 @@ var expandProps = function (ts, ps, parent) {
                 }
             }
             else if (x.range().isArray() && !x.range().nameId()) {
-                var as = x.range().componentType().allProperties();
-                if (as.length > 0) {
-                    expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
+                if (x.range().isObject()) {
+                    var as = x.range().componentType().allProperties();
+                    if (as.length > 0) {
+                        expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
+                    }
                 }
             }
             ts.pop();
@@ -1786,6 +1843,9 @@ var TreeView = (function (_super) {
         }
     };
     TreeView.prototype.hasModel = function (model) {
+        if (!this.treeNodes) {
+            this.getTree();
+        }
         if (findNode(this.treeNodes, model)) {
             return true;
         }
