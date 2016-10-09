@@ -371,6 +371,9 @@ var TreeView = (function (_super) {
         }
     };
     TreeView.prototype.hasModel = function (model) {
+        if (!this.treeNodes) {
+            this.getTree();
+        }
         if (findNode(this.treeNodes, model)) {
             return true;
         }

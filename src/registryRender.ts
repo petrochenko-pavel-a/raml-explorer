@@ -25,12 +25,18 @@ interface IRegistryObj{
     name: string
     tags?: string[]
     category: string
+    location?: string
 }
 
 interface IRegistry{
 
     apis:any[]
     libraries:[IRegistryObj]
+}
+export class RegistryDetailsView extends workbench.ViewPart{
+
+    innerRender(e: Element) {
+    }
 }
 
 export class RegistryView extends workbench.AccorditionTreeView{
@@ -41,6 +47,10 @@ export class RegistryView extends workbench.AccorditionTreeView{
             this.node=data;
             this.refresh();
         })
+    }
+    protected url: string;
+    setSelectedUrl(url:string){
+        this.url=url;
     }
 
     protected customizeAccordition(root: Accordition, node: IRegistry) {
@@ -55,6 +65,20 @@ export class RegistryView extends workbench.AccorditionTreeView{
                 }}
             ]
         });
+        if (this.url!=null){
+            var selection=null;
+            node.libraries.forEach(x=>{
+                if (x.location==this.url){
+                    selection=x;
+                }
+            })
+            var view=this;
+            if (selection){
+                setTimeout(function () {
+                    view.setSelection(selection);
+                },100)
+            }
+        }
     }
 
     protected customize(tree: workbench.TreeView) {

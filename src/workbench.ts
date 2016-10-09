@@ -486,6 +486,9 @@ export class TreeView extends ViewPart{
         }
     }
     hasModel(model:any):boolean{
+        if (!this.treeNodes){
+            this.getTree();
+        }
         if (findNode(this.treeNodes,model)){
             return true;
         }

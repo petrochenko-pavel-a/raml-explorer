@@ -200,9 +200,11 @@ var expandProps = function (ts, ps, parent) {
                 }
             }
             else if (x.range().isArray() && !x.range().nameId()) {
-                var as = x.range().componentType().allProperties();
-                if (as.length > 0) {
-                    expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
+                if (x.range().isObject()) {
+                    var as = x.range().componentType().allProperties();
+                    if (as.length > 0) {
+                        expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
+                    }
                 }
             }
             ts.pop();

@@ -71,9 +71,16 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
     protected api:IHighLevelNode;
 
 
-    constructor(private path:string)
+    constructor(private path:string,title:string="Overview")
     {
-        super("Overview")
+        super(title)
+    }
+
+    setUrl(url:string){
+        this.path=url;
+        this.node=null;
+        this.api=null;
+        this.refresh();
     }
 
     protected customize(tree: workbench.TreeView) {
@@ -97,6 +104,15 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected control:Accordition;
     protected trees:workbench.TreeView[]=[];
+
+    innerRender(e:Element) {
+        if (this.path==""){
+            e.innerHTML=`<div style="display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;"><div style="display: flex;flex-direction: row;justify-content: center"><div><div>Please select API or Library</div></div></div></div>`
+        }
+        else{
+            super.innerRender(e);
+        }
+    }
 
     protected renderArraySection(id:string,label:string,groups:any,libs:IHighLevelNode[]){
         var toRender=[];
@@ -126,6 +142,9 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         }
     }
 
+
+
+
     protected customizeAccordition(a: Accordition, node: any) {
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
@@ -141,6 +160,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         var lt=null;
     }
     protected  load(){
+
         hl.loadApi(this.path,api=>{
             this.api=api;
             this.node=api;

@@ -63,11 +63,18 @@ var RAMLTreeProvider = (function () {
 exports.RAMLTreeProvider = RAMLTreeProvider;
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
-    function RAMLTreeView(path) {
-        _super.call(this, "Overview");
+    function RAMLTreeView(path, title) {
+        if (title === void 0) { title = "Overview"; }
+        _super.call(this, title);
         this.path = path;
         this.trees = [];
     }
+    RAMLTreeView.prototype.setUrl = function (url) {
+        this.path = url;
+        this.node = null;
+        this.api = null;
+        this.refresh();
+    };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
@@ -84,6 +91,14 @@ var RAMLTreeView = (function (_super) {
                 return "glyphicon glyphicon-pencil";
             }
         });
+    };
+    RAMLTreeView.prototype.innerRender = function (e) {
+        if (this.path == "") {
+            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
+        }
+        else {
+            _super.prototype.innerRender.call(this, e);
+        }
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
         var toRender = [];

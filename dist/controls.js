@@ -66,7 +66,7 @@ var Label = (function (_super) {
     }
     Label.prototype.innerRender = function (e) {
         if (this.content) {
-            e.innerHTML = "<span style=\"padding: 5px\">" + this.content + "</span>";
+            e.innerHTML = "<span style=\"padding: 5px;overflow: auto\">" + this.content + "</span>";
         }
         else {
             e.innerHTML = "<span>" + this.title() + "</span>";

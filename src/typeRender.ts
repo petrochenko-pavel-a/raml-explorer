@@ -208,10 +208,11 @@ var expandProps = function (ts:hl.IType[],ps:hl.IProperty[],parent?:hl.IProperty
                 }
             }
             else if (x.range().isArray() && !x.range().nameId()) {
-
-                var as = x.range().componentType().allProperties();
-                if (as.length > 0) {
-                    expandProps(ts,as, x).forEach(y=>pm.push(y));
+                if (x.range().isObject()) {
+                    var as = x.range().componentType().allProperties();
+                    if (as.length > 0) {
+                        expandProps(ts, as, x).forEach(y=>pm.push(y));
+                    }
                 }
             }
             ts.pop();
