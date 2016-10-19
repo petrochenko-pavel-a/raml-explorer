@@ -30,3 +30,6 @@ export function init()
 {
     rv.init();
 }
+export function showApi(s:string){
+    rv.showApi(s);
+}

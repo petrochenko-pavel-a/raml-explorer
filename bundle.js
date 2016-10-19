@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 var workbench = require("./workbench");
+var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
 var reg = require("./registryApp");
 var url = "";
@@ -8,10 +9,10 @@ var h = document.location.hash;
 reg.init();
 if (h && h.length > 1) {
     url = h.substr(1);
-    reg.showApi(url);
+    rv.showApi(url);
 }
 
-},{"./registryApp":7,"./workbench":11}],2:[function(require,module,exports){
+},{"./ramlTreeView":6,"./registryApp":7,"./workbench":11}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -508,6 +509,65 @@ function renderNodes(nodes) {
     return result.join("");
 }
 exports.renderNodes = renderNodes;
+var HeaderRenderer = (function () {
+    function HeaderRenderer() {
+    }
+    HeaderRenderer.prototype.consume = function (nodes) {
+        var _this = this;
+        var result = [];
+        nodes.forEach(function (x) {
+            if (x.property().nameId() == "title") {
+                _this.title = x.value();
+                return;
+            }
+            if (x.property().nameId() == "version") {
+                _this.version = x.value();
+                return;
+            }
+            if (x.property().nameId() == "baseUri") {
+                _this.baseUrl = x.value();
+                return;
+            }
+            if (x.definition().nameId() === "Icons") {
+                var obj = x.lowLevel().dumpToObject(true);
+                obj = obj[Object.keys(obj)[0]];
+                _this.iconUrl = obj[0].url;
+                return;
+            }
+            result.push(x);
+        });
+        return result;
+    };
+    HeaderRenderer.prototype.render = function () {
+        var result = [];
+        if (this.iconUrl != null) {
+            result.push("<img src='" + this.iconUrl + "'/>");
+        }
+        if (this.title != null) {
+            result.push("<h4 style='display: inline'> " + this.title + "</h4>");
+        }
+        if (this.version != null) {
+            result.push(or.renderKeyValue("Version", this.version, false));
+        }
+        if (this.baseUrl != null) {
+            result.push(or.renderKeyValue("Base url", this.baseUrl, false));
+        }
+        return result.join("");
+    };
+    return HeaderRenderer;
+}());
+exports.HeaderRenderer = HeaderRenderer;
+function renderNodesOverview(nodes) {
+    var result = [];
+    var obj = {};
+    nodes = hl.prepareNodes(nodes);
+    var hr = new HeaderRenderer();
+    nodes = hr.consume(nodes);
+    result.push(hr.render());
+    nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    return result.join("");
+}
+exports.renderNodesOverview = renderNodesOverview;
 function renderNode(h, small) {
     if (small === void 0) { small = false; }
     var vl = h.value ? h.value() : null;
@@ -519,9 +579,12 @@ function renderNode(h, small) {
         if (h.isAttr()) {
             if (typeof vl === "object") {
                 if (!Array.isArray(vl)) {
-                    vl = JSON.stringify(hl.asObject(vl), null, 2);
+                    var v = hl.asObject(h);
+                    v = v[Object.keys(v)[0]];
+                    vl = JSON.stringify(v, null, 2);
                     var svl = "" + vl;
-                    vl = svl.substr(1, svl.length - 1);
+                    svl = svl.replace(": null", "");
+                    vl = svl.substr(1, svl.length - 2);
                 }
             }
             res = or.renderKeyValue(h.property().nameId(), vl, small);
@@ -733,6 +796,17 @@ var hl = require("./hl");
 var tr = require("./typeRender");
 var rr = require("./resourceRender");
 var nr = require("./nodeRender");
+var rrend = require("./registryRender");
+exports.states = [];
+function back() {
+    if (exports.states.length > 0) {
+        exports.ramlView.openNodeById(exports.states.pop());
+    }
+    else {
+        init();
+    }
+}
+exports.back = back;
 var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
@@ -741,6 +815,19 @@ var RAMLDetailsView = (function (_super) {
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
         this.refresh();
+    };
+    RAMLDetailsView.prototype.init = function (holder) {
+        holder.setContextMenu({
+            items: [
+                {
+                    title: "Back",
+                    run: function () {
+                        back();
+                    }
+                }
+            ]
+        });
+        return _super.prototype.init.call(this, holder);
     };
     RAMLDetailsView.prototype.innerRender = function (e) {
         e.style.overflow = "auto";
@@ -774,7 +861,7 @@ var RAMLTreeProvider = (function () {
             return pn.children();
         }
         if (x.property().nameId() == "resources") {
-            return x.elements();
+            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
         }
         return [];
     };
@@ -852,7 +939,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodes(this.api.attrs());
+        var overview = nr.renderNodesOverview(this.api.attrs());
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", overview));
         }
@@ -881,26 +968,20 @@ function showTitle(api) {
         }
     });
 }
-
-},{"./controls":2,"./hl":3,"./nodeRender":4,"./resourceRender":9,"./typeRender":10,"./workbench":11}],7:[function(require,module,exports){
-"use strict";
-var workbench = require("./workbench");
-var rr = require("./registryRender");
-var rv = require("./ramlTreeView");
-var ramlView = new rv.RAMLTreeView("");
-var details = new rv.RAMLDetailsView("Details", "Details");
-var regView = new rr.RegistryView("API Registry");
+exports.ramlView = new RAMLTreeView("");
+var details = new RAMLDetailsView("Details", "Details");
+var regView = new rrend.RegistryView("API Registry");
 function init() {
     var page = new workbench.Page("rest");
-    var rtv = new rv.RAMLTreeView("");
+    var rtv = new RAMLTreeView("");
     page.addView(details, "*", 100, workbench.Relation.LEFT);
     page.addView(regView, "Details", 15, workbench.Relation.LEFT);
-    page.addView(ramlView, "Details", 20, workbench.Relation.LEFT);
+    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
     regView.addSelectionListener({
         selectionChanged: function (v) {
             if (v.length > 0) {
                 if (v[0].location) {
-                    ramlView.setUrl(v[0].location);
+                    exports.ramlView.setUrl(v[0].location);
                 }
             }
             else {
@@ -916,7 +997,7 @@ function init() {
     window.onresize = initSizes;
 }
 exports.init = init;
-ramlView.addSelectionListener({
+exports.ramlView.addSelectionListener({
     selectionChanged: function (v) {
         if (v.length > 0) {
             details.setSelection(v[0]);
@@ -926,35 +1007,42 @@ ramlView.addSelectionListener({
         }
     }
 });
-var states = [];
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        if (states.length > 0) {
-            ramlView.openNodeById(states.pop());
-        }
-        else {
-            init();
-        }
-    };
-}
-workbench.registerHandler(function (x) {
-    if (history.pushState) {
-        var node = ramlView.getSelection();
-        if (node && node.length > 0) {
-            states.push(node[0].id());
-        }
-        history.pushState({ page: x }, document.title, document.location.toString());
-    }
-    ramlView.openNodeById(x);
-    return true;
-});
 function showApi(url) {
-    ramlView.setUrl(url);
+    exports.ramlView.setUrl(url);
     regView.setSelectedUrl(url);
 }
 exports.showApi = showApi;
 
-},{"./ramlTreeView":6,"./registryRender":8,"./workbench":11}],8:[function(require,module,exports){
+},{"./controls":2,"./hl":3,"./nodeRender":4,"./registryRender":8,"./resourceRender":9,"./typeRender":10,"./workbench":11}],7:[function(require,module,exports){
+"use strict";
+var workbench = require("./workbench");
+var rv = require("./ramlTreeView");
+if (history && history.pushState) {
+    window.onpopstate = function (event) {
+        rv.back();
+    };
+}
+workbench.registerHandler(function (x) {
+    if (history.pushState) {
+        var node = rv.ramlView.getSelection();
+        if (node && node.length > 0) {
+            rv.states.push(node[0].id());
+        }
+        history.pushState({ page: x }, document.title, document.location.toString());
+    }
+    rv.ramlView.openNodeById(x);
+    return true;
+});
+function init() {
+    rv.init();
+}
+exports.init = init;
+function showApi(s) {
+    rv.showApi(s);
+}
+exports.showApi = showApi;
+
+},{"./ramlTreeView":6,"./workbench":11}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1032,7 +1120,7 @@ var RegistryView = (function (_super) {
         tree.setLabelProvider({
             label: function (e) {
                 if (e.name) {
-                    return e.name;
+                    return "" + e.name + "";
                 }
                 else {
                     var c = Object.keys(e)[0];
@@ -1154,6 +1242,9 @@ exports.renderTypeList = renderTypeList;
 function escapeBuiltIn(n) {
     if (n === "StringType") {
         n = "string";
+    }
+    if (n === "DateTimeType") {
+        n = "date-time";
     }
     if (n === "BooleanType") {
         n = "boolean";
@@ -1396,11 +1487,13 @@ var TypeRenderer = (function () {
         }
         if (at.isArray()) {
             var ct = at.componentType();
-            if (ct.isArray()) {
+            if (ct) {
                 result.push("Component type:");
                 result.push(renderTypeList([ct]).join(""));
                 ps = ct.allProperties();
-                renderPropertyTable("Component type properties", ps, result, at);
+                if (ct.isObject()) {
+                    renderPropertyTable("Component type properties", ps, result, ct);
+                }
             }
         }
         if (at.isUnion()) {

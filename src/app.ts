@@ -11,7 +11,7 @@ var h=document.location.hash
 reg.init();
 if (h&&h.length>1){
     url=h.substr(1);
-    reg.showApi(url)
+    rv.showApi(url)
 }
 
 
