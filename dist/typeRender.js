@@ -14,6 +14,9 @@ function escapeBuiltIn(n) {
     if (n === "StringType") {
         n = "string";
     }
+    if (n === "DateTimeType") {
+        n = "date-time";
+    }
     if (n === "BooleanType") {
         n = "boolean";
     }
@@ -255,11 +258,13 @@ var TypeRenderer = (function () {
         }
         if (at.isArray()) {
             var ct = at.componentType();
-            if (ct.isArray()) {
+            if (ct) {
                 result.push("Component type:");
                 result.push(renderTypeList([ct]).join(""));
                 ps = ct.allProperties();
-                renderPropertyTable("Component type properties", ps, result, at);
+                if (ct.isObject()) {
+                    renderPropertyTable("Component type properties", ps, result, ct);
+                }
             }
         }
         if (at.isUnion()) {

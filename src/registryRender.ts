@@ -86,7 +86,8 @@ export class RegistryView extends workbench.AccorditionTreeView{
         tree.setLabelProvider({
             label(e){
                 if (e.name) {
-                    return e.name;
+
+                    return ""+e.name+"";
                 }
                 else{
                     var c=Object.keys(e)[0];

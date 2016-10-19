@@ -6,7 +6,17 @@ import {IHighLevelNode} from "./hl";
 import  tr=require("./typeRender")
 import  rr=require("./resourceRender")
 import nr=require("./nodeRender")
+import rrend=require("./registryRender")
+export var states: string[] = [];
 
+export function back(){
+    if (states.length > 0) {
+        ramlView.openNodeById(states.pop());
+    }
+    else{
+        init();
+    }
+}
 export class RAMLDetailsView extends workbench.ViewPart{
 
     _element:hl.IHighLevelNode;
@@ -15,6 +25,23 @@ export class RAMLDetailsView extends workbench.ViewPart{
         this._element=v;
 
         this.refresh();
+    }
+
+
+    init(holder: workbench.IPartHolder): any {
+        holder.setContextMenu({
+            items:[
+                {
+                    title:"Back",
+
+                    run(){
+                        back()
+                    }
+                }
+
+            ]
+        })
+        return super.init(holder);
     }
 
     innerRender(e:Element) {
@@ -57,7 +84,7 @@ export class RAMLTreeProvider implements workbench.ITreeContentProvider{
             return pn.children();
         }
         if (x.property().nameId()=="resources"){
-            return x.elements();
+            return x.elements().filter(x=>x.property().nameId()=="resources");
         }
         return [];
     }
@@ -148,7 +175,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
     protected customizeAccordition(a: Accordition, node: any) {
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
-        var overview:string=nr.renderNodes(this.api.attrs());
+        var overview:string=nr.renderNodesOverview(this.api.attrs());
         if (overview.length>0) {
             a.add(new Label("Generic Info", overview))
         }
@@ -177,4 +204,49 @@ function showTitle(api:hl.IHighLevelNode){
             document.getElementById("title").innerHTML=x.value();
         }
     })
+}
+export var ramlView=new RAMLTreeView("");
+var details=new RAMLDetailsView("Details","Details");
+var regView=new rrend.RegistryView("API Registry")
+export function init(){
+    var page=new workbench.Page("rest");
+    var rtv=new RAMLTreeView("");
+
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(regView,"Details",15,workbench.Relation.LEFT);
+    page.addView(ramlView,"Details",20,workbench.Relation.LEFT);
+
+    regView.addSelectionListener({
+        selectionChanged(v: any[]){
+            if (v.length > 0) {
+                if (v[0].location) {
+                    ramlView.setUrl(v[0].location)
+                }
+            }
+            else {
+                details.setSelection(null);
+            }
+        }
+
+    })
+    function initSizes(){
+        var h=document.getElementById("header").clientHeight+50;
+        document.getElementById("rest").setAttribute("style","height:"+(window.innerHeight-h)+"px");
+    }
+    initSizes();
+    window.onresize=initSizes;
+}
+ramlView.addSelectionListener({
+    selectionChanged(v: any[]){
+        if (v.length > 0) {
+            details.setSelection(v[0]);
+        }
+        else {
+            details.setSelection(null);
+        }
+    }
+})
+export function showApi(url){
+    ramlView.setUrl(url);
+    regView.setSelectedUrl(url)
 }

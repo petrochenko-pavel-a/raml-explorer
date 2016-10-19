@@ -10,6 +10,17 @@ var hl = require("./hl");
 var tr = require("./typeRender");
 var rr = require("./resourceRender");
 var nr = require("./nodeRender");
+var rrend = require("./registryRender");
+exports.states = [];
+function back() {
+    if (exports.states.length > 0) {
+        exports.ramlView.openNodeById(exports.states.pop());
+    }
+    else {
+        init();
+    }
+}
+exports.back = back;
 var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
@@ -18,6 +29,19 @@ var RAMLDetailsView = (function (_super) {
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
         this.refresh();
+    };
+    RAMLDetailsView.prototype.init = function (holder) {
+        holder.setContextMenu({
+            items: [
+                {
+                    title: "Back",
+                    run: function () {
+                        back();
+                    }
+                }
+            ]
+        });
+        return _super.prototype.init.call(this, holder);
     };
     RAMLDetailsView.prototype.innerRender = function (e) {
         e.style.overflow = "auto";
@@ -51,7 +75,7 @@ var RAMLTreeProvider = (function () {
             return pn.children();
         }
         if (x.property().nameId() == "resources") {
-            return x.elements();
+            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
         }
         return [];
     };
@@ -129,7 +153,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodes(this.api.attrs());
+        var overview = nr.renderNodesOverview(this.api.attrs());
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", overview));
         }
@@ -158,3 +182,47 @@ function showTitle(api) {
         }
     });
 }
+exports.ramlView = new RAMLTreeView("");
+var details = new RAMLDetailsView("Details", "Details");
+var regView = new rrend.RegistryView("API Registry");
+function init() {
+    var page = new workbench.Page("rest");
+    var rtv = new RAMLTreeView("");
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
+    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
+    regView.addSelectionListener({
+        selectionChanged: function (v) {
+            if (v.length > 0) {
+                if (v[0].location) {
+                    exports.ramlView.setUrl(v[0].location);
+                }
+            }
+            else {
+                details.setSelection(null);
+            }
+        }
+    });
+    function initSizes() {
+        var h = document.getElementById("header").clientHeight + 50;
+        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
+    }
+    initSizes();
+    window.onresize = initSizes;
+}
+exports.init = init;
+exports.ramlView.addSelectionListener({
+    selectionChanged: function (v) {
+        if (v.length > 0) {
+            details.setSelection(v[0]);
+        }
+        else {
+            details.setSelection(null);
+        }
+    }
+});
+function showApi(url) {
+    exports.ramlView.setUrl(url);
+    regView.setSelectedUrl(url);
+}
+exports.showApi = showApi;
