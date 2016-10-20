@@ -47,14 +47,14 @@ var RAMLDetailsView = (function (_super) {
         e.style.overflow = "auto";
         if (this._element) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var cnt = new tr.TypeRenderer().render(this._element);
+                var cnt = new tr.TypeRenderer(null, false).render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
                     var cnt = new rr.ResourceRenderer().render(this._element);
                 }
                 if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer().render(this._element);
+                    var cnt = new rr.MethodRenderer(true, false, true).render(this._element);
                 }
             }
             new controls_1.Label(this._element.name(), cnt).render(e);
@@ -103,6 +103,12 @@ var RAMLTreeView = (function (_super) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label: function (x) {
+                var a = x.attrs();
+                for (var i = 0; i < a.length; i++) {
+                    if (a[i].name() == "displayName") {
+                        return a[i].value();
+                    }
+                }
                 return "" + x.name();
             },
             icon: function (x) {

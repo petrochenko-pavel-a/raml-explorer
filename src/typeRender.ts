@@ -75,8 +75,10 @@ class NameColumn implements or.IColumn<hl.IProperty>{
     caption(){return "Name"}
     width(){return "15em;"}
     render(p:hl.IProperty,rowId?:string){
-
         var rs= p.nameId();
+        if (rs.length==0){
+            rs="additionalProperties";
+        }
         if (p instanceof WProperty){
             var wp=<WProperty>p;
             if (wp._children.length>0){
@@ -90,8 +92,8 @@ class NameColumn implements or.IColumn<hl.IProperty>{
                 rs=`<span style="padding-left: ${wp.level()*20}px"></span><span class="glyphicon ${st}"></span> `+rs
             }
         }
-        if (!p.isRequired()){
-            rs+=" <small>(optional)</small>"
+        if (p.isRequired()){
+            rs+=" <small style='color: red'>(required)</small>"
         }
         return rs;
     }
@@ -229,7 +231,7 @@ var expandProps = function (ts:hl.IType[],ps:hl.IProperty[],parent?:hl.IProperty
 };
 export class TypeRenderer{
 
-    constructor(private isAnnotationType:boolean=false){
+    constructor(private extraCaption: string,private isSingle:boolean,private isAnnotationType:boolean=false){
 
     }
 
@@ -239,8 +241,13 @@ export class TypeRenderer{
             at=at.superTypes()[0];
         }
         var result:string[]=[];
-        result.push("<h3>"+at.nameId()+"</h3><hr>")
-        result.push("<h5>Supertypes: "+renderTypeList(at.superTypes())+"</h5>")
+        result.push("<h3>"+(this.extraCaption?this.extraCaption+": ":"")+ at.nameId()+"</h3><hr>")
+        if (at.superTypes().length==1&&h.children().length==2){
+            result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>")
+        }
+        else {
+            result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>")
+        }
         var desc=hl.description(at);
         if (desc){
             result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>"+desc+"</span>")
@@ -297,9 +304,11 @@ export function renderPropertyTable(name:string,ps:IProperty[],result:string[],a
 }
 
 export function renderParameters(name:string,ps:IHighLevelNode[],result:string[]){
+    ps=ps.filter(x=>!hl.isSyntetic(x))
     if (ps.length==0){
         return;
     }
+
     result.push("<div style='padding-top: 10px'>")
     var pr:IProperty[]=[];
     ps.forEach(x=>{
@@ -333,6 +342,7 @@ export function renderParameters(name:string,ps:IHighLevelNode[],result:string[]
         })
     })
     var pm = expandProps([],pr);
+
     result.push(new or.TableRenderer(name,[new NameColumn(), new Type(),new Facets(),new Description()],{
 
         hidden(c:WProperty){

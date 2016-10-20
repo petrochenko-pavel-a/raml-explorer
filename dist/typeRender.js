@@ -72,6 +72,9 @@ var NameColumn = (function () {
     NameColumn.prototype.width = function () { return "15em;"; };
     NameColumn.prototype.render = function (p, rowId) {
         var rs = p.nameId();
+        if (rs.length == 0) {
+            rs = "additionalProperties";
+        }
         if (p instanceof WProperty) {
             var wp = p;
             if (wp._children.length > 0) {
@@ -85,8 +88,8 @@ var NameColumn = (function () {
                 rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span class=\"glyphicon " + st + "\"></span> ") + rs;
             }
         }
-        if (!p.isRequired()) {
-            rs += " <small>(optional)</small>";
+        if (p.isRequired()) {
+            rs += " <small style='color: red'>(required)</small>";
         }
         return rs;
     };
@@ -219,8 +222,10 @@ var expandProps = function (ts, ps, parent) {
     return pm;
 };
 var TypeRenderer = (function () {
-    function TypeRenderer(isAnnotationType) {
+    function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.extraCaption = extraCaption;
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
     TypeRenderer.prototype.render = function (h) {
@@ -229,8 +234,13 @@ var TypeRenderer = (function () {
             at = at.superTypes()[0];
         }
         var result = [];
-        result.push("<h3>" + at.nameId() + "</h3><hr>");
-        result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
+        result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
+        if (at.superTypes().length == 1 && h.children().length == 2) {
+            result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
+        else {
+            result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
         var desc = hl.description(at);
         if (desc) {
             result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>" + desc + "</span>");
@@ -288,6 +298,7 @@ function renderPropertyTable(name, ps, result, at) {
 }
 exports.renderPropertyTable = renderPropertyTable;
 function renderParameters(name, ps, result) {
+    ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
     if (ps.length == 0) {
         return;
     }

@@ -8,22 +8,42 @@ var ResourceRenderer = (function () {
         this.isAnnotationType = isAnnotationType;
     }
     ResourceRenderer.prototype.render = function (h) {
-        var result = [];
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            result.push(nr.renderNode(x, false));
-        });
-        tr.renderParameters("Uri Parameters", h.elements().filter(function (x) { return x.property().nameId() == "uriParameters"; }), result);
         var ms = h.elements().filter(function (x) { return x.property().nameId() == "methods"; });
-        if (ms.length > 0) {
-            result.push("<h3>Methods:</h3>");
-            result.push(renderTabFolder(ms, new MethodRenderer()));
+        var result = [];
+        var pn = hl.uriParameters(h);
+        if (ms.length == 1) {
+            var dn = ms[0].attr("displayName");
+            if (dn && (dn.value())) {
+                result.push("<h3>" + dn.value() + "</h3>");
+                result.push("<h5>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h5>");
+            }
+            else {
+                result.push("<h3>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h3>");
+            }
+            hl.prepareNodes(ms[0].attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            result.push("</hr>");
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            result.push(new MethodRenderer(false, false, false).render(ms[0]));
+        }
+        else {
+            result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
+            result.push("</hr>");
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            if (ms.length > 0) {
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(ms.length == 1, false, true)));
+            }
         }
         return result.join("");
     };
     return ResourceRenderer;
 }());
 exports.ResourceRenderer = ResourceRenderer;
-function renderTabFolder(nodes, r) {
+function renderTabFolder(caption, nodes, r) {
     if (nodes.length == 0) {
         return "";
     }
@@ -31,6 +51,7 @@ function renderTabFolder(nodes, r) {
         return r.render(nodes[0]);
     }
     var result = [];
+    result.push("<h3>" + caption + "</h3>");
     result.push("<ul class=\"nav nav-tabs\">");
     var num = 0;
     nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (x.name() + "Tab") + "\">" + x.name() + "</a></li>"); });
@@ -43,27 +64,31 @@ function renderTabFolder(nodes, r) {
 }
 exports.renderTabFolder = renderTabFolder;
 var MethodRenderer = (function () {
-    function MethodRenderer(isAnnotationType) {
+    function MethodRenderer(isSingle, isAnnotationType, renderAttrs) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
+        this.renderAttrs = renderAttrs;
     }
     MethodRenderer.prototype.render = function (h) {
         var result = [];
-        result.push("<h3>" + h.name() + "</h3>");
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            result.push(nr.renderNode(x, false));
-        });
+        if (this.isSingle) {
+            result.push("<h3>Method: " + h.name() + "</h3>");
+        }
+        if (this.renderAttrs) {
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+        }
         tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result);
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
         if (rs.length > 0) {
-            result.push("<h3>Body:</h3>");
-            result.push(renderTabFolder(rs, new tr.TypeRenderer()));
+            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer("Body", rs.length == 1)));
         }
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
         if (rs.length > 0) {
-            result.push("<h3>Responses:</h3>");
-            result.push(renderTabFolder(rs, new ResponseRenderer()));
+            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(rs.length == 1)));
         }
         return result.join("");
     };
@@ -71,19 +96,22 @@ var MethodRenderer = (function () {
 }());
 exports.MethodRenderer = MethodRenderer;
 var ResponseRenderer = (function () {
-    function ResponseRenderer(isAnnotationType) {
+    function ResponseRenderer(isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
     ResponseRenderer.prototype.render = function (h) {
         var result = [];
-        result.push("<h3>" + h.name() + "</h3>");
+        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
+        if (this.isSingle && rs.length > 1) {
+            result.push("<h3>Response: " + h.name() + "</h3>");
+        }
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        result.push(renderTabFolder(rs, new tr.TypeRenderer()));
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;

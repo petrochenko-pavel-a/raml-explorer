@@ -20,6 +20,9 @@ function findById(id) {
 exports.findById = findById;
 function getDeclaration(n, escP) {
     if (escP === void 0) { escP = true; }
+    if (!n.adapters || n.adapters.length == 0) {
+        return null;
+    }
     var ns = n.adapters[0].getDeclaringNode();
     if (ns) {
         if (escP && ns.property() && (ns.property().nameId() === "properties" || ns.property().nameId() === "facets")) {
@@ -80,6 +83,9 @@ var ProxyNode = (function () {
         this.original = original;
         this._children = _children;
     }
+    ProxyNode.prototype.parent = function () {
+        return this.original.parent();
+    };
     ProxyNode.prototype.definition = function () {
         return this.original.definition();
     };
@@ -190,6 +196,59 @@ function subTypes(t) {
     return result;
 }
 exports.subTypes = subTypes;
+var FakeNode = (function () {
+    function FakeNode(t, _name) {
+        this.t = t;
+        this._name = _name;
+    }
+    FakeNode.prototype.localType = function () {
+        return this.t;
+    };
+    FakeNode.prototype.root = function () {
+        return null;
+    };
+    FakeNode.prototype.id = function () {
+        return this._name;
+    };
+    FakeNode.prototype.findById = function () {
+        return null;
+    };
+    FakeNode.prototype.parent = function () {
+        return null;
+    };
+    FakeNode.prototype.definition = function () {
+        return this.t;
+    };
+    FakeNode.prototype.name = function () {
+        return this._name;
+    };
+    FakeNode.prototype.property = function () {
+        return null;
+    };
+    FakeNode.prototype.children = function () {
+        return [];
+    };
+    FakeNode.prototype.elements = function () {
+        return [];
+    };
+    FakeNode.prototype.attrs = function () {
+        return [];
+    };
+    FakeNode.prototype.attr = function (name) {
+        return null;
+    };
+    FakeNode.prototype.value = function () {
+        return null;
+    };
+    FakeNode.prototype.lowLevel = function () {
+        return [];
+    };
+    FakeNode.prototype.isAttr = function () {
+        return true;
+    };
+    return FakeNode;
+}());
+exports.FakeNode = FakeNode;
 var MergedNode = (function () {
     function MergedNode(p, t, vl, _name) {
         this.p = p;
@@ -207,6 +266,9 @@ var MergedNode = (function () {
         return "";
     };
     MergedNode.prototype.findById = function () {
+        return null;
+    };
+    MergedNode.prototype.parent = function () {
         return null;
     };
     MergedNode.prototype.definition = function () {
@@ -273,6 +335,90 @@ function group(n) {
     return 10;
 }
 exports.group = group;
+function resourceUrl(h) {
+    var result = "";
+    var o = h;
+    while (h != null && h.property() != null) {
+        result = h.name() + result;
+        h = h.parent();
+    }
+    var up = uriParameters(o);
+    for (var i = 0; i < up.length; i++) {
+        if (isSyntetic(up[i])) {
+            var nm = up[i].name();
+            if (nm.charAt(nm.length - 1) == "?") {
+                nm = nm.substr(0, nm.length - 1);
+            }
+            result = result.replace("{" + nm + "}", "");
+        }
+    }
+    return result;
+}
+exports.resourceUrl = resourceUrl;
+function isSyntetic(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && d.nameId() == "syntetic") {
+            return true;
+        }
+    }
+    return false;
+}
+exports.isSyntetic = isSyntetic;
+function uriParameters(h) {
+    var result = [];
+    while (h != null && h.property() != null) {
+        var nm = h.name();
+        var names = [];
+        while (true) {
+            var ind = nm.indexOf('{');
+            if (ind != -1) {
+                nm = nm.substr(ind + 1);
+                var end = nm.indexOf('}');
+                if (end == -1) {
+                    break;
+                }
+                var upn = nm.substr(0, end);
+                names.push(upn);
+                nm = nm.substr(end);
+            }
+            else {
+                break;
+            }
+        }
+        names.forEach(function (x) {
+            var up = h.elements().filter(function (y) { return y.property().nameId() == "uriParameters" && y.name() == x || (y.name()) == (x + '?'); });
+            if (up.length > 0) {
+                var m = up[0];
+                result.push(up[0]);
+            }
+            else {
+                result.push(new FakeNode({
+                    nameId: function () {
+                        return "string";
+                    },
+                    properties: function () { return []; },
+                    facets: function () { return []; },
+                    allProperties: function () { return []; },
+                    isObject: function () { return false; },
+                    isArray: function () { return false; },
+                    isUnion: function () { return false; },
+                    componentType: function () { return null; },
+                    union: function () { return null; },
+                    isRequired: function () { return true; },
+                    leftType: function () { return null; },
+                    rightType: function () { return null; },
+                    superTypes: function () { return []; },
+                    adapters: []
+                }, x));
+            }
+        });
+        h = h.parent();
+    }
+    return result;
+}
+exports.uriParameters = uriParameters;
 function prepareNodes(nodes) {
     var nodesToRender = [];
     nodes.forEach(function (v) {

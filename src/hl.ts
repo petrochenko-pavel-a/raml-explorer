@@ -1,5 +1,4 @@
 
-
 export interface IProperty{
     nameId():string
     isKey(): boolean
@@ -44,6 +43,9 @@ export function findById(id:string):IHighLevelNode{
     }
 }
 export function getDeclaration(n:IType,escP:boolean=true):IHighLevelNode{
+    if (!n.adapters||n.adapters.length==0){
+        return null;
+    }
     var ns=n.adapters[0].getDeclaringNode();
     if (ns) {
         if (escP&&ns.property()&&(ns.property().nameId() === "properties" || ns.property().nameId() === "facets")) {
@@ -104,6 +106,9 @@ export class ProxyNode implements IHighLevelNode{
 
     }
 
+    parent(){
+        return this.original.parent();
+    }
 
     definition():IType{
         return this.original.definition();
@@ -180,6 +185,7 @@ export interface IHighLevelNode{
     root():IHighLevelNode
     findById(id: string): IHighLevelNode;
     localType(): IType
+    parent():IHighLevelNode
 }
 
 declare var RAML:any;
@@ -241,7 +247,68 @@ export function subTypes(t:IType):IType[]{
     return result;
 }
 
+export class FakeNode implements IHighLevelNode{
 
+    constructor(private t:IType,private _name: string){
+
+    }
+    localType(){
+        return this.t;
+    }
+
+    root(){
+        return null;
+    }
+    id(){
+        return this._name;
+    }
+    findById(){
+        return null;
+    }
+    parent(){
+        return null;
+    }
+
+    definition():IType {
+        return this.t;
+    }
+
+    name():string {
+        return this._name;
+    }
+
+    property():IProperty {
+        return null;
+    }
+
+    children():IHighLevelNode[] {
+        return [];
+    }
+
+    elements():IHighLevelNode[] {
+        return [];
+    }
+
+    attrs():IHighLevelNode[] {
+        return [];
+    }
+
+    attr(name:string):IHighLevelNode {
+        return null;
+    }
+
+    value():any {
+        return null;
+    }
+
+    lowLevel():any {
+        return [];
+    }
+
+    isAttr():boolean {
+        return true;
+    }
+}
 
 export class MergedNode implements IHighLevelNode{
 
@@ -259,6 +326,9 @@ export class MergedNode implements IHighLevelNode{
         return "";
     }
     findById(){
+        return null;
+    }
+    parent(){
         return null;
     }
 
@@ -334,6 +404,92 @@ export function group(n:IHighLevelNode):number{
         }
     }
     return 10;
+}
+export function resourceUrl(h:IHighLevelNode):string{
+    var result=""
+    var o=h;
+    while (h!=null&&h.property()!=null){
+        result=h.name()+result;
+        h=h.parent();
+    }
+    var up=uriParameters(o);
+    for (var i=0;i<up.length;i++){
+        if (isSyntetic(up[i])){
+            var nm=up[i].name();
+            if (nm.charAt(nm.length-1)=="?"){
+                nm=nm.substr(0,nm.length-1);
+            }
+            result=result.replace("{"+nm+"}","");
+        }
+    }
+    return result;
+}
+
+export function isSyntetic(x:IHighLevelNode):boolean{
+    var attrs=prepareNodes(x.attrs());
+    for (var i=0;i<attrs.length;i++){
+        var d=attrs[i].definition();
+        if (d&&d.nameId()=="syntetic"){
+            return true;
+        }
+    }
+    return false;
+}
+
+export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
+    var result:IHighLevelNode[]=[];
+
+    while (h!=null&&h.property()!=null){
+        var nm:string=h.name();
+        var names:string[]=[]
+        while (true){
+
+            var ind=nm.indexOf('{');
+            if (ind!=-1){
+                nm=nm.substr(ind+1);
+                var end=nm.indexOf('}');
+                if (end==-1){
+                    break;
+                }
+                var upn=nm.substr(0,end);
+                names.push(upn)
+                nm=nm.substr(end);
+            }
+            else{
+                break;
+            }
+        }
+        names.forEach(x=>{
+            var up=h.elements().filter(y=>y.property().nameId()=="uriParameters"&&y.name()==x||(y.name())==(x+ '?'));
+            if (up.length>0){
+                var m=up[0];
+                result.push(up[0]);
+            }
+            else{
+                result.push(new FakeNode({
+                    nameId(){
+                        return "string"
+                    },
+                    properties(){return []},
+                    facets(){return []},
+                    allProperties(){return []},
+                    isObject(){return false},
+                    isArray(){return false},
+                    isUnion(){return false},
+                    componentType(){return null},
+                    union(){return null},
+                    isRequired(){return true},
+                    leftType(){return null},
+                    rightType(){return null},
+                    superTypes(){return []},
+                    adapters:[]
+
+                },x))
+            }
+        })
+        h=h.parent();
+    }
+    return result;
 }
 
 export function prepareNodes(nodes:IHighLevelNode[]):IHighLevelNode[]{
