@@ -109,6 +109,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         this.api=null;
         this.refresh();
     }
+    searchable=true;
 
     protected customize(tree: workbench.TreeView) {
         tree.setContentProvider(new RAMLTreeProvider());

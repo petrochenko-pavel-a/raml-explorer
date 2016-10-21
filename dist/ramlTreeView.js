@@ -91,6 +91,7 @@ var RAMLTreeView = (function (_super) {
         if (title === void 0) { title = "Overview"; }
         _super.call(this, title);
         this.path = path;
+        this.searchable = true;
         this.trees = [];
     }
     RAMLTreeView.prototype.setUrl = function (url) {

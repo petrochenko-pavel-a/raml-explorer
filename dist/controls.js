@@ -79,14 +79,19 @@ var Accordition = (function (_super) {
     __extends(Accordition, _super);
     function Accordition() {
         _super.apply(this, arguments);
+        this.disabled = {};
     }
     Accordition.prototype.expand = function (c) {
         var index = this.children.indexOf(c);
         this.expandIndex(index);
     };
+    Accordition.prototype.getSelectedIndex = function () {
+        return this.selectedIndex;
+    };
     Accordition.prototype.expandIndex = function (index) {
         var bids = this.bids;
         var gids = this.gids;
+        this.selectedIndex = index;
         for (var j = 0; j < bids.length; j++) {
             if (j != index) {
                 document.getElementById(bids[j]).style.display = "none";
@@ -99,11 +104,35 @@ var Accordition = (function (_super) {
             }
         }
     };
+    Accordition.prototype.getHeader = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon = -1) {
+            return null;
+        }
+        return document.getElementById(this.headings[positon]);
+    };
+    Accordition.prototype.disable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        document.getElementById(this.headings[positon]).style.color = "gray";
+        this.disabled[this.headings[positon]] = true;
+    };
+    Accordition.prototype.enable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        delete this.disabled[this.headings[positon]];
+        document.getElementById(this.headings[positon]).style.color = "black";
+    };
     Accordition.prototype.innerRender = function (e) {
         var _this = this;
         var topId = nextId();
         var templates = [];
         var headings = [];
+        this.headings = headings;
         var bids = [];
         var gids = [];
         for (var i = 0; i < this.children.length; i++) {
@@ -133,7 +162,9 @@ var Accordition = (function (_super) {
             var containerId = gids[i];
             var k = i;
             document.getElementById(x).onclick = function () {
-                _this.expandIndex(k);
+                if (!_this.disabled[x]) {
+                    _this.expandIndex(k);
+                }
             };
             i++;
         });

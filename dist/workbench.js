@@ -381,15 +381,21 @@ var TreeView = (function (_super) {
     };
     TreeView.prototype.onSearch = function (s) {
         if (!this.treeId) {
-            return;
+            return false;
         }
+        this.pattern = s;
         $('#' + this.treeId).treeview("search", s, { revealResults: true });
+        return this.afterSearch(s);
+    };
+    TreeView.prototype.afterSearch = function (s) {
         var lst = document.getElementById(this.treeId).getElementsByTagName("li");
         var parents = {};
+        var found = false;
         for (var i = 0; i < lst.length; i++) {
             var el = lst.item(i);
             if (el.classList.contains("search-result")) {
                 el.style.display = "inherit";
+                found = true;
                 var id = el.attributes.getNamedItem("data-nodeid").value;
                 var rs = $('#' + this.treeId).treeview("getParent", parseInt(id));
                 parents[rs.nodeId] = true;
@@ -410,6 +416,7 @@ var TreeView = (function (_super) {
                 el.style.display = "inherit";
             }
         }
+        return found;
     };
     TreeView.prototype.setContentProvider = function (i) {
         this.contentProvider = new ContentProviderProxy(i);
@@ -435,6 +442,12 @@ var TreeView = (function (_super) {
             onNodeSelected: function (x) {
                 var sel = $('#' + treeId).treeview("getSelected");
                 view.onSelection(sel.map(function (x) { return x.original; }));
+            },
+            onNodeExpanded: function (x) {
+                var sel = $('#' + treeId).treeview("getSelected");
+                if (view.pattern) {
+                    view.afterSearch(view.pattern);
+                }
             },
             collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF" });
         var sel = $('#' + treeId).treeview("getSelected");
@@ -541,6 +554,7 @@ var AccorditionTreeView = (function (_super) {
     __extends(AccorditionTreeView, _super);
     function AccorditionTreeView(title) {
         _super.call(this, title, title);
+        this.seachable = true;
         this.trees = [];
     }
     AccorditionTreeView.prototype.createTree = function (name) {
@@ -559,6 +573,38 @@ var AccorditionTreeView = (function (_super) {
         types.setInput(at);
         this.control.add(types);
         this.trees.push(types);
+    };
+    AccorditionTreeView.prototype.onSearch = function (searchStr) {
+        var _this = this;
+        var num = 0;
+        var index = -1;
+        var selectedIndexIsOk = false;
+        this.control.children.forEach(function (x) {
+            if (x instanceof TreeView) {
+                var has = x.onSearch(searchStr);
+                if (searchStr.length > 0) {
+                    if (!has) {
+                        _this.control.disable(x);
+                    }
+                    else {
+                        _this.control.enable(x);
+                        if (num == _this.control.getSelectedIndex()) {
+                            selectedIndexIsOk = true;
+                        }
+                        index = num;
+                    }
+                }
+                else {
+                    _this.control.enable(x);
+                }
+            }
+            num++;
+        });
+        if (searchStr.length > 0) {
+            if (!selectedIndexIsOk && index != -1) {
+                this.control.expandIndex(index);
+            }
+        }
     };
     AccorditionTreeView.prototype.setSelection = function (o) {
         for (var i = 0; i < this.trees.length; i++) {

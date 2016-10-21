@@ -94,14 +94,19 @@ var Accordition = (function (_super) {
     __extends(Accordition, _super);
     function Accordition() {
         _super.apply(this, arguments);
+        this.disabled = {};
     }
     Accordition.prototype.expand = function (c) {
         var index = this.children.indexOf(c);
         this.expandIndex(index);
     };
+    Accordition.prototype.getSelectedIndex = function () {
+        return this.selectedIndex;
+    };
     Accordition.prototype.expandIndex = function (index) {
         var bids = this.bids;
         var gids = this.gids;
+        this.selectedIndex = index;
         for (var j = 0; j < bids.length; j++) {
             if (j != index) {
                 document.getElementById(bids[j]).style.display = "none";
@@ -114,11 +119,35 @@ var Accordition = (function (_super) {
             }
         }
     };
+    Accordition.prototype.getHeader = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon = -1) {
+            return null;
+        }
+        return document.getElementById(this.headings[positon]);
+    };
+    Accordition.prototype.disable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        document.getElementById(this.headings[positon]).style.color = "gray";
+        this.disabled[this.headings[positon]] = true;
+    };
+    Accordition.prototype.enable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        delete this.disabled[this.headings[positon]];
+        document.getElementById(this.headings[positon]).style.color = "black";
+    };
     Accordition.prototype.innerRender = function (e) {
         var _this = this;
         var topId = nextId();
         var templates = [];
         var headings = [];
+        this.headings = headings;
         var bids = [];
         var gids = [];
         for (var i = 0; i < this.children.length; i++) {
@@ -148,7 +177,9 @@ var Accordition = (function (_super) {
             var containerId = gids[i];
             var k = i;
             document.getElementById(x).onclick = function () {
-                _this.expandIndex(k);
+                if (!_this.disabled[x]) {
+                    _this.expandIndex(k);
+                }
             };
             i++;
         });
@@ -180,6 +211,9 @@ function findById(id) {
 exports.findById = findById;
 function getDeclaration(n, escP) {
     if (escP === void 0) { escP = true; }
+    if (!n.adapters || n.adapters.length == 0) {
+        return null;
+    }
     var ns = n.adapters[0].getDeclaringNode();
     if (ns) {
         if (escP && ns.property() && (ns.property().nameId() === "properties" || ns.property().nameId() === "facets")) {
@@ -240,6 +274,9 @@ var ProxyNode = (function () {
         this.original = original;
         this._children = _children;
     }
+    ProxyNode.prototype.parent = function () {
+        return this.original.parent();
+    };
     ProxyNode.prototype.definition = function () {
         return this.original.definition();
     };
@@ -350,6 +387,59 @@ function subTypes(t) {
     return result;
 }
 exports.subTypes = subTypes;
+var FakeNode = (function () {
+    function FakeNode(t, _name) {
+        this.t = t;
+        this._name = _name;
+    }
+    FakeNode.prototype.localType = function () {
+        return this.t;
+    };
+    FakeNode.prototype.root = function () {
+        return null;
+    };
+    FakeNode.prototype.id = function () {
+        return this._name;
+    };
+    FakeNode.prototype.findById = function () {
+        return null;
+    };
+    FakeNode.prototype.parent = function () {
+        return null;
+    };
+    FakeNode.prototype.definition = function () {
+        return this.t;
+    };
+    FakeNode.prototype.name = function () {
+        return this._name;
+    };
+    FakeNode.prototype.property = function () {
+        return null;
+    };
+    FakeNode.prototype.children = function () {
+        return [];
+    };
+    FakeNode.prototype.elements = function () {
+        return [];
+    };
+    FakeNode.prototype.attrs = function () {
+        return [];
+    };
+    FakeNode.prototype.attr = function (name) {
+        return null;
+    };
+    FakeNode.prototype.value = function () {
+        return null;
+    };
+    FakeNode.prototype.lowLevel = function () {
+        return [];
+    };
+    FakeNode.prototype.isAttr = function () {
+        return true;
+    };
+    return FakeNode;
+}());
+exports.FakeNode = FakeNode;
 var MergedNode = (function () {
     function MergedNode(p, t, vl, _name) {
         this.p = p;
@@ -367,6 +457,9 @@ var MergedNode = (function () {
         return "";
     };
     MergedNode.prototype.findById = function () {
+        return null;
+    };
+    MergedNode.prototype.parent = function () {
         return null;
     };
     MergedNode.prototype.definition = function () {
@@ -433,6 +526,90 @@ function group(n) {
     return 10;
 }
 exports.group = group;
+function resourceUrl(h) {
+    var result = "";
+    var o = h;
+    while (h != null && h.property() != null) {
+        result = h.name() + result;
+        h = h.parent();
+    }
+    var up = uriParameters(o);
+    for (var i = 0; i < up.length; i++) {
+        if (isSyntetic(up[i])) {
+            var nm = up[i].name();
+            if (nm.charAt(nm.length - 1) == "?") {
+                nm = nm.substr(0, nm.length - 1);
+            }
+            result = result.replace("{" + nm + "}", "");
+        }
+    }
+    return result;
+}
+exports.resourceUrl = resourceUrl;
+function isSyntetic(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && d.nameId() == "syntetic") {
+            return true;
+        }
+    }
+    return false;
+}
+exports.isSyntetic = isSyntetic;
+function uriParameters(h) {
+    var result = [];
+    while (h != null && h.property() != null) {
+        var nm = h.name();
+        var names = [];
+        while (true) {
+            var ind = nm.indexOf('{');
+            if (ind != -1) {
+                nm = nm.substr(ind + 1);
+                var end = nm.indexOf('}');
+                if (end == -1) {
+                    break;
+                }
+                var upn = nm.substr(0, end);
+                names.push(upn);
+                nm = nm.substr(end);
+            }
+            else {
+                break;
+            }
+        }
+        names.forEach(function (x) {
+            var up = h.elements().filter(function (y) { return y.property().nameId() == "uriParameters" && y.name() == x || (y.name()) == (x + '?'); });
+            if (up.length > 0) {
+                var m = up[0];
+                result.push(up[0]);
+            }
+            else {
+                result.push(new FakeNode({
+                    nameId: function () {
+                        return "string";
+                    },
+                    properties: function () { return []; },
+                    facets: function () { return []; },
+                    allProperties: function () { return []; },
+                    isObject: function () { return false; },
+                    isArray: function () { return false; },
+                    isUnion: function () { return false; },
+                    componentType: function () { return null; },
+                    union: function () { return null; },
+                    isRequired: function () { return true; },
+                    leftType: function () { return null; },
+                    rightType: function () { return null; },
+                    superTypes: function () { return []; },
+                    adapters: []
+                }, x));
+            }
+        });
+        h = h.parent();
+    }
+    return result;
+}
+exports.uriParameters = uriParameters;
 function prepareNodes(nodes) {
     var nodesToRender = [];
     nodes.forEach(function (v) {
@@ -833,14 +1010,14 @@ var RAMLDetailsView = (function (_super) {
         e.style.overflow = "auto";
         if (this._element) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var cnt = new tr.TypeRenderer().render(this._element);
+                var cnt = new tr.TypeRenderer(null, false).render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
                     var cnt = new rr.ResourceRenderer().render(this._element);
                 }
                 if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer().render(this._element);
+                    var cnt = new rr.MethodRenderer(true, false, true).render(this._element);
                 }
             }
             new controls_1.Label(this._element.name(), cnt).render(e);
@@ -877,6 +1054,7 @@ var RAMLTreeView = (function (_super) {
         if (title === void 0) { title = "Overview"; }
         _super.call(this, title);
         this.path = path;
+        this.searchable = true;
         this.trees = [];
     }
     RAMLTreeView.prototype.setUrl = function (url) {
@@ -889,6 +1067,12 @@ var RAMLTreeView = (function (_super) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label: function (x) {
+                var a = x.attrs();
+                for (var i = 0; i < a.length; i++) {
+                    if (a[i].name() == "displayName") {
+                        return a[i].value();
+                    }
+                }
                 return "" + x.name();
             },
             icon: function (x) {
@@ -1075,6 +1259,7 @@ var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
         _super.apply(this, arguments);
+        this.searchable = true;
     }
     RegistryView.prototype.load = function () {
         var _this = this;
@@ -1144,22 +1329,42 @@ var ResourceRenderer = (function () {
         this.isAnnotationType = isAnnotationType;
     }
     ResourceRenderer.prototype.render = function (h) {
-        var result = [];
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            result.push(nr.renderNode(x, false));
-        });
-        tr.renderParameters("Uri Parameters", h.elements().filter(function (x) { return x.property().nameId() == "uriParameters"; }), result);
         var ms = h.elements().filter(function (x) { return x.property().nameId() == "methods"; });
-        if (ms.length > 0) {
-            result.push("<h3>Methods:</h3>");
-            result.push(renderTabFolder(ms, new MethodRenderer()));
+        var result = [];
+        var pn = hl.uriParameters(h);
+        if (ms.length == 1) {
+            var dn = ms[0].attr("displayName");
+            if (dn && (dn.value())) {
+                result.push("<h3>" + dn.value() + "</h3>");
+                result.push("<h5>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h5>");
+            }
+            else {
+                result.push("<h3>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h3>");
+            }
+            hl.prepareNodes(ms[0].attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            result.push("</hr>");
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            result.push(new MethodRenderer(false, false, false).render(ms[0]));
+        }
+        else {
+            result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
+            result.push("</hr>");
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            if (ms.length > 0) {
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(ms.length == 1, false, true)));
+            }
         }
         return result.join("");
     };
     return ResourceRenderer;
 }());
 exports.ResourceRenderer = ResourceRenderer;
-function renderTabFolder(nodes, r) {
+function renderTabFolder(caption, nodes, r) {
     if (nodes.length == 0) {
         return "";
     }
@@ -1167,6 +1372,7 @@ function renderTabFolder(nodes, r) {
         return r.render(nodes[0]);
     }
     var result = [];
+    result.push("<h3>" + caption + "</h3>");
     result.push("<ul class=\"nav nav-tabs\">");
     var num = 0;
     nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (x.name() + "Tab") + "\">" + x.name() + "</a></li>"); });
@@ -1179,27 +1385,31 @@ function renderTabFolder(nodes, r) {
 }
 exports.renderTabFolder = renderTabFolder;
 var MethodRenderer = (function () {
-    function MethodRenderer(isAnnotationType) {
+    function MethodRenderer(isSingle, isAnnotationType, renderAttrs) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
+        this.renderAttrs = renderAttrs;
     }
     MethodRenderer.prototype.render = function (h) {
         var result = [];
-        result.push("<h3>" + h.name() + "</h3>");
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            result.push(nr.renderNode(x, false));
-        });
+        if (this.isSingle) {
+            result.push("<h3>Method: " + h.name() + "</h3>");
+        }
+        if (this.renderAttrs) {
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+        }
         tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result);
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
         if (rs.length > 0) {
-            result.push("<h3>Body:</h3>");
-            result.push(renderTabFolder(rs, new tr.TypeRenderer()));
+            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer("Body", rs.length == 1)));
         }
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
         if (rs.length > 0) {
-            result.push("<h3>Responses:</h3>");
-            result.push(renderTabFolder(rs, new ResponseRenderer()));
+            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(rs.length == 1)));
         }
         return result.join("");
     };
@@ -1207,19 +1417,22 @@ var MethodRenderer = (function () {
 }());
 exports.MethodRenderer = MethodRenderer;
 var ResponseRenderer = (function () {
-    function ResponseRenderer(isAnnotationType) {
+    function ResponseRenderer(isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
     ResponseRenderer.prototype.render = function (h) {
         var result = [];
-        result.push("<h3>" + h.name() + "</h3>");
+        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
+        if (this.isSingle && rs.length > 1) {
+            result.push("<h3>Response: " + h.name() + "</h3>");
+        }
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        result.push(renderTabFolder(rs, new tr.TypeRenderer()));
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;
@@ -1301,6 +1514,9 @@ var NameColumn = (function () {
     NameColumn.prototype.width = function () { return "15em;"; };
     NameColumn.prototype.render = function (p, rowId) {
         var rs = p.nameId();
+        if (rs.length == 0) {
+            rs = "additionalProperties";
+        }
         if (p instanceof WProperty) {
             var wp = p;
             if (wp._children.length > 0) {
@@ -1314,8 +1530,8 @@ var NameColumn = (function () {
                 rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span class=\"glyphicon " + st + "\"></span> ") + rs;
             }
         }
-        if (!p.isRequired()) {
-            rs += " <small>(optional)</small>";
+        if (p.isRequired()) {
+            rs += " <small style='color: red'>(required)</small>";
         }
         return rs;
     };
@@ -1448,8 +1664,10 @@ var expandProps = function (ts, ps, parent) {
     return pm;
 };
 var TypeRenderer = (function () {
-    function TypeRenderer(isAnnotationType) {
+    function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.extraCaption = extraCaption;
+        this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
     TypeRenderer.prototype.render = function (h) {
@@ -1458,8 +1676,13 @@ var TypeRenderer = (function () {
             at = at.superTypes()[0];
         }
         var result = [];
-        result.push("<h3>" + at.nameId() + "</h3><hr>");
-        result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
+        result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
+        if (at.superTypes().length == 1 && h.children().length == 2) {
+            result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
+        else {
+            result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
         var desc = hl.description(at);
         if (desc) {
             result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>" + desc + "</span>");
@@ -1517,6 +1740,7 @@ function renderPropertyTable(name, ps, result, at) {
 }
 exports.renderPropertyTable = renderPropertyTable;
 function renderParameters(name, ps, result) {
+    ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
     if (ps.length == 0) {
         return;
     }
@@ -1946,15 +2170,21 @@ var TreeView = (function (_super) {
     };
     TreeView.prototype.onSearch = function (s) {
         if (!this.treeId) {
-            return;
+            return false;
         }
+        this.pattern = s;
         $('#' + this.treeId).treeview("search", s, { revealResults: true });
+        return this.afterSearch(s);
+    };
+    TreeView.prototype.afterSearch = function (s) {
         var lst = document.getElementById(this.treeId).getElementsByTagName("li");
         var parents = {};
+        var found = false;
         for (var i = 0; i < lst.length; i++) {
             var el = lst.item(i);
             if (el.classList.contains("search-result")) {
                 el.style.display = "inherit";
+                found = true;
                 var id = el.attributes.getNamedItem("data-nodeid").value;
                 var rs = $('#' + this.treeId).treeview("getParent", parseInt(id));
                 parents[rs.nodeId] = true;
@@ -1975,6 +2205,7 @@ var TreeView = (function (_super) {
                 el.style.display = "inherit";
             }
         }
+        return found;
     };
     TreeView.prototype.setContentProvider = function (i) {
         this.contentProvider = new ContentProviderProxy(i);
@@ -2000,6 +2231,12 @@ var TreeView = (function (_super) {
             onNodeSelected: function (x) {
                 var sel = $('#' + treeId).treeview("getSelected");
                 view.onSelection(sel.map(function (x) { return x.original; }));
+            },
+            onNodeExpanded: function (x) {
+                var sel = $('#' + treeId).treeview("getSelected");
+                if (view.pattern) {
+                    view.afterSearch(view.pattern);
+                }
             },
             collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF" });
         var sel = $('#' + treeId).treeview("getSelected");
@@ -2106,6 +2343,7 @@ var AccorditionTreeView = (function (_super) {
     __extends(AccorditionTreeView, _super);
     function AccorditionTreeView(title) {
         _super.call(this, title, title);
+        this.seachable = true;
         this.trees = [];
     }
     AccorditionTreeView.prototype.createTree = function (name) {
@@ -2124,6 +2362,38 @@ var AccorditionTreeView = (function (_super) {
         types.setInput(at);
         this.control.add(types);
         this.trees.push(types);
+    };
+    AccorditionTreeView.prototype.onSearch = function (searchStr) {
+        var _this = this;
+        var num = 0;
+        var index = -1;
+        var selectedIndexIsOk = false;
+        this.control.children.forEach(function (x) {
+            if (x instanceof TreeView) {
+                var has = x.onSearch(searchStr);
+                if (searchStr.length > 0) {
+                    if (!has) {
+                        _this.control.disable(x);
+                    }
+                    else {
+                        _this.control.enable(x);
+                        if (num == _this.control.getSelectedIndex()) {
+                            selectedIndexIsOk = true;
+                        }
+                        index = num;
+                    }
+                }
+                else {
+                    _this.control.enable(x);
+                }
+            }
+            num++;
+        });
+        if (searchStr.length > 0) {
+            if (!selectedIndexIsOk && index != -1) {
+                this.control.expandIndex(index);
+            }
+        }
     };
     AccorditionTreeView.prototype.setSelection = function (o) {
         for (var i = 0; i < this.trees.length; i++) {

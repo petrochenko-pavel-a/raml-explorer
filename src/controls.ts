@@ -85,10 +85,16 @@ export class Accordition extends Composite{
         var index=this.children.indexOf(c);
         this.expandIndex(index);
     }
+    protected selectedIndex:number;
+
+    getSelectedIndex(){
+        return this.selectedIndex;
+    }
 
     public expandIndex(index: number){
         var bids=this.bids;
         var gids=this.gids;
+        this.selectedIndex=index;
         for (var j=0;j<bids.length;j++) {
             if (j!=index) {
                 document.getElementById(bids[j]).style.display = "none";
@@ -103,13 +109,44 @@ export class Accordition extends Composite{
         }
     }
 
+    getHeader(c:IControl){
+        var positon=this.children.indexOf(c);
+        if (positon=-1){
+            return null;
+        }
+        return document.getElementById(this.headings[positon]);
+    }
+
+    disabled={
+
+    }
+
+    disable(c:IControl){
+        var positon=this.children.indexOf(c);
+        if (positon==-1){
+            return null;
+        }
+        document.getElementById(this.headings[positon]).style.color="gray";
+        this.disabled[this.headings[positon]]=true;
+    }
+    enable(c:IControl){
+        var positon=this.children.indexOf(c);
+        if (positon==-1){
+            return null;
+        }
+        delete this.disabled[this.headings[positon]];
+        document.getElementById(this.headings[positon]).style.color="black";
+    }
+
     private bids:string[]
     private gids: string[]
+    private headings: string[]
     protected innerRender(e:Element){
         var topId=nextId();
 
         var templates:string[]=[]
         var headings:string[]=[]
+        this.headings=headings;
         var bids:string[]=[]
         var gids:string[]=[]
         for (var i=0;i<this.children.length;i++){
@@ -150,7 +187,9 @@ export class Accordition extends Composite{
             var containerId=gids[i]
             var k=i;
             document.getElementById(x).onclick=()=> {
-                this.expandIndex(k);
+                if (!this.disabled[x]) {
+                    this.expandIndex(k);
+                }
             }
             i++;
         });

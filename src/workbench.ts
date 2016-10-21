@@ -494,39 +494,48 @@ export class TreeView extends ViewPart{
         }
         return false;
     }
+    pattern: string;
 
-    onSearch(s:string){
+    onSearch(s:string):boolean{
         if (!this.treeId){
-            return;
+            return false;
         }
+        this.pattern=s;
         $('#'+this.treeId).treeview("search",s,{revealResults:true});
 
-        var lst=document.getElementById(this.treeId).getElementsByTagName("li")
-        var parents={}
-        for (var i=0;i<lst.length;i++){
-            var el=lst.item(i);
-            if (el.classList.contains("search-result")){
-                el.style.display ="inherit" ;
-                var id=el.attributes.getNamedItem("data-nodeid").value;
-                var rs=$('#'+this.treeId).treeview("getParent",parseInt(id));
-                parents[rs.nodeId]=true;
-                while (rs.parentId!==undefined){
-                    parents[rs.parentId]=true;
-                    rs=$('#'+this.treeId).treeview("getParent",rs.parentId);
-                    parents[rs.nodeId]=true;
+        return this.afterSearch(s);
+    }
+
+    private afterSearch(s: string) {
+        var lst = document.getElementById(this.treeId).getElementsByTagName("li")
+        var parents = {}
+        var found: boolean = false;
+        for (var i = 0; i < lst.length; i++) {
+            var el = lst.item(i);
+            if (el.classList.contains("search-result")) {
+                el.style.display = "inherit";
+                found = true;
+                var id = el.attributes.getNamedItem("data-nodeid").value;
+                var rs = $('#' + this.treeId).treeview("getParent", parseInt(id));
+                parents[rs.nodeId] = true;
+                while (rs.parentId !== undefined) {
+                    parents[rs.parentId] = true;
+                    rs = $('#' + this.treeId).treeview("getParent", rs.parentId);
+                    parents[rs.nodeId] = true;
                 }
             }
             else {
                 el.style.display = s.length == 0 ? "inherit" : "none"
             }
         }
-        for (var i=0;i<lst.length;i++){
-            var el=lst.item(i);
-            var id=el.attributes.getNamedItem("data-nodeid").value;
-            if(parents[parseInt(id)]){
-                el.style.display="inherit"
+        for (var i = 0; i < lst.length; i++) {
+            var el = lst.item(i);
+            var id = el.attributes.getNamedItem("data-nodeid").value;
+            if (parents[parseInt(id)]) {
+                el.style.display = "inherit"
             }
         }
+        return found;
     }
 
     setContentProvider(i:ITreeContentProvider){
@@ -555,6 +564,12 @@ export class TreeView extends ViewPart{
             onNodeSelected:function (x) {
                var sel= $('#'+treeId).treeview("getSelected");
                view.onSelection(sel.map(x=>x.original))
+            },
+            onNodeExpanded:function (x) {
+                var sel= $('#'+treeId).treeview("getSelected");
+                if (view.pattern) {
+                    view.afterSearch(view.pattern)
+                }
             },
             collapseIcon:"glyphicon glyphicon-chevron-down",borderColor:"0xFFFFFF"});
         var sel= $('#'+treeId).treeview("getSelected");
@@ -683,7 +698,7 @@ export abstract class AccorditionTreeView extends ViewPart{
         })
         return tree;
     }
-
+    seachable=true;
 
 
     protected control:controls.Accordition;
@@ -697,7 +712,38 @@ export abstract class AccorditionTreeView extends ViewPart{
         this.trees.push(types)
     }
 
+    onSearch(searchStr:string){
+        var num=0;
+        var index=-1;
+        var selectedIndexIsOk=false;
+        this.control.children.forEach(x=> {
+            if (x instanceof TreeView) {
+            var has = x.onSearch(searchStr);
+            if (searchStr.length > 0) {
+                if (!has) {
+                    this.control.disable(x);
+                }
+                else {
+                    this.control.enable(x);
+                    if (num == this.control.getSelectedIndex()) {
+                        selectedIndexIsOk = true;
+                    }
+                    index = num;
+                }
 
+            }
+            else {
+                this.control.enable(x);
+            }
+        }
+            num++;
+        })
+        if (searchStr.length>0){
+            if (!selectedIndexIsOk&&index!=-1){
+                this.control.expandIndex(index);
+            }
+        }
+    }
 
     public setSelection(o:any){
         for(var i=0;i<this.trees.length;i++){

@@ -52,6 +52,7 @@ export class RegistryView extends workbench.AccorditionTreeView{
     setSelectedUrl(url:string){
         this.url=url;
     }
+    searchable=true;
 
     protected customizeAccordition(root: Accordition, node: IRegistry) {
         this.addTree("Libraries",node.libraries)
