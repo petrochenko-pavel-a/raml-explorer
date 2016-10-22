@@ -1999,6 +1999,7 @@ var ViewPart = (function () {
         this._title = _title;
         this.selection = [];
         this.selectionListeners = [];
+        console.log("Hello")
     }
     ViewPart.prototype.getHolder = function () {
         return this.holder;
