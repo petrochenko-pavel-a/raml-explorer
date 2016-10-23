@@ -96,13 +96,24 @@ export class RAMLTreeProvider implements workbench.ITreeContentProvider{
 export class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:IHighLevelNode;
-
+    protected versions:rrend.ApiWithVersions;
 
     constructor(private path:string,title:string="Overview")
     {
         super(title)
     }
 
+    setKnownVersions(r:rrend.ApiWithVersions){
+        this.versions=r;
+    }
+
+    setVersion(ver:string){
+        this.versions.versions.forEach(x=>{
+            if (x.version==ver){
+                this.setUrl(x.location);
+            }
+        })
+    }
     setUrl(url:string){
         this.path=url;
         this.node=null;
@@ -181,9 +192,9 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
     protected customizeAccordition(a: Accordition, node: any) {
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
-        var overview:string=nr.renderNodesOverview(this.api.attrs());
+        var overview:string=nr.renderNodesOverview(this.api.attrs(),this.versions);
         if (overview.length>0) {
-            a.add(new Label("Generic Info", overview))
+            a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
         }
 
         var groups=hl.elementGroups(this.api);
@@ -216,7 +227,6 @@ var details=new RAMLDetailsView("Details","Details");
 var regView=new rrend.RegistryView("API Registry")
 export function init(){
     var page=new workbench.Page("rest");
-    var rtv=new RAMLTreeView("");
 
     page.addView(details, "*", 100, workbench.Relation.LEFT);
     page.addView(regView,"Details",15,workbench.Relation.LEFT);
@@ -225,8 +235,16 @@ export function init(){
     regView.addSelectionListener({
         selectionChanged(v: any[]){
             if (v.length > 0) {
-                if (v[0].location) {
-                    ramlView.setUrl(v[0].location)
+                if (v[0] instanceof rrend.ApiWithVersions){
+                    var aw:rrend.ApiWithVersions=v[0];
+                    var sel:rrend.IRegistryObj=aw.versions[aw.versions.length-1];
+                    ramlView.setKnownVersions(aw);
+                    ramlView.setUrl(sel.location)
+                }
+                else {
+                    if (v[0].location) {
+                        ramlView.setUrl(v[0].location)
+                    }
                 }
             }
             else {
@@ -241,6 +259,10 @@ export function init(){
     }
     initSizes();
     window.onresize=initSizes;
+    var w:any=window;
+    w.openVersion=function(x){
+        ramlView.setVersion(x);
+    }
 }
 ramlView.addSelectionListener({
     selectionChanged(v: any[]){

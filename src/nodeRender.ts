@@ -1,5 +1,6 @@
 import  or=require("./objectRender")
 import hl=require("./hl")
+import reg=require("./registryRender")
 import IHighLevelNode=hl.IHighLevelNode;
 export function renderNodes(nodes:IHighLevelNode[]):string{
     var result:string[]=[];
@@ -15,6 +16,10 @@ export class HeaderRenderer{
     iconUrl: string
     version: string
     baseUrl: string
+
+    constructor(private versions?:reg.ApiWithVersions){
+
+    }
 
     consume(nodes:hl.IHighLevelNode[]):hl.IHighLevelNode[]{
         var result:hl.IHighLevelNode[]=[];
@@ -52,8 +57,21 @@ export class HeaderRenderer{
             result.push("<h4 style='display: inline'> "+this.title+"</h4>")
         }
         if (this.version!=null){
-            result.push(or.renderKeyValue("Version",this.version,false))
-
+            var mens=""
+            if (this.versions&&this.versions.versions.length>1){
+                mens=this.versions.versions.map(x=>`<li><a onclick="openVersion('${x.version}')">${x.version}</a></li>`).join("")
+                result.push(`<h5>Version: <div class="btn-group">
+                  <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    ${this.version} <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    ${mens}
+                  </ul>
+                </div></h5>`)
+            }
+            else {
+                result.push(or.renderKeyValue("Version", this.version, false))
+            }
         }
         if (this.baseUrl!=null){
             result.push(or.renderKeyValue("Base url",this.baseUrl,false))
@@ -62,11 +80,11 @@ export class HeaderRenderer{
     }
 }
 
-export function renderNodesOverview(nodes:IHighLevelNode[]):string{
+export function renderNodesOverview(nodes:IHighLevelNode[],v?:reg.ApiWithVersions):string{
     var result:string[]=[];
     var obj:any={};
     nodes=hl.prepareNodes(nodes);
-    var hr=new HeaderRenderer();
+    var hr=new HeaderRenderer(v);
     nodes=hr.consume(nodes);
     result.push(hr.render())
     nodes.forEach(x=>result.push(renderNode(x)));

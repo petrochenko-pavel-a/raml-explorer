@@ -10,7 +10,8 @@ function renderNodes(nodes) {
 }
 exports.renderNodes = renderNodes;
 var HeaderRenderer = (function () {
-    function HeaderRenderer() {
+    function HeaderRenderer(versions) {
+        this.versions = versions;
     }
     HeaderRenderer.prototype.consume = function (nodes) {
         var _this = this;
@@ -47,7 +48,14 @@ var HeaderRenderer = (function () {
             result.push("<h4 style='display: inline'> " + this.title + "</h4>");
         }
         if (this.version != null) {
-            result.push(or.renderKeyValue("Version", this.version, false));
+            var mens = "";
+            if (this.versions && this.versions.versions.length > 1) {
+                mens = this.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("");
+                result.push("<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + this.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + mens + "\n                  </ul>\n                </div></h5>");
+            }
+            else {
+                result.push(or.renderKeyValue("Version", this.version, false));
+            }
         }
         if (this.baseUrl != null) {
             result.push(or.renderKeyValue("Base url", this.baseUrl, false));
@@ -57,11 +65,11 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes) {
+function renderNodesOverview(nodes, v) {
     var result = [];
     var obj = {};
     nodes = hl.prepareNodes(nodes);
-    var hr = new HeaderRenderer();
+    var hr = new HeaderRenderer(v);
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });

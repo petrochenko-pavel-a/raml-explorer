@@ -506,6 +506,11 @@ export class TreeView extends ViewPart{
         return this.afterSearch(s);
     }
 
+    /**
+     *
+     * @param s
+     * @returns {boolean}
+     */
     private afterSearch(s: string) {
         var lst = document.getElementById(this.treeId).getElementsByTagName("li")
         var parents = {}

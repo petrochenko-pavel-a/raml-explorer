@@ -687,7 +687,8 @@ function renderNodes(nodes) {
 }
 exports.renderNodes = renderNodes;
 var HeaderRenderer = (function () {
-    function HeaderRenderer() {
+    function HeaderRenderer(versions) {
+        this.versions = versions;
     }
     HeaderRenderer.prototype.consume = function (nodes) {
         var _this = this;
@@ -724,7 +725,14 @@ var HeaderRenderer = (function () {
             result.push("<h4 style='display: inline'> " + this.title + "</h4>");
         }
         if (this.version != null) {
-            result.push(or.renderKeyValue("Version", this.version, false));
+            var mens = "";
+            if (this.versions && this.versions.versions.length > 1) {
+                mens = this.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("");
+                result.push("<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + this.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + mens + "\n                  </ul>\n                </div></h5>");
+            }
+            else {
+                result.push(or.renderKeyValue("Version", this.version, false));
+            }
         }
         if (this.baseUrl != null) {
             result.push(or.renderKeyValue("Base url", this.baseUrl, false));
@@ -734,11 +742,11 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes) {
+function renderNodesOverview(nodes, v) {
     var result = [];
     var obj = {};
     nodes = hl.prepareNodes(nodes);
-    var hr = new HeaderRenderer();
+    var hr = new HeaderRenderer(v);
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
@@ -1057,6 +1065,17 @@ var RAMLTreeView = (function (_super) {
         this.searchable = true;
         this.trees = [];
     }
+    RAMLTreeView.prototype.setKnownVersions = function (r) {
+        this.versions = r;
+    };
+    RAMLTreeView.prototype.setVersion = function (ver) {
+        var _this = this;
+        this.versions.versions.forEach(function (x) {
+            if (x.version == ver) {
+                _this.setUrl(x.location);
+            }
+        });
+    };
     RAMLTreeView.prototype.setUrl = function (url) {
         this.path = url;
         this.node = null;
@@ -1123,9 +1142,9 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs());
+        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions);
         if (overview.length > 0) {
-            a.add(new controls_1.Label("Generic Info", overview));
+            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
         var groups = hl.elementGroups(this.api);
         this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
@@ -1157,15 +1176,22 @@ var details = new RAMLDetailsView("Details", "Details");
 var regView = new rrend.RegistryView("API Registry");
 function init() {
     var page = new workbench.Page("rest");
-    var rtv = new RAMLTreeView("");
     page.addView(details, "*", 100, workbench.Relation.LEFT);
     page.addView(regView, "Details", 15, workbench.Relation.LEFT);
     page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
     regView.addSelectionListener({
         selectionChanged: function (v) {
             if (v.length > 0) {
-                if (v[0].location) {
-                    exports.ramlView.setUrl(v[0].location);
+                if (v[0] instanceof rrend.ApiWithVersions) {
+                    var aw = v[0];
+                    var sel = aw.versions[aw.versions.length - 1];
+                    exports.ramlView.setKnownVersions(aw);
+                    exports.ramlView.setUrl(sel.location);
+                }
+                else {
+                    if (v[0].location) {
+                        exports.ramlView.setUrl(v[0].location);
+                    }
                 }
             }
             else {
@@ -1179,6 +1205,10 @@ function init() {
     }
     initSizes();
     window.onresize = initSizes;
+    var w = window;
+    w.openVersion = function (x) {
+        exports.ramlView.setVersion(x);
+    };
 }
 exports.init = init;
 exports.ramlView.addSelectionListener({
@@ -1255,6 +1285,68 @@ var RegistryDetailsView = (function (_super) {
     return RegistryDetailsView;
 }(workbench.ViewPart));
 exports.RegistryDetailsView = RegistryDetailsView;
+var GroupNode = (function () {
+    function GroupNode() {
+    }
+    return GroupNode;
+}());
+var ApiWithVersions = (function () {
+    function ApiWithVersions() {
+    }
+    return ApiWithVersions;
+}());
+exports.ApiWithVersions = ApiWithVersions;
+var RegistryContentProvider = (function () {
+    function RegistryContentProvider() {
+    }
+    RegistryContentProvider.prototype.elements = function (i) {
+        return i;
+    };
+    RegistryContentProvider.prototype.children = function (i) {
+        if (i instanceof GroupNode) {
+            return i.children;
+        }
+        return [];
+    };
+    return RegistryContentProvider;
+}());
+function groupBy(els, f) {
+    var result = {};
+    els.forEach(function (x) {
+        var group = f(x);
+        if (result[group]) {
+            result[group].push(x);
+        }
+        else {
+            result[group] = [];
+            result[group].push(x);
+        }
+    });
+    return result;
+}
+function buildRegistryGroups(els) {
+    var groups = groupBy(els, function (x) { return x.org; });
+    var groupNodes = [];
+    Object.keys(groups).forEach(function (gr) {
+        var g = new GroupNode();
+        g.name = gr;
+        g.children = mergeVersions(groups[gr]);
+        groupNodes.push(g);
+    });
+    return groupNodes;
+}
+function mergeVersions(els) {
+    var groups = groupBy(els, function (x) { return x.name; });
+    var groupNodes = [];
+    Object.keys(groups).forEach(function (gr) {
+        var g = new ApiWithVersions();
+        g.name = gr;
+        g.versions = groups[gr];
+        g.icon = g.versions[0].icon;
+        groupNodes.push(g);
+    });
+    return groupNodes;
+}
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
@@ -1263,7 +1355,7 @@ var RegistryView = (function (_super) {
     }
     RegistryView.prototype.load = function () {
         var _this = this;
-        loadData("https://raw.githubusercontent.com/apiregistry/registry/master/registry.json", function (data, s) {
+        loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
             console.log(data);
             _this.node = data;
             _this.refresh();
@@ -1275,7 +1367,7 @@ var RegistryView = (function (_super) {
     RegistryView.prototype.customizeAccordition = function (root, node) {
         var _this = this;
         this.addTree("Libraries", node.libraries);
-        this.addTree("Apis", node.apis);
+        this.addTree("Apis", buildRegistryGroups(node.apis));
         var v = this;
         this.getHolder().setContextMenu({
             items: [
@@ -1301,10 +1393,13 @@ var RegistryView = (function (_super) {
         }
     };
     RegistryView.prototype.customize = function (tree) {
-        tree.setContentProvider(new workbench.ArrayContentProvider());
+        tree.setContentProvider(new RegistryContentProvider());
         tree.setLabelProvider({
             label: function (e) {
                 if (e.name) {
+                    if (e.icon) {
+                        return "<img src='" + e.icon + "' /> " + e.name + "";
+                    }
                     return "" + e.name + "";
                 }
                 else {
@@ -1999,7 +2094,6 @@ var ViewPart = (function () {
         this._title = _title;
         this.selection = [];
         this.selectionListeners = [];
-        console.log("Hello")
     }
     ViewPart.prototype.getHolder = function () {
         return this.holder;

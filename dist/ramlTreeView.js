@@ -94,6 +94,17 @@ var RAMLTreeView = (function (_super) {
         this.searchable = true;
         this.trees = [];
     }
+    RAMLTreeView.prototype.setKnownVersions = function (r) {
+        this.versions = r;
+    };
+    RAMLTreeView.prototype.setVersion = function (ver) {
+        var _this = this;
+        this.versions.versions.forEach(function (x) {
+            if (x.version == ver) {
+                _this.setUrl(x.location);
+            }
+        });
+    };
     RAMLTreeView.prototype.setUrl = function (url) {
         this.path = url;
         this.node = null;
@@ -160,9 +171,9 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs());
+        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions);
         if (overview.length > 0) {
-            a.add(new controls_1.Label("Generic Info", overview));
+            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
         var groups = hl.elementGroups(this.api);
         this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
@@ -194,15 +205,22 @@ var details = new RAMLDetailsView("Details", "Details");
 var regView = new rrend.RegistryView("API Registry");
 function init() {
     var page = new workbench.Page("rest");
-    var rtv = new RAMLTreeView("");
     page.addView(details, "*", 100, workbench.Relation.LEFT);
     page.addView(regView, "Details", 15, workbench.Relation.LEFT);
     page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
     regView.addSelectionListener({
         selectionChanged: function (v) {
             if (v.length > 0) {
-                if (v[0].location) {
-                    exports.ramlView.setUrl(v[0].location);
+                if (v[0] instanceof rrend.ApiWithVersions) {
+                    var aw = v[0];
+                    var sel = aw.versions[aw.versions.length - 1];
+                    exports.ramlView.setKnownVersions(aw);
+                    exports.ramlView.setUrl(sel.location);
+                }
+                else {
+                    if (v[0].location) {
+                        exports.ramlView.setUrl(v[0].location);
+                    }
                 }
             }
             else {
@@ -216,6 +234,10 @@ function init() {
     }
     initSizes();
     window.onresize = initSizes;
+    var w = window;
+    w.openVersion = function (x) {
+        exports.ramlView.setVersion(x);
+    };
 }
 exports.init = init;
 exports.ramlView.addSelectionListener({

@@ -21,11 +21,14 @@ function loadData(url:string, c:(t:any,e?:number)=>void){
     }
 }
 
-interface IRegistryObj{
+export interface IRegistryObj{
     name: string
     tags?: string[]
     category: string
     location?: string
+    org?: string
+    version?:string
+    icon?:string
 }
 
 interface IRegistry{
@@ -39,10 +42,70 @@ export class RegistryDetailsView extends workbench.ViewPart{
     }
 }
 
+class GroupNode{
+    name: string
+    children: any
+}
+export class ApiWithVersions{
+    name: string
+    icon: string
+    versions: IRegistryObj[]
+}
+class RegistryContentProvider implements workbench.ITreeContentProvider{
+    elements(i:any):any[]{
+        return i;
+    }
+    children(i:any):any[]{
+        if (i instanceof GroupNode){
+            return i.children;
+        }
+        return []
+    }
+}
+function groupBy(els:any[], f:(x)=>string){
+    var result={};
+    els.forEach(x=>{
+        var group=f(x);
+        if (result[group]){
+            result[group].push(x);
+        }
+        else {
+            result[group] = []
+            result[group].push(x);
+        }
+    })
+    return result;
+}
+
+function buildRegistryGroups(els:IRegistryObj[]){
+    var groups=groupBy(els,x=>x.org);
+    var groupNodes:GroupNode[]=[];
+    Object.keys(groups).forEach(gr=>{
+        var g=new GroupNode();
+        g.name=gr;
+        g.children=mergeVersions(groups[gr]);
+        groupNodes.push(g);
+    })
+    return groupNodes;
+}
+function mergeVersions(els:IRegistryObj[]):ApiWithVersions[]{
+    var groups=groupBy(els,x=>x.name);
+    var groupNodes:ApiWithVersions[]=[];
+    Object.keys(groups).forEach(gr=>{
+        var g=new ApiWithVersions();
+        g.name=gr;
+
+        g.versions=groups[gr];
+        g.icon=g.versions[0].icon;
+        groupNodes.push(g);
+    })
+    return groupNodes;
+}
+
 export class RegistryView extends workbench.AccorditionTreeView{
 
     protected load() {
-        loadData("https://raw.githubusercontent.com/apiregistry/registry/master/registry.json",(data:any,s:number)=>{
+        loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json",(data:any,s:number)=>{
             console.log(data);
             this.node=data;
             this.refresh();
@@ -56,7 +119,7 @@ export class RegistryView extends workbench.AccorditionTreeView{
 
     protected customizeAccordition(root: Accordition, node: IRegistry) {
         this.addTree("Libraries",node.libraries)
-        this.addTree("Apis",node.apis)
+        this.addTree("Apis",buildRegistryGroups(node.apis))
         var v=this;
         this.getHolder().setContextMenu({
             items:[
@@ -83,11 +146,13 @@ export class RegistryView extends workbench.AccorditionTreeView{
     }
 
     protected customize(tree: workbench.TreeView) {
-        tree.setContentProvider(new workbench.ArrayContentProvider())
+        tree.setContentProvider(new RegistryContentProvider())
         tree.setLabelProvider({
             label(e){
                 if (e.name) {
-
+                     if (e.icon){
+                         return "<img src='"+e.icon+"' /> "+e.name+"";
+                     }
                     return ""+e.name+"";
                 }
                 else{
@@ -95,6 +160,7 @@ export class RegistryView extends workbench.AccorditionTreeView{
                     return c;
                 }
             }
+
         })
     }
 }
