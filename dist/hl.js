@@ -162,7 +162,14 @@ function elementGroups(hl) {
 exports.elementGroups = elementGroups;
 function loadApi(path, f) {
     RAML.Parser.loadApi(path).then(function (api) {
-        root = api.expand ? api.expand().highLevel() : api.highLevel();
+        var hl = api.highLevel();
+        var tr = hl.elements().filter(function (x) { return x.property().nameId() == "traits" || x.property().nameId() == "resourceTypes"; });
+        if (tr.length > 0) {
+            root = api.expand ? api.expand().highLevel() : api.highLevel();
+        }
+        else {
+            root = hl;
+        }
         libs = null;
         f(root);
     });
@@ -319,7 +326,8 @@ var Locals = {
 };
 var PLocals = {
     "usage": 2,
-    "description": 150
+    "description": 150,
+    "securedBy": -2
 };
 function group(n) {
     if (n.definition && n.definition()) {
@@ -366,6 +374,30 @@ function isSyntetic(x) {
     return false;
 }
 exports.isSyntetic = isSyntetic;
+function logicalStructure(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && (d.nameId() == "LogicalStructure")) {
+            var obj = asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return [];
+}
+exports.logicalStructure = logicalStructure;
+function enumDescriptions(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && (d.nameId() == "EnumDescriptions")) {
+            var obj = asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return null;
+}
+exports.enumDescriptions = enumDescriptions;
 function uriParameters(h) {
     var result = [];
     while (h != null && h.property() != null) {
@@ -419,6 +451,196 @@ function uriParameters(h) {
     return result;
 }
 exports.uriParameters = uriParameters;
+function gatherMethods(h, result) {
+    h.elements().forEach(function (x) {
+        var p = x.property();
+        if (p) {
+            if (p.nameId() == "resources") {
+                gatherMethods(x, result);
+            }
+            if (p.nameId() == "methods") {
+                result.push(x);
+            }
+        }
+    });
+}
+exports.gatherMethods = gatherMethods;
+var TreeLike = (function () {
+    function TreeLike(id) {
+        this.children = {};
+        this.values = [];
+        this.id = id;
+    }
+    TreeLike.prototype.addItem = function (items, position, i) {
+        if (position >= items.length) {
+            this.values.push(i);
+            return;
+        }
+        var name = items[position];
+        var ch = this.children[name];
+        if (!ch) {
+            ch = new TreeLike(name);
+            this.children[name] = ch;
+        }
+        ch.addItem(items, position + 1, i);
+    };
+    TreeLike.prototype.allChildren = function () {
+        var _this = this;
+        var result = [];
+        result = result.concat(this.values);
+        Object.keys(this.children).forEach(function (x) {
+            var c = _this.children[x];
+            result.push(c);
+        });
+        return result;
+    };
+    TreeLike.prototype.optimizeStructure = function () {
+        var _this = this;
+        var c = Object.keys(this.children);
+        Object.keys(this.children).forEach(function (x) {
+            var c = _this.children[x];
+            c.optimizeStructure();
+            var k = Object.keys(c.children);
+            if (k.length == 0 && c.values.length == 1) {
+                delete _this.children[x];
+                c.values.forEach(function (x) {
+                    if (x.$name) {
+                        x.$name = c.id + " " + x.$name;
+                    }
+                    else
+                        x.$name = c.id;
+                    _this.values.push(x);
+                });
+            }
+        });
+        if (this.values.length > 12) {
+            this.values = collapseValues(this.values);
+        }
+    };
+    return TreeLike;
+}());
+exports.TreeLike = TreeLike;
+function collapseValues(v) {
+    var labelToMethods = {};
+    v.forEach(function (m) {
+        var lab = label(m);
+        var words = lab.split(" ");
+        var num = 0;
+        words.forEach(function (x) {
+            if (x.length <= 3) {
+                return;
+            }
+            num++;
+            if (num == 1) {
+                return;
+            }
+            if (num > 7) {
+                return;
+            }
+            x = x.toLowerCase();
+            if (x.charAt(x.length - 1) == 's') {
+                x = x.substr(0, x.length - 1);
+            }
+            var r = labelToMethods[x];
+            if (!r) {
+                r = [];
+                labelToMethods[x] = r;
+            }
+            r.push(m);
+        });
+    });
+    Object.keys(labelToMethods).forEach(function (x) {
+        if (labelToMethods[x].length <= 1) {
+            delete labelToMethods[x];
+        }
+    });
+    var sorted = Object.keys(labelToMethods).sort(function (x, y) {
+        return labelToMethods[x].length - labelToMethods[y].length;
+    });
+    var q = new Map();
+    var result = [];
+    for (var i = sorted.length - 1; i >= 0; i--) {
+        var key = sorted[i];
+        var values = labelToMethods[key];
+        if (values.length <= 2) {
+            continue;
+        }
+        if (values.length < v.length - 2) {
+            var t = new TreeLike(key);
+            values.forEach(function (x) {
+                if (!q.has(x)) {
+                    t.values.push(x);
+                    q.set(x, 1);
+                }
+            });
+            if (t.values.length <= 2) {
+                t.values.forEach(function (x) { q.delete(x); });
+            }
+            else {
+                result.push(t);
+            }
+        }
+    }
+    v.forEach(function (x) {
+        if (!q.has(x)) {
+            result.push(x);
+        }
+    });
+    return result;
+}
+exports.collapseValues = collapseValues;
+function label(x) {
+    var a = x.attrs();
+    var b = null;
+    var result = "";
+    var pr = x.property();
+    var mm = x;
+    if (mm.label) {
+        return mm.label;
+    }
+    var isMethod = pr && pr.nameId() == "methods";
+    for (var i = 0; i < a.length; i++) {
+        if (a[i].name() == "displayName") {
+            var v = a[i].value();
+            if (x.$name) {
+                result = v + " " + x.$name;
+                break;
+            }
+            else {
+                result = v;
+                break;
+            }
+        }
+        if (isMethod && a[i].name() == "description") {
+            b = a[i].value();
+        }
+    }
+    if (!result) {
+        if (x.$name) {
+            return b + " " + x.$name;
+        }
+        result = b;
+    }
+    if (!result) {
+        result = x.name();
+    }
+    if (result.length > 60) {
+        result = result.substr(0, 50) + "...";
+    }
+    mm.label = result;
+    return result;
+}
+exports.label = label;
+function groupMethods(methods) {
+    var root = new TreeLike("");
+    methods.forEach(function (x) {
+        var structure = logicalStructure(x);
+        root.addItem(structure, 0, x);
+    });
+    root.optimizeStructure();
+    return root;
+}
+exports.groupMethods = groupMethods;
 function prepareNodes(nodes) {
     var nodesToRender = [];
     nodes.forEach(function (v) {

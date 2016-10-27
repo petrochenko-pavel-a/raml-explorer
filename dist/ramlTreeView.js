@@ -45,7 +45,7 @@ var RAMLDetailsView = (function (_super) {
     };
     RAMLDetailsView.prototype.innerRender = function (e) {
         e.style.overflow = "auto";
-        if (this._element) {
+        if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
                 var cnt = new tr.TypeRenderer(null, false).render(this._element);
             }
@@ -54,7 +54,7 @@ var RAMLDetailsView = (function (_super) {
                     var cnt = new rr.ResourceRenderer().render(this._element);
                 }
                 if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer(true, false, true).render(this._element);
+                    var cnt = new rr.MethodRenderer(true, true, false, true).render(this._element);
                 }
             }
             new controls_1.Label(this._element.name(), cnt).render(e);
@@ -62,6 +62,7 @@ var RAMLDetailsView = (function (_super) {
         else {
             e.innerHTML = "";
         }
+        $('[data-toggle="tooltip"]').tooltip();
     };
     return RAMLDetailsView;
 }(workbench.ViewPart));
@@ -70,6 +71,10 @@ var RAMLTreeProvider = (function () {
     function RAMLTreeProvider() {
     }
     RAMLTreeProvider.prototype.children = function (x) {
+        if (x instanceof hl.TreeLike) {
+            var c = x;
+            return c.allChildren();
+        }
         if (x instanceof hl.ProxyNode) {
             var pn = x;
             return pn.children();
@@ -85,6 +90,18 @@ var RAMLTreeProvider = (function () {
     return RAMLTreeProvider;
 }());
 exports.RAMLTreeProvider = RAMLTreeProvider;
+var colors = {
+    get: "#0f6ab4",
+    post: "#10a54a",
+    put: "#c5862b",
+    patch: "#c5862b",
+    delete: "#a41e22"
+};
+function methodKey(name) {
+    var color = "#10a54a";
+    color = colors[name];
+    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
+}
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
     function RAMLTreeView(path, title) {
@@ -115,22 +132,31 @@ var RAMLTreeView = (function (_super) {
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label: function (x) {
-                var a = x.attrs();
-                for (var i = 0; i < a.length; i++) {
-                    if (a[i].name() == "displayName") {
-                        return a[i].value();
-                    }
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    return t.id;
                 }
-                return "" + x.name();
+                var result = "";
+                var pr = x.property ? x.property() : null;
+                var isMethod = pr && pr.nameId() == "methods";
+                result = hl.label(x);
+                if (isMethod) {
+                    result = methodKey(x.name()) + result;
+                }
+                return result;
             },
             icon: function (x) {
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    return "glyphicon glyphicon-cloud";
+                }
                 if (x instanceof hl.ProxyNode) {
                     return "glyphicon glyphicon-tasks";
                 }
                 if (x.property().nameId() == "resources") {
                     return "glyphicon glyphicon-link";
                 }
-                return "glyphicon glyphicon-pencil";
+                return "";
             }
         });
     };
@@ -175,10 +201,25 @@ var RAMLTreeView = (function (_super) {
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
+        if (!this.devMode) {
+            libs = [];
+        }
         var groups = hl.elementGroups(this.api);
-        this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
-        this.renderArraySection("types", "Types", groups, libs);
-        this.renderArraySection("resources", "Resources", groups, libs);
+        var methods = [];
+        var ts = hl.gatherMethods(this.api, methods);
+        var mgroups = hl.groupMethods(methods);
+        var groupedMethods = mgroups.allChildren();
+        if (methods != null) {
+            groups["methods"] = groupedMethods;
+        }
+        if (this.devMode || this.api.definition().nameId() == "Library") {
+            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        }
+        this.renderArraySection("methods", "Operations", groups, libs);
+        this.renderArraySection("types", "Data Types", groups, libs);
+        if (this.devMode) {
+            this.renderArraySection("resources", "API Paths", groups, libs);
+        }
         var lt = null;
     };
     RAMLTreeView.prototype.load = function () {
@@ -189,6 +230,34 @@ var RAMLTreeView = (function (_super) {
             _this.refresh();
             showTitle(_this.api);
         });
+    };
+    RAMLTreeView.prototype.init = function (holder) {
+        holder.setContextMenu({
+            items: [
+                {
+                    title: "Back",
+                    run: function () {
+                        back();
+                    }
+                }
+            ]
+        });
+        var v = this;
+        holder.setToolbar({
+            items: [
+                {
+                    title: "",
+                    image: "glyphicon glyphicon-asterisk",
+                    checked: this.devMode,
+                    run: function () {
+                        v.devMode = !v.devMode;
+                        v.refresh();
+                        v.init(v.holder);
+                    }
+                }
+            ]
+        });
+        return _super.prototype.init.call(this, holder);
     };
     return RAMLTreeView;
 }(workbench.AccorditionTreeView));

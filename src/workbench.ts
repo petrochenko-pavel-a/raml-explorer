@@ -142,6 +142,9 @@ export class ToolbarRenderer{
                 button.classList.add("btn-primary")
             }
             button.textContent=x.title
+            if (x.image){
+                    button.innerHTML=`<span class="${x.image}">${x.title}</span>`
+            }
             if (x.run){
                 button.onclick=x.run
             }

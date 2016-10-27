@@ -191,7 +191,7 @@ export interface IHighLevelNode{
 declare var RAML:any;
 
 export interface ElementGroups{
-    [name:string]: IHighLevelNode[];
+    [name:string]: (IHighLevelNode|TreeLike)[];
 }
 
 export function elementGroups(hl:IHighLevelNode):ElementGroups{
@@ -210,7 +210,14 @@ export function elementGroups(hl:IHighLevelNode):ElementGroups{
 export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void){
     RAML.Parser.loadApi(path).then(
         function (api) {
-            root=api.expand?api.expand().highLevel():api.highLevel();
+            var hl=api.highLevel();
+            var tr=hl.elements().filter(x=>x.property().nameId()=="traits"||x.property().nameId()=="resourceTypes");
+            if (tr.length>0) {
+                root = api.expand ? api.expand().highLevel() : api.highLevel();
+            }
+            else{
+                root=hl;
+            }
             libs=null;
             f(root);
         }
@@ -388,7 +395,8 @@ var Locals={
 }
 var PLocals={
     "usage": 2,
-    "description":150
+    "description":150,
+    "securedBy":-2
 }
 
 
@@ -435,6 +443,30 @@ export function isSyntetic(x:IHighLevelNode):boolean{
     }
     return false;
 }
+export function logicalStructure(x:IHighLevelNode):string[]{
+    var attrs=prepareNodes(x.attrs());
+    for (var i=0;i<attrs.length;i++){
+        var d=attrs[i].definition();
+        if (d&&(d.nameId()=="LogicalStructure")){
+            var obj= asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return [];
+}
+export function enumDescriptions(x:IHighLevelNode):string[]{
+    var attrs=prepareNodes(x.attrs());
+    for (var i=0;i<attrs.length;i++){
+        var d=attrs[i].definition();
+        if (d&&(d.nameId()=="EnumDescriptions")){
+            var obj= asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return null;
+}
+
+
 
 export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
     var result:IHighLevelNode[]=[];
@@ -491,6 +523,210 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
     }
     return result;
 }
+export function gatherMethods(h:IHighLevelNode,result:IHighLevelNode[]){
+    h.elements().forEach(x=>{
+        var p=x.property();
+        if (p) {
+            if (p.nameId() == "resources") {
+                gatherMethods(x, result);
+            }
+            if (p.nameId() == "methods") {
+                result.push(x);
+
+            }
+        }
+    })
+}
+export class TreeLike{
+
+    id: string
+
+    children: { [n:string]:TreeLike}={}
+
+    values: any[]=[];
+
+    constructor(id: string){
+        this.id=id;
+
+    }
+
+    addItem(items:string[],position:number,i:any){
+        if (position>=items.length){
+            this.values.push(i);
+            return;
+        }
+        var name=items[position];
+
+        var ch=this.children[name];
+        if (!ch){
+            ch=new TreeLike(name);
+            this.children[name]=ch;
+        }
+        ch.addItem(items,position+1,i);
+    }
+
+    allChildren():(TreeLike|IHighLevelNode)[]{
+        var result:(TreeLike|IHighLevelNode)[]=[];
+        result=result.concat(this.values);
+        Object.keys(this.children).forEach(x=>{
+            var c=this.children[x];
+
+            result.push(c);
+        })
+        return result;
+    }
+    optimizeStructure(){
+        var c=Object.keys(this.children);
+        Object.keys(this.children).forEach(x=>{
+            var c=this.children[x];
+            c.optimizeStructure();
+            var k=Object.keys(c.children);
+            if (k.length==0&&c.values.length==1){
+                delete this.children[x];
+                c.values.forEach(x=>{
+                    if (x.$name){
+                        x.$name=c.id+" "+x.$name;
+                    }
+                    else x.$name=c.id;
+                    this.values.push(x);
+                })
+            }
+        })
+        if (this.values.length>12){
+           this.values=collapseValues(this.values);
+        }
+    }
+}
+declare class Map{
+    set(k:any,v:any)
+    has(k:any):boolean
+    delete(k:any):boolean
+}
+export function collapseValues(v:any[]){
+    var labelToMethods:{ [name:string]: any[]}={};
+    v.forEach(m=>{
+        var lab=label(m);
+
+        var words=lab.split(" ");
+        var num=0;
+        words.forEach(x=>{
+
+            if (x.length<=3){
+              return;
+            }
+
+            num++;
+            if (num==1){
+                return;
+            }
+            if (num>7){
+                return;
+            }
+            x=x.toLowerCase();
+            if (x.charAt(x.length-1)=='s'){
+                x=x.substr(0,x.length-1);
+            }
+            var r=labelToMethods[x];
+            if (!r){
+                r=[];
+                labelToMethods[x]=r;
+            }
+            r.push(m);
+        })
+    })
+    Object.keys(labelToMethods).forEach(x=>{
+        if (labelToMethods[x].length<=1){
+            delete labelToMethods[x]
+        }
+    })
+    var sorted=Object.keys(labelToMethods).sort( (x,y)=>{
+        return labelToMethods[x].length-labelToMethods[y].length;
+    })
+    var q=new Map()
+    var result:any[]=[];
+    for (var i=sorted.length-1;i>=0;i--){
+        var key=sorted[i];
+        var values=labelToMethods[key];
+        if (values.length<=2){
+            continue;
+        }
+        if (values.length<v.length-2){
+            var t=new TreeLike(key);
+            values.forEach(x=> {
+                    if (!q.has(x)) {
+                        t.values.push(x);
+                        q.set(x,1);
+                    }
+                }
+            )
+            if (t.values.length<=2){
+                t.values.forEach(x=>{q.delete(x)})
+            }
+            else {
+                result.push(t);
+            }
+        }
+    }
+    v.forEach(x=>{
+        if (!q.has(x)){
+            result.push(x);
+        }
+    });
+    return result;
+}
+
+export function label(x:IHighLevelNode&{$name?:string}){
+    var a=x.attrs();
+    var b=null;
+    var result="";
+    var pr=x.property();
+    var mm:any=x;
+    if (mm.label){
+        return mm.label;
+    }
+    var isMethod=pr&&pr.nameId()=="methods";
+    for (var i=0;i<a.length;i++){
+
+        if (a[i].name()=="displayName"){
+            var v=a[i].value();
+            if (x.$name){
+                result=v+" "+x.$name;
+                break;
+            }
+            else{
+                result=v;
+                break;
+            }
+        }
+        if (isMethod&&a[i].name()=="description"){
+            b=a[i].value();
+        }
+    }
+    if (!result){
+        if (x.$name){
+            return b+" "+x.$name;
+        }
+        result=b;
+    }
+    if (!result){
+        result=x.name();
+    }
+    if (result.length>60){
+        result=result.substr(0,50)+"...";
+    }
+    mm.label=result;
+    return result;
+}
+
+export function groupMethods(methods:IHighLevelNode[]):TreeLike{
+    var root=new TreeLike("");
+    methods.forEach(x=>{
+        var structure=logicalStructure(x);
+        root.addItem(structure,0,x);
+    })
+    root.optimizeStructure()
+    return root;
+}
 
 export function prepareNodes(nodes:IHighLevelNode[]):IHighLevelNode[]{
     var nodesToRender:IHighLevelNode[]=[];
@@ -499,8 +735,11 @@ export function prepareNodes(nodes:IHighLevelNode[]):IHighLevelNode[]{
 
         if (v.property&&v.property()&&v.property().nameId()=="annotations"){
             var node:IHighLevelNode=v.value().toHighLevel();
+
             if (node!=null){
-                nodesToRender.push(node);
+
+                    nodesToRender.push(node);
+
             }
         }
         else{

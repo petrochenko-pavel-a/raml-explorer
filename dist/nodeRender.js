@@ -76,8 +76,12 @@ function renderNodesOverview(nodes, v) {
     return result.join("");
 }
 exports.renderNodesOverview = renderNodesOverview;
+var ToSkip = { "LogicalStructure": 1, "EnumDescriptions": 1, "is": 1, "Id": 1, "displayName": 1 };
 function renderNode(h, small) {
     if (small === void 0) { small = false; }
+    if (h.definition && ToSkip[h.definition().nameId()]) {
+        return "";
+    }
     var vl = h.value ? h.value() : null;
     if (!h.definition) {
         var obj = h.lowLevel().dumpToObject();
@@ -85,6 +89,28 @@ function renderNode(h, small) {
     }
     if (vl) {
         if (h.isAttr()) {
+            var pname = h.property().nameId();
+            if (ToSkip[pname]) {
+                return "";
+            }
+            if (pname == "securedBy") {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                var result = [];
+                if (Object.keys(v).length == 1) {
+                    if (h.parent() && (h.parent().parent() != null)) {
+                        var sd = h.root().elements().filter(function (x) { return x.property() && x.property().nameId() == "securitySchemes"; });
+                        if (sd.length == 1) {
+                            var toRend = v[Object.keys(v)[0]];
+                            var rs = [];
+                            Object.keys(toRend).forEach(function (x) {
+                                rs.push(or.renderKeyValue(x, toRend[x]));
+                            });
+                            return "<div>" + rs.join("") + "</div>";
+                        }
+                    }
+                }
+            }
             if (typeof vl === "object") {
                 if (!Array.isArray(vl)) {
                     var v = hl.asObject(h);
@@ -93,6 +119,9 @@ function renderNode(h, small) {
                     var svl = "" + vl;
                     svl = svl.replace(": null", "");
                     vl = svl.substr(1, svl.length - 2);
+                }
+                else {
+                    vl = vl.join(", ");
                 }
             }
             res = or.renderKeyValue(h.property().nameId(), vl, small);

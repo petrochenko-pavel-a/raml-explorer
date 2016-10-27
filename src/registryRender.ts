@@ -45,6 +45,7 @@ export class RegistryDetailsView extends workbench.ViewPart{
 class GroupNode{
     name: string
     children: any
+    icon: string
 }
 export class ApiWithVersions{
     name: string
@@ -86,7 +87,18 @@ function buildRegistryGroups(els:IRegistryObj[]){
         g.children=mergeVersions(groups[gr]);
         groupNodes.push(g);
     })
-    return groupNodes;
+    var result:(GroupNode| ApiWithVersions)[]=[];
+    groupNodes.forEach(x=>{
+        if (x.children.length==1){
+            result.push(x.children[0]);
+        }
+        else{
+            result.push(x);
+            var v=x.children[0];
+            x.icon=v.icon;
+        }
+    })
+    return result;
 }
 function mergeVersions(els:IRegistryObj[]):ApiWithVersions[]{
     var groups=groupBy(els,x=>x.name);

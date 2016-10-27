@@ -120,7 +120,31 @@ class Facets implements or.IColumn<hl.IProperty>{
                 if (skipProps[x.name()]) {
                     return;
                 }
-                rs.push(nr.renderNode(x,true)+"; ");
+                if (x.property&&x.property().nameId()=="enum"){
+                    var descs:string[]=hl.enumDescriptions(decl);
+                    if(descs){
+                        var vl:string[]=x.value();
+                        rs.push("enum: ")
+                        for (var i=0;i<vl.length;i++){
+                            if (descs[i]){
+                                rs.push(" <span style='color: darkred'>"+vl[i]+" </span>");
+                                rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='"+descs[i]+"'></span>");
+                                if (i!=vl.length-1){
+                                    rs.push(",")
+                                }
+                            }
+                            else{
+                                rs.push("<span style='color: darkred'>"+vl[i]+"</span>"+(i==vl.length-1?"":", "));
+                            }
+                        }
+
+                        return;
+                    }
+                }
+                var nd=nr.renderNode(x,true);
+                if (nd) {
+                    rs.push(nd+"; ");
+                }
             });
         }
         return rs.join("");
@@ -276,8 +300,9 @@ export class TypeRenderer{
         if (at.isArray()){
             var ct=at.componentType();
             if (ct){
-                result.push("Component type:")
+                result.push("<h5>Component type:")
                 result.push(renderTypeList([ct]).join(""));
+                result.push("</h5>")
                 ps=ct.allProperties();
                 if (ct.isObject()) {
                     renderPropertyTable("Component type properties", ps, result, ct)

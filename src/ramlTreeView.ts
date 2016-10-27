@@ -17,6 +17,7 @@ export function back(){
         init();
     }
 }
+declare var $:any
 export class RAMLDetailsView extends workbench.ViewPart{
 
     _element:hl.IHighLevelNode;
@@ -41,13 +42,15 @@ export class RAMLDetailsView extends workbench.ViewPart{
 
             ]
         })
+
         return super.init(holder);
     }
 
     innerRender(e:Element) {
         (<HTMLElement>e).style.overflow="auto"
-        if (this._element)
+        if (this._element&&this._element.property)
         {
+
             if (this._element.property().nameId()=="types"||this._element.property().nameId()=="annotationTypes"){
                 var cnt=new tr.TypeRenderer(null,false).render(this._element);
             }
@@ -56,7 +59,7 @@ export class RAMLDetailsView extends workbench.ViewPart{
                     var cnt=new rr.ResourceRenderer().render(this._element);
                 }
                 if (this._element.property().nameId()=="methods"){
-                    var cnt=new rr.MethodRenderer(true,false,true).render(this._element);
+                    var cnt=new rr.MethodRenderer(true,true,false,true).render(this._element);
                 }
 
                 // var cnt = `<h3>${this._element.name()}</h3><hr/>` + renderNodes(this._element.attrs());
@@ -73,12 +76,18 @@ export class RAMLDetailsView extends workbench.ViewPart{
         else{
             e.innerHTML="";
         }
+
+        $('[data-toggle="tooltip"]').tooltip();
     }
 }
 
 export class RAMLTreeProvider implements workbench.ITreeContentProvider{
 
     children(x:hl.IHighLevelNode){
+        if (x instanceof hl.TreeLike){
+            var c:hl.TreeLike=<any>x;
+            return c.allChildren();
+        }
         if (x instanceof hl.ProxyNode){
             var pn=<hl.ProxyNode>x;
             return pn.children();
@@ -92,11 +101,24 @@ export class RAMLTreeProvider implements workbench.ITreeContentProvider{
         return x;
     }
 }
+var colors={
 
+    get:"#0f6ab4",
+    post:"#10a54a",
+    put:"#c5862b",
+    patch:"#c5862b",
+    delete:"#a41e22"
+}
+function methodKey(name:string){
+    var color:string="#10a54a"
+    color=colors[name];
+    return `<span style="border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: ${color};font-size: small;padding: 3px"> </span>`
+}
 export class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:IHighLevelNode;
     protected versions:rrend.ApiWithVersions;
+    protected devMode: boolean
 
     constructor(private path:string,title:string="Overview")
     {
@@ -126,22 +148,31 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         tree.setContentProvider(new RAMLTreeProvider());
         tree.setLabelProvider({
             label(x:any){
-                var a=x.attrs();
-                for (var i=0;i<a.length;i++){
-                    if (a[i].name()=="displayName"){
-                        return a[i].value();
-                    }
+                if (x instanceof hl.TreeLike){
+                    var t:hl.TreeLike=x;
+                    return t.id;
                 }
-                return ""+x.name();
+                var result="";
+                var pr=x.property?x.property():null;
+                var isMethod=pr&&pr.nameId()=="methods";
+                result=hl.label(x);
+                if (isMethod){
+                    result=methodKey(x.name())+result;
+                }
+                return result;
             },
             icon(x:any){
+                if (x instanceof hl.TreeLike){
+                    var t:hl.TreeLike=x;
+                    return "glyphicon glyphicon-cloud";
+                }
                 if (x instanceof hl.ProxyNode){
                     return "glyphicon glyphicon-tasks"
                 }
                 if (x.property().nameId()=="resources"){
                     return "glyphicon glyphicon-link"
                 }
-                return "glyphicon glyphicon-pencil"
+                return ""
             }
         })
     }
@@ -192,15 +223,32 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
     protected customizeAccordition(a: Accordition, node: any) {
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
+        //this.devMode=true;
         var overview:string=nr.renderNodesOverview(this.api.attrs(),this.versions);
         if (overview.length>0) {
             a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
         }
-
+        if (!this.devMode){
+            libs=[]
+        }
         var groups=hl.elementGroups(this.api);
-        this.renderArraySection("annotationTypes","Annotation Types",groups,libs);
-        this.renderArraySection("types","Types",groups,libs);
-        this.renderArraySection("resources","Resources",groups,libs);
+        var methods:hl.IHighLevelNode[]=[];
+        var ts=hl.gatherMethods(this.api,methods);
+
+        var mgroups=hl.groupMethods(methods);
+        var groupedMethods=mgroups.allChildren();
+        if (methods!=null) {
+            groups["methods"] = groupedMethods;
+        }
+        if (this.devMode||this.api.definition().nameId()=="Library") {
+            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        }
+
+        this.renderArraySection("methods","Operations",groups,libs);
+        this.renderArraySection("types","Data Types",groups,libs);
+        if (this.devMode) {
+            this.renderArraySection("resources", "API Paths", groups, libs);
+        }
         var lt=null;
     }
     protected  load(){
@@ -212,6 +260,40 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
             showTitle(this.api)
         })
     }
+
+    init(holder: workbench.IPartHolder): any {
+        holder.setContextMenu({
+            items:[
+                {
+                    title:"Back",
+
+                    run(){
+                        back()
+                    }
+                }
+
+            ]
+        })
+        var v=this;
+        holder.setToolbar({
+                items:[
+                    {
+                        title:"",
+                        image:"glyphicon glyphicon-asterisk",
+                        checked: this.devMode,
+                        run(){
+                            v.devMode=!v.devMode;
+                            v.refresh();
+                            v.init(v.holder);
+                        }
+                    }
+                ]
+            }
+
+        )
+        return super.init(holder);
+    }
+
 
 }
 

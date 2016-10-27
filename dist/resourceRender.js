@@ -25,7 +25,7 @@ var ResourceRenderer = (function () {
             });
             result.push("</hr>");
             tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
-            result.push(new MethodRenderer(false, false, false).render(ms[0]));
+            result.push(new MethodRenderer(false, false, false, false).render(ms[0]));
         }
         else {
             result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
@@ -35,7 +35,7 @@ var ResourceRenderer = (function () {
             });
             tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
             if (ms.length > 0) {
-                result.push(renderTabFolder("Methods", ms, new MethodRenderer(ms.length == 1, false, true)));
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(false, ms.length == 1, false, true)));
             }
         }
         return result.join("");
@@ -43,6 +43,7 @@ var ResourceRenderer = (function () {
     return ResourceRenderer;
 }());
 exports.ResourceRenderer = ResourceRenderer;
+var num = 0;
 function renderTabFolder(caption, nodes, r) {
     if (nodes.length == 0) {
         return "";
@@ -51,34 +52,54 @@ function renderTabFolder(caption, nodes, r) {
         return r.render(nodes[0]);
     }
     var result = [];
-    result.push("<h3>" + caption + "</h3>");
+    if (caption) {
+        result.push("<h3>" + caption + "</h3>");
+    }
     result.push("<ul class=\"nav nav-tabs\">");
     var num = 0;
-    nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (x.name() + "Tab") + "\">" + x.name() + "</a></li>"); });
+    nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (escape(x.name()) + "Tab" + num) + "\">" + x.name() + "</a></li>"); });
     result.push("</ul>");
     num = 0;
     result.push("<div class=\"tab-content\">");
-    nodes.forEach(function (x) { return result.push("<div class=\"tab-pane fade " + (num++ == 0 ? "in active" : "") + "\" id=\"" + (x.name() + "Tab") + "\">" + r.render(x) + "</div>"); });
+    nodes.forEach(function (x) { return result.push("<div class=\"tab-pane fade " + (num++ == 0 ? "in active" : "") + "\" id=\"" + (escape(x.name()) + "Tab" + num) + "\">" + r.render(x) + "</div>"); });
     result.push('</div>');
+    num++;
     return result.join("");
 }
 exports.renderTabFolder = renderTabFolder;
+function escape(n) {
+    return n.replace("/", "_");
+}
 var MethodRenderer = (function () {
-    function MethodRenderer(isSingle, isAnnotationType, renderAttrs) {
+    function MethodRenderer(topLevel, isSingle, isAnnotationType, renderAttrs) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.topLevel = topLevel;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
         this.renderAttrs = renderAttrs;
     }
     MethodRenderer.prototype.render = function (h) {
         var result = [];
-        if (this.isSingle) {
+        if (this.topLevel) {
+            var dn = h.attr("displayName");
+            if (dn) {
+                result.push("<h3>" + dn.value() + "</h3>");
+            }
+            result.push("<h5>Resource: " + hl.resourceUrl(h.parent()) + " Method: " + h.name() + "</h5>");
+        }
+        else if (this.isSingle) {
             result.push("<h3>Method: " + h.name() + "</h3>");
         }
         if (this.renderAttrs) {
             hl.prepareNodes(h.attrs()).forEach(function (x) {
+                if (x.name() == "displayName") {
+                    return;
+                }
                 result.push(nr.renderNode(x, false));
             });
+        }
+        if (this.topLevel) {
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result);
         }
         tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result);
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);

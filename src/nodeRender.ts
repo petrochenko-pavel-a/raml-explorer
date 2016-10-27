@@ -90,8 +90,12 @@ export function renderNodesOverview(nodes:IHighLevelNode[],v?:reg.ApiWithVersion
     nodes.forEach(x=>result.push(renderNode(x)));
     return result.join("");
 }
-
+var ToSkip={"LogicalStructure":1,"EnumDescriptions":1,"is":1,"Id":1,"displayName":1}
 export function renderNode(h:IHighLevelNode,small:boolean=false):string{
+    if (h.definition&&ToSkip[h.definition().nameId()]){
+        return "";
+    }
+
     var vl=h.value?h.value():null;
     if (!h.definition){
         var obj=h.lowLevel().dumpToObject();
@@ -99,6 +103,30 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
     }
     if (vl){
         if (h.isAttr()){
+            var pname=h.property().nameId();
+            if (ToSkip[pname]){
+                return "";
+            }
+            if (pname=="securedBy"){
+                var v=hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                var result:string[]=[];
+                if (Object.keys(v).length==1){
+                    if (h.parent()&&(h.parent().parent()!=null)) {
+                        var sd = h.root().elements().filter(x=>x.property() && x.property().nameId() == "securitySchemes");
+                        if (sd.length == 1) {
+                            var toRend=v[Object.keys(v)[0]];
+                            var rs:string[]=[];
+                            Object.keys(toRend).forEach(x=>{
+                                rs.push(or.renderKeyValue(x,toRend[x]));
+                            })
+                            return "<div>"+rs.join("")+"</div>";
+                        }
+                    }
+                }
+
+
+            }
             if (typeof vl==="object"){
                 if (!Array.isArray(vl)) {
                     var v=hl.asObject(h);
@@ -107,6 +135,9 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
                     var svl=""+vl;
                     svl=svl.replace(": null","")
                     vl=svl.substr(1,svl.length-2);
+                }
+                else{
+                    vl=vl.join(", ")
                 }
             }
             res=or.renderKeyValue(h.property().nameId(),vl,small)
@@ -150,3 +181,4 @@ export class AttrProperty implements or.IColumn<IHighLevelNode>{
         return "";
     }
 }
+
