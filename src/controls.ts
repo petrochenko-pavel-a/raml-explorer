@@ -90,6 +90,11 @@ export class Accordition extends Composite{
     getSelectedIndex(){
         return this.selectedIndex;
     }
+    getSelectedTitle(){
+        if (this.selectedIndex!=undefined){
+            return this.children[this.selectedIndex].title();
+        }
+    }
 
     public expandIndex(index: number){
         var bids=this.bids;

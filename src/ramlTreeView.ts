@@ -155,9 +155,18 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
                 var result="";
                 var pr=x.property?x.property():null;
                 var isMethod=pr&&pr.nameId()=="methods";
+                var isType=pr&&pr.nameId()=="types";
+                var isAType=pr&&pr.nameId()=="annotationTypes";
+
                 result=hl.label(x);
                 if (isMethod){
                     result=methodKey(x.name())+result;
+                }
+                if (isType){
+                    result="<img src='typedef_obj.gif'/> "+result;
+                }
+                if (isAType){
+                    result="<img src='annotation_obj.gif'/>"+result;
                 }
                 return result;
             },

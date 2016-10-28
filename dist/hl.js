@@ -1,4 +1,6 @@
 "use strict";
+var keywords = require("./keywords");
+var keywords_1 = require("./keywords");
 var root;
 var libs;
 function findById(id) {
@@ -435,6 +437,10 @@ function uriParameters(h) {
                     allProperties: function () { return []; },
                     isObject: function () { return false; },
                     isArray: function () { return false; },
+                    isBoolean: function () { return false; },
+                    isBuiltIn: function () { return false; },
+                    isString: function () { return false; },
+                    isNumber: function () { return false; },
                     isUnion: function () { return false; },
                     componentType: function () { return null; },
                     union: function () { return null; },
@@ -524,23 +530,15 @@ function collapseValues(v) {
     var labelToMethods = {};
     v.forEach(function (m) {
         var lab = label(m);
-        var words = lab.split(" ");
-        var num = 0;
+        if (lab == "Get your deposits history") {
+            console.log("A");
+        }
+        var words = keywords.keywords(lab);
         words.forEach(function (x) {
             if (x.length <= 3) {
                 return;
             }
-            num++;
-            if (num == 1) {
-                return;
-            }
-            if (num > 7) {
-                return;
-            }
             x = x.toLowerCase();
-            if (x.charAt(x.length - 1) == 's') {
-                x = x.substr(0, x.length - 1);
-            }
             var r = labelToMethods[x];
             if (!r) {
                 r = [];
@@ -549,11 +547,9 @@ function collapseValues(v) {
             r.push(m);
         });
     });
-    Object.keys(labelToMethods).forEach(function (x) {
-        if (labelToMethods[x].length <= 1) {
-            delete labelToMethods[x];
-        }
-    });
+    keywords.tryMergeToPlurals(labelToMethods);
+    keywords.removeZombieGroups(labelToMethods);
+    keywords.removeHighlyIntersectedGroups(labelToMethods);
     var sorted = Object.keys(labelToMethods).sort(function (x, y) {
         return labelToMethods[x].length - labelToMethods[y].length;
     });
@@ -568,17 +564,10 @@ function collapseValues(v) {
         if (values.length < v.length - 2) {
             var t = new TreeLike(key);
             values.forEach(function (x) {
-                if (!q.has(x)) {
-                    t.values.push(x);
-                    q.set(x, 1);
-                }
+                t.values.push(x);
+                q.set(x, 1);
             });
-            if (t.values.length <= 2) {
-                t.values.forEach(function (x) { q.delete(x); });
-            }
-            else {
-                result.push(t);
-            }
+            result.push(t);
         }
     }
     v.forEach(function (x) {
@@ -622,11 +611,22 @@ function label(x) {
         result = b;
     }
     if (!result) {
-        result = x.name();
+        if (isMethod) {
+            result = resourceUrl(x.parent());
+        }
+        else {
+            result = x.name();
+        }
     }
-    if (result.length > 60) {
-        result = result.substr(0, 50) + "...";
+    if (isMethod && result.indexOf(' ') == -1) {
+        if (b) {
+            var tr = keywords_1.trimDesc(b);
+            if (tr.indexOf("...") == -1 && tr.indexOf(' ') != -1) {
+                result = tr;
+            }
+        }
     }
+    result = keywords.trimDesc(result);
     mm.label = result;
     return result;
 }

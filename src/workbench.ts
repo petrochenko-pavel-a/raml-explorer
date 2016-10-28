@@ -579,7 +579,7 @@ export class TreeView extends ViewPart{
                     view.afterSearch(view.pattern)
                 }
             },
-            collapseIcon:"glyphicon glyphicon-chevron-down",borderColor:"0xFFFFFF"});
+            collapseIcon:"glyphicon glyphicon-chevron-down",borderColor:"0xFFFFFF",levels:0});
         var sel= $('#'+treeId).treeview("getSelected");
         view.onSelection(sel.map(x=>x.original))
     }
@@ -771,11 +771,23 @@ export abstract class AccorditionTreeView extends ViewPart{
             this.load();
         }
         else{
+            var title=null;
+            if (this.control){
+                title=this.control.getSelectedTitle();
+
+            }
             var a = new controls.Accordition();
             this.control=a;
             this.trees=[];
             this.customizeAccordition(a,this.node);
             a.render(e);
+            if (title){
+                for (var i=0;i<this.control.children.length;i++){
+                    if (this.control.children[i].title()==title){
+                        this.control.expandIndex(i);
+                    }
+                }
+            }
         }
     }
 

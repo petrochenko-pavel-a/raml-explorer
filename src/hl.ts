@@ -1,4 +1,5 @@
-
+import keywords=require("./keywords")
+import {trimDesc} from "./keywords";
 export interface IProperty{
     nameId():string
     isKey(): boolean
@@ -12,7 +13,11 @@ export interface IType{
     facets():IProperty[]
     allProperties():IProperty[]
     isObject():boolean
+    isString():boolean
+    isBoolean():boolean
+    isNumber():boolean
     isArray(): boolean
+    isBuiltIn(): boolean
     isUnion(): boolean
     componentType(): IType
     union():IType
@@ -507,6 +512,10 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
                     allProperties(){return []},
                     isObject(){return false},
                     isArray(){return false},
+                    isBoolean(){return false},
+                    isBuiltIn(){return false},
+                    isString(){return false},
+                    isNumber(){return false},
                     isUnion(){return false},
                     componentType(){return null},
                     union(){return null},
@@ -606,26 +615,15 @@ export function collapseValues(v:any[]){
     var labelToMethods:{ [name:string]: any[]}={};
     v.forEach(m=>{
         var lab=label(m);
-
-        var words=lab.split(" ");
-        var num=0;
+        if( lab=="Get your deposits history"){
+            console.log("A")
+        }
+        var words=keywords.keywords(lab);
         words.forEach(x=>{
-
             if (x.length<=3){
               return;
             }
-
-            num++;
-            if (num==1){
-                return;
-            }
-            if (num>7){
-                return;
-            }
             x=x.toLowerCase();
-            if (x.charAt(x.length-1)=='s'){
-                x=x.substr(0,x.length-1);
-            }
             var r=labelToMethods[x];
             if (!r){
                 r=[];
@@ -634,11 +632,9 @@ export function collapseValues(v:any[]){
             r.push(m);
         })
     })
-    Object.keys(labelToMethods).forEach(x=>{
-        if (labelToMethods[x].length<=1){
-            delete labelToMethods[x]
-        }
-    })
+    keywords.tryMergeToPlurals(labelToMethods);
+    keywords.removeZombieGroups(labelToMethods);
+    keywords.removeHighlyIntersectedGroups(labelToMethods);
     var sorted=Object.keys(labelToMethods).sort( (x,y)=>{
         return labelToMethods[x].length-labelToMethods[y].length;
     })
@@ -653,18 +649,13 @@ export function collapseValues(v:any[]){
         if (values.length<v.length-2){
             var t=new TreeLike(key);
             values.forEach(x=> {
-                    if (!q.has(x)) {
+                    //if (!q.has(x)) {
                         t.values.push(x);
                         q.set(x,1);
-                    }
+                    //}
                 }
             )
-            if (t.values.length<=2){
-                t.values.forEach(x=>{q.delete(x)})
-            }
-            else {
-                result.push(t);
-            }
+            result.push(t);
         }
     }
     v.forEach(x=>{
@@ -709,11 +700,22 @@ export function label(x:IHighLevelNode&{$name?:string}){
         result=b;
     }
     if (!result){
-        result=x.name();
+        if (isMethod){
+            result=resourceUrl(x.parent())
+        }
+        else {
+            result = x.name();
+        }
     }
-    if (result.length>60){
-        result=result.substr(0,50)+"...";
+    if (isMethod&&result.indexOf(' ')==-1){
+        if (b){
+            var tr=trimDesc(b);
+            if (tr.indexOf("...")==-1&&tr.indexOf(' ')!=-1){
+                result=tr;
+            }
+        }
     }
+    result=keywords.trimDesc(result);
     mm.label=result;
     return result;
 }

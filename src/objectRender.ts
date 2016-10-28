@@ -41,6 +41,7 @@ export interface IColumn<T>{
     caption():string
     render(o:T,rowId?:string):string
     width?():string
+    nowrap?:boolean
 }
 
 export interface IRowStyleProvider<T>{
@@ -64,7 +65,9 @@ export class TableRenderer{
             var h=this.st.hidden(x)?"none":"table-row";
             result.push(`<tr id="${"tr"+mm}" level="${x.level()}" style="display: ${h}" onclick="toggleRow('${"tr"+mm}')">`)
             fp.forEach(p=> {
-                result.push("<td>")
+                var pn=p.nowrap;
+                var es=pn?"white-space: nowrap":"";
+                result.push(`<td style='${es}'>`)
                 result.push(p.render(x,"tr"+mm))
                 result.push("</td>")
             })
@@ -76,6 +79,7 @@ export class TableRenderer{
         header.push("<tr>")
         fp.forEach(p=> {
             var cw=p.width?"width: "+p.width():"";
+
             header.push(`<th style='border-bottom: inherit;${cw}'>`)
             header.push(p.caption())
             header.push("</th>")

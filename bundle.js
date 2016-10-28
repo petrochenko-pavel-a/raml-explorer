@@ -12,7 +12,7 @@ if (h && h.length > 1) {
     rv.showApi(url);
 }
 
-},{"./ramlTreeView":6,"./registryApp":7,"./workbench":11}],2:[function(require,module,exports){
+},{"./ramlTreeView":7,"./registryApp":8,"./workbench":12}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -103,6 +103,11 @@ var Accordition = (function (_super) {
     Accordition.prototype.getSelectedIndex = function () {
         return this.selectedIndex;
     };
+    Accordition.prototype.getSelectedTitle = function () {
+        if (this.selectedIndex != undefined) {
+            return this.children[this.selectedIndex].title();
+        }
+    };
     Accordition.prototype.expandIndex = function (index) {
         var bids = this.bids;
         var gids = this.gids;
@@ -190,6 +195,8 @@ exports.Accordition = Accordition;
 
 },{}],3:[function(require,module,exports){
 "use strict";
+var keywords = require("./keywords");
+var keywords_1 = require("./keywords");
 var root;
 var libs;
 function findById(id) {
@@ -626,6 +633,10 @@ function uriParameters(h) {
                     allProperties: function () { return []; },
                     isObject: function () { return false; },
                     isArray: function () { return false; },
+                    isBoolean: function () { return false; },
+                    isBuiltIn: function () { return false; },
+                    isString: function () { return false; },
+                    isNumber: function () { return false; },
                     isUnion: function () { return false; },
                     componentType: function () { return null; },
                     union: function () { return null; },
@@ -715,23 +726,15 @@ function collapseValues(v) {
     var labelToMethods = {};
     v.forEach(function (m) {
         var lab = label(m);
-        var words = lab.split(" ");
-        var num = 0;
+        if (lab == "Get your deposits history") {
+            console.log("A");
+        }
+        var words = keywords.keywords(lab);
         words.forEach(function (x) {
             if (x.length <= 3) {
                 return;
             }
-            num++;
-            if (num == 1) {
-                return;
-            }
-            if (num > 7) {
-                return;
-            }
             x = x.toLowerCase();
-            if (x.charAt(x.length - 1) == 's') {
-                x = x.substr(0, x.length - 1);
-            }
             var r = labelToMethods[x];
             if (!r) {
                 r = [];
@@ -740,11 +743,9 @@ function collapseValues(v) {
             r.push(m);
         });
     });
-    Object.keys(labelToMethods).forEach(function (x) {
-        if (labelToMethods[x].length <= 1) {
-            delete labelToMethods[x];
-        }
-    });
+    keywords.tryMergeToPlurals(labelToMethods);
+    keywords.removeZombieGroups(labelToMethods);
+    keywords.removeHighlyIntersectedGroups(labelToMethods);
     var sorted = Object.keys(labelToMethods).sort(function (x, y) {
         return labelToMethods[x].length - labelToMethods[y].length;
     });
@@ -759,17 +760,10 @@ function collapseValues(v) {
         if (values.length < v.length - 2) {
             var t = new TreeLike(key);
             values.forEach(function (x) {
-                if (!q.has(x)) {
-                    t.values.push(x);
-                    q.set(x, 1);
-                }
+                t.values.push(x);
+                q.set(x, 1);
             });
-            if (t.values.length <= 2) {
-                t.values.forEach(function (x) { q.delete(x); });
-            }
-            else {
-                result.push(t);
-            }
+            result.push(t);
         }
     }
     v.forEach(function (x) {
@@ -813,11 +807,22 @@ function label(x) {
         result = b;
     }
     if (!result) {
-        result = x.name();
+        if (isMethod) {
+            result = resourceUrl(x.parent());
+        }
+        else {
+            result = x.name();
+        }
     }
-    if (result.length > 60) {
-        result = result.substr(0, 50) + "...";
+    if (isMethod && result.indexOf(' ') == -1) {
+        if (b) {
+            var tr = keywords_1.trimDesc(b);
+            if (tr.indexOf("...") == -1 && tr.indexOf(' ') != -1) {
+                result = tr;
+            }
+        }
     }
+    result = keywords.trimDesc(result);
     mm.label = result;
     return result;
 }
@@ -896,7 +901,288 @@ exports.collapseScalarArrays = function (nodesToRender) {
     return resultNodes;
 };
 
-},{}],4:[function(require,module,exports){
+},{"./keywords":4}],4:[function(require,module,exports){
+"use strict";
+function isLetter(c) {
+    return c.toLowerCase() != c.toUpperCase();
+}
+var digits = {
+    "0": true,
+    "1": true,
+    "2": true,
+    "3": true,
+    "4": true,
+    "5": true,
+    "6": true,
+    "7": true,
+    "8": true,
+    "9": true,
+};
+var blackList = {};
+function isDigit(c) {
+    return digits[c];
+}
+var list = ["that",
+    "with",
+    "they",
+    "have",
+    "this",
+    "from",
+    "what",
+    "some",
+    "other",
+    "were",
+    "there",
+    "when",
+    "your",
+    "said",
+    "each",
+    "which",
+    "their",
+    "will",
+    "about",
+    "many",
+    "then",
+    "them",
+    "would",
+    "these",
+    "thing",
+    "more",
+    "could",
+    "come",
+    "most",
+    "over",
+    "know",
+    "than",
+    "been",
+    "where",
+    "after",
+    "back",
+    "every",
+    "good",
+    "under",
+    "very",
+    "through",
+    "before",
+    "also"];
+list.forEach(function (x) {
+    blackList[x] = 1;
+});
+function keywords(s, ignoreFirst) {
+    if (ignoreFirst === void 0) { ignoreFirst = true; }
+    var words = [];
+    var cword = null;
+    for (var i = 0; i < s.length; i++) {
+        var c = s.charAt(i);
+        if (isLetter(c) || isDigit(c) || ((c != ' ' && c != '\r' && c != '\n') && cword != null && i < s.length - 1 && (isLetter(s.charAt(i + 1) || isDigit(s.charAt(i + 1)))))) {
+            if (cword == null) {
+                cword = [];
+            }
+            cword.push(c);
+        }
+        else {
+            if (cword != null) {
+                if (ignoreFirst) {
+                    ignoreFirst = false;
+                }
+                else {
+                    var cwordString = cword.join("");
+                    if (cword.length > 3) {
+                        if (!blackList[cwordString]) {
+                            words.push(cwordString);
+                            if (words.length > 5) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            cword = null;
+        }
+    }
+    if (cword != null) {
+        var cwordString = cword.join("");
+        if (cword.length > 3) {
+            if (!blackList[cwordString]) {
+                words.push(cwordString);
+            }
+        }
+    }
+    return words;
+}
+exports.keywords = keywords;
+function removeZombieGroups(labelToMethods) {
+    Object.keys(labelToMethods).forEach(function (x) {
+        if (labelToMethods[x].length <= 2) {
+            delete labelToMethods[x];
+        }
+    });
+}
+exports.removeZombieGroups = removeZombieGroups;
+var methodToKeyWords = function (labelToMethods) {
+    var methodToKeywords = new Map();
+    Object.keys(labelToMethods).forEach(function (x) {
+        labelToMethods[x].forEach(function (m) {
+            if (methodToKeywords.has(m)) {
+                methodToKeywords.get(m).push(x);
+            }
+            else {
+                var s = [x];
+                methodToKeywords.set(m, s);
+            }
+        });
+    });
+    return methodToKeywords;
+};
+function removeHighlyIntersectedGroups(labelToMethods) {
+    var keys = Object.keys(labelToMethods);
+    var methodToKeywords = methodToKeyWords(labelToMethods);
+    var changed = false;
+    keys.forEach(function (x) {
+        var methods = labelToMethods[x];
+        var ks = null;
+        methods.forEach(function (m) {
+            var keywords = methodToKeywords.get(m);
+            if (ks == null) {
+                ks = keywords;
+            }
+            else {
+                ks = ks.filter(function (x) { return keywords.indexOf(x) != -1; });
+            }
+        });
+        ks = ks.filter(function (w) { return w != x; });
+        if (ks.length > 0) {
+            var maxGroup = null;
+            ks.forEach(function (g) {
+                var gm = labelToMethods[g];
+                if (!gm) {
+                    return;
+                }
+                if (maxGroup == null) {
+                    maxGroup = g;
+                }
+                else if (labelToMethods[maxGroup].length < gm.length) {
+                    maxGroup = g;
+                }
+            });
+            if (maxGroup) {
+                var ms = labelToMethods[maxGroup];
+                if (ms.length == methods.length) {
+                }
+                delete labelToMethods[x];
+                changed = true;
+            }
+        }
+    });
+    if (changed) {
+        methodToKeywords = methodToKeyWords(labelToMethods);
+    }
+    var sorted = Object.keys(labelToMethods).sort(function (x, y) {
+        return labelToMethods[x].length - labelToMethods[y].length;
+    });
+    sorted.forEach(function (x) {
+        var intersectionCount = 0;
+        var methods = labelToMethods[x];
+        if (!methods) {
+            return;
+        }
+        methods.forEach(function (m) {
+            var kv = methodToKeywords.get(m);
+            if (kv.length > 1) {
+                intersectionCount++;
+            }
+        });
+        var total = methods.length;
+        var remove = 0;
+        var stat;
+        if (total < 4) {
+            stat = intersectionCount / total >= 0.55;
+        }
+        else {
+            stat = intersectionCount / total > 0.84;
+        }
+        if (stat) {
+            delete labelToMethods[x];
+            methodToKeywords = methodToKeyWords(labelToMethods);
+        }
+    });
+}
+exports.removeHighlyIntersectedGroups = removeHighlyIntersectedGroups;
+function tryMergeToPlurals(val) {
+    Object.keys(val).forEach(function (x) {
+        if (x.charAt(x.length - 1) == 's') {
+            var op1 = x.substring(0, x.length - 1);
+            if (val[op1]) {
+                val[x] = val[x].concat(val[op1]);
+                delete val[op1];
+                return;
+            }
+            if (op1.charAt(op1.length - 1) == 'e') {
+                op1 = x.substring(0, op1.length - 1);
+            }
+            if (val[op1]) {
+                val[x] = val[x].concat(val[op1]);
+                delete val[op1];
+                return;
+            }
+            if (op1.charAt(op1.length - 1) == 'i') {
+                op1 = x.substring(0, op1.length - 1) + "y";
+            }
+            if (val[op1]) {
+                val[x] = val[x].concat(val[op1]);
+                delete val[op1];
+            }
+        }
+    });
+}
+exports.tryMergeToPlurals = tryMergeToPlurals;
+function trimDesc(s) {
+    var words = [];
+    var cword = null;
+    if (s.charAt(0) == '[') {
+        var ll = s.indexOf(']');
+        if (ll != -1) {
+            return s.substring(1, ll);
+        }
+    }
+    for (var i = 0; i < s.length; i++) {
+        var c = s.charAt(i);
+        if (isLetter(c) || isDigit(c)) {
+            if (cword == null) {
+                cword = [];
+            }
+            cword.push(c);
+        }
+        else {
+            if (cword != null) {
+                var cwordString = cword.join("");
+                if (cword.length > 3) {
+                    if (!blackList[cwordString]) {
+                        words.push(cwordString);
+                    }
+                }
+            }
+            cword = null;
+            if (c == '(') {
+                if (words.length >= 3) {
+                    return s.substring(0, i);
+                }
+            }
+            if (c == '.' || c == ';' || c == '\n' || c == '\r' || c == "<") {
+                if (words.length >= 2) {
+                    return s.substring(0, i);
+                }
+            }
+            if (i > 50) {
+                return s.substring(0, i) + "...";
+            }
+        }
+    }
+    return s;
+}
+exports.trimDesc = trimDesc;
+
+},{}],5:[function(require,module,exports){
 "use strict";
 var or = require("./objectRender");
 var hl = require("./hl");
@@ -1066,7 +1352,7 @@ var AttrProperty = (function () {
 }());
 exports.AttrProperty = AttrProperty;
 
-},{"./hl":3,"./objectRender":5}],5:[function(require,module,exports){
+},{"./hl":3,"./objectRender":6}],6:[function(require,module,exports){
 "use strict";
 var RenderMode;
 (function (RenderMode) {
@@ -1105,7 +1391,9 @@ var TableRenderer = (function () {
             var h = _this.st.hidden(x) ? "none" : "table-row";
             result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
             fp.forEach(function (p) {
-                result.push("<td>");
+                var pn = p.nowrap;
+                var es = pn ? "white-space: nowrap" : "";
+                result.push("<td style='" + es + "'>");
                 result.push(p.render(x, "tr" + mm));
                 result.push("</td>");
             });
@@ -1219,7 +1507,7 @@ function renderObj(v) {
 }
 exports.renderObj = renderObj;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1361,9 +1649,17 @@ var RAMLTreeView = (function (_super) {
                 var result = "";
                 var pr = x.property ? x.property() : null;
                 var isMethod = pr && pr.nameId() == "methods";
+                var isType = pr && pr.nameId() == "types";
+                var isAType = pr && pr.nameId() == "annotationTypes";
                 result = hl.label(x);
                 if (isMethod) {
                     result = methodKey(x.name()) + result;
+                }
+                if (isType) {
+                    result = "<img src='typedef_obj.gif'/> " + result;
+                }
+                if (isAType) {
+                    result = "<img src='annotation_obj.gif'/>" + result;
                 }
                 return result;
             },
@@ -1547,7 +1843,7 @@ function showApi(url) {
 }
 exports.showApi = showApi;
 
-},{"./controls":2,"./hl":3,"./nodeRender":4,"./registryRender":8,"./resourceRender":9,"./typeRender":10,"./workbench":11}],7:[function(require,module,exports){
+},{"./controls":2,"./hl":3,"./nodeRender":5,"./registryRender":9,"./resourceRender":10,"./typeRender":11,"./workbench":12}],8:[function(require,module,exports){
 "use strict";
 var workbench = require("./workbench");
 var rv = require("./ramlTreeView");
@@ -1576,7 +1872,7 @@ function showApi(s) {
 }
 exports.showApi = showApi;
 
-},{"./ramlTreeView":6,"./workbench":11}],8:[function(require,module,exports){
+},{"./ramlTreeView":7,"./workbench":12}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1744,7 +2040,7 @@ var RegistryView = (function (_super) {
 }(workbench.AccorditionTreeView));
 exports.RegistryView = RegistryView;
 
-},{"./registryApp":7,"./workbench":11}],9:[function(require,module,exports){
+},{"./registryApp":8,"./workbench":12}],10:[function(require,module,exports){
 "use strict";
 var hl = require("./hl");
 var tr = require("./typeRender");
@@ -1886,7 +2182,7 @@ var ResponseRenderer = (function () {
 }());
 exports.ResponseRenderer = ResponseRenderer;
 
-},{"./hl":3,"./nodeRender":4,"./typeRender":10}],10:[function(require,module,exports){
+},{"./hl":3,"./nodeRender":5,"./typeRender":11}],11:[function(require,module,exports){
 "use strict";
 var hl = require("./hl");
 var or = require("./objectRender");
@@ -1955,12 +2251,43 @@ function renderTypeLink(x) {
 }
 var NameColumn = (function () {
     function NameColumn() {
+        this.nowrap = true;
     }
     NameColumn.prototype.id = function () { return "name"; };
     NameColumn.prototype.caption = function () { return "Name"; };
     NameColumn.prototype.width = function () { return "15em;"; };
     NameColumn.prototype.render = function (p, rowId) {
         var rs = p.nameId();
+        var s = p.range();
+        if (p.local || (!s.isBuiltIn() && !s.isArray() && !s.isUnion())) {
+            while (s.superTypes().length == 1 && !s.isBuiltIn()) {
+                s = s.superTypes()[0];
+            }
+        }
+        if (p.range().isObject()) {
+            rs = "<img src='object.gif'/> " + rs;
+        }
+        if (p.range().isArray()) {
+            rs = "<img src='arraytype_obj.gif'/> " + rs;
+        }
+        else if (s.nameId() == "StringType") {
+            rs = "<img src='string.gif'/> " + rs;
+        }
+        else if (s.nameId() == "BooleanType") {
+            rs = "<img src='boolean.gif'/> " + rs;
+        }
+        else if (s.nameId() == "NumberType") {
+            rs = "<img src='number.png'/> " + rs;
+        }
+        else if (s.nameId() == "IntegerType") {
+            rs = "<img src='number.png'/> " + rs;
+        }
+        else if (s.nameId().indexOf("Date") != -1) {
+            rs = "<img src='date.gif'/> " + rs;
+        }
+        else if (s.nameId().indexOf("File") != -1) {
+            rs = "<img src='file.gif'/> " + rs;
+        }
         if (rs.length == 0) {
             rs = "additionalProperties";
         }
@@ -1974,7 +2301,7 @@ var NameColumn = (function () {
                 if (wp.recursive) {
                     st = "glyphicon-repeat";
                 }
-                rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span class=\"glyphicon " + st + "\"></span> ") + rs;
+                rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
             }
         }
         if (p.isRequired()) {
@@ -2257,7 +2584,7 @@ function renderParameters(name, ps, result) {
 }
 exports.renderParameters = renderParameters;
 
-},{"./hl":3,"./nodeRender":4,"./objectRender":5}],11:[function(require,module,exports){
+},{"./hl":3,"./nodeRender":5,"./objectRender":6}],12:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2712,7 +3039,7 @@ var TreeView = (function (_super) {
                     view.afterSearch(view.pattern);
                 }
             },
-            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF" });
+            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0 });
         var sel = $('#' + treeId).treeview("getSelected");
         view.onSelection(sel.map(function (x) { return x.original; }));
     };
@@ -2883,11 +3210,22 @@ var AccorditionTreeView = (function (_super) {
             this.load();
         }
         else {
+            var title = null;
+            if (this.control) {
+                title = this.control.getSelectedTitle();
+            }
             var a = new controls.Accordition();
             this.control = a;
             this.trees = [];
             this.customizeAccordition(a, this.node);
             a.render(e);
+            if (title) {
+                for (var i = 0; i < this.control.children.length; i++) {
+                    if (this.control.children[i].title() == title) {
+                        this.control.expandIndex(i);
+                    }
+                }
+            }
         }
     };
     return AccorditionTreeView;

@@ -88,6 +88,11 @@ var Accordition = (function (_super) {
     Accordition.prototype.getSelectedIndex = function () {
         return this.selectedIndex;
     };
+    Accordition.prototype.getSelectedTitle = function () {
+        if (this.selectedIndex != undefined) {
+            return this.children[this.selectedIndex].title();
+        }
+    };
     Accordition.prototype.expandIndex = function (index) {
         var bids = this.bids;
         var gids = this.gids;

@@ -36,7 +36,9 @@ var TableRenderer = (function () {
             var h = _this.st.hidden(x) ? "none" : "table-row";
             result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
             fp.forEach(function (p) {
-                result.push("<td>");
+                var pn = p.nowrap;
+                var es = pn ? "white-space: nowrap" : "";
+                result.push("<td style='" + es + "'>");
                 result.push(p.render(x, "tr" + mm));
                 result.push("</td>");
             });

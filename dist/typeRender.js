@@ -66,12 +66,43 @@ function renderTypeLink(x) {
 }
 var NameColumn = (function () {
     function NameColumn() {
+        this.nowrap = true;
     }
     NameColumn.prototype.id = function () { return "name"; };
     NameColumn.prototype.caption = function () { return "Name"; };
     NameColumn.prototype.width = function () { return "15em;"; };
     NameColumn.prototype.render = function (p, rowId) {
         var rs = p.nameId();
+        var s = p.range();
+        if (p.local || (!s.isBuiltIn() && !s.isArray() && !s.isUnion())) {
+            while (s.superTypes().length == 1 && !s.isBuiltIn()) {
+                s = s.superTypes()[0];
+            }
+        }
+        if (p.range().isObject()) {
+            rs = "<img src='object.gif'/> " + rs;
+        }
+        if (p.range().isArray()) {
+            rs = "<img src='arraytype_obj.gif'/> " + rs;
+        }
+        else if (s.nameId() == "StringType") {
+            rs = "<img src='string.gif'/> " + rs;
+        }
+        else if (s.nameId() == "BooleanType") {
+            rs = "<img src='boolean.gif'/> " + rs;
+        }
+        else if (s.nameId() == "NumberType") {
+            rs = "<img src='number.png'/> " + rs;
+        }
+        else if (s.nameId() == "IntegerType") {
+            rs = "<img src='number.png'/> " + rs;
+        }
+        else if (s.nameId().indexOf("Date") != -1) {
+            rs = "<img src='date.gif'/> " + rs;
+        }
+        else if (s.nameId().indexOf("File") != -1) {
+            rs = "<img src='file.gif'/> " + rs;
+        }
         if (rs.length == 0) {
             rs = "additionalProperties";
         }
@@ -85,7 +116,7 @@ var NameColumn = (function () {
                 if (wp.recursive) {
                     st = "glyphicon-repeat";
                 }
-                rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span class=\"glyphicon " + st + "\"></span> ") + rs;
+                rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
             }
         }
         if (p.isRequired()) {

@@ -452,7 +452,7 @@ var TreeView = (function (_super) {
                     view.afterSearch(view.pattern);
                 }
             },
-            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF" });
+            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0 });
         var sel = $('#' + treeId).treeview("getSelected");
         view.onSelection(sel.map(function (x) { return x.original; }));
     };
@@ -623,11 +623,22 @@ var AccorditionTreeView = (function (_super) {
             this.load();
         }
         else {
+            var title = null;
+            if (this.control) {
+                title = this.control.getSelectedTitle();
+            }
             var a = new controls.Accordition();
             this.control = a;
             this.trees = [];
             this.customizeAccordition(a, this.node);
             a.render(e);
+            if (title) {
+                for (var i = 0; i < this.control.children.length; i++) {
+                    if (this.control.children[i].title() == title) {
+                        this.control.expandIndex(i);
+                    }
+                }
+            }
         }
     };
     return AccorditionTreeView;
