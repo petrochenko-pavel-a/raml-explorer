@@ -486,6 +486,7 @@ export class TreeView extends ViewPart{
         if (n) {
             this.selection=[model];
             this.refresh();
+            $('#' + this.treeId).treeview("revealNode",n);
         }
     }
     hasModel(model:any):boolean{

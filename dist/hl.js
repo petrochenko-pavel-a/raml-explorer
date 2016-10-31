@@ -162,21 +162,52 @@ function elementGroups(hl) {
     return groups;
 }
 exports.elementGroups = elementGroups;
-function loadApi(path, f) {
+function loadApi(path, f, setRoot) {
+    if (setRoot === void 0) { setRoot = true; }
     RAML.Parser.loadApi(path).then(function (api) {
         var hl = api.highLevel();
+        var res = null;
         var tr = hl.elements().filter(function (x) { return x.property().nameId() == "traits" || x.property().nameId() == "resourceTypes"; });
         if (tr.length > 0) {
-            root = api.expand ? api.expand().highLevel() : api.highLevel();
+            res = api.expand ? api.expand().highLevel() : api.highLevel();
+            if (setRoot) {
+                root = res;
+            }
         }
         else {
-            root = hl;
+            res = hl;
+            if (setRoot) {
+                root = hl;
+            }
         }
         libs = null;
-        f(root);
+        f(res);
     });
 }
 exports.loadApi = loadApi;
+function allOps(x) {
+    var mn = [];
+    gatherMethods(x, mn);
+    var result = {};
+    mn.forEach(function (x) {
+        result[resourceUrl(x.parent()) + "." + x.name()] = x;
+    });
+    return result;
+}
+exports.allOps = allOps;
+var colors = {
+    get: "#0f6ab4",
+    post: "#10a54a",
+    put: "#c5862b",
+    patch: "#c5862b",
+    delete: "#a41e22"
+};
+function methodKey(name) {
+    var color = "#10a54a";
+    color = colors[name];
+    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
+}
+exports.methodKey = methodKey;
 function subTypes(t) {
     var n = getDeclaration(t);
     var result = [];
@@ -631,6 +662,33 @@ function label(x) {
     return result;
 }
 exports.label = label;
+function groupTypes(types) {
+    var root = new TreeLike("");
+    types.forEach(function (x) {
+        var structure = [];
+        var ld = x.localType();
+        if (ld.isUnion()) {
+            structure.push("!!union");
+        }
+        else if (ld.isObject()) {
+            structure.push("!!object");
+        }
+        else if (ld.isArray()) {
+            structure.push("!!array");
+        }
+        else {
+            structure.push("!!scalar");
+        }
+        root.addItem(structure, 0, x);
+    });
+    if (root.values.length == 0) {
+        if (Object.keys(root.children).length == 1) {
+            return root.children[Object.keys(root.children)[0]];
+        }
+    }
+    return root;
+}
+exports.groupTypes = groupTypes;
 function groupMethods(methods) {
     var root = new TreeLike("");
     methods.forEach(function (x) {

@@ -80,14 +80,19 @@ export class HeaderRenderer{
     }
 }
 
-export function renderNodesOverview(nodes:IHighLevelNode[],v?:reg.ApiWithVersions):string{
+export function renderNodesOverview(nodes:IHighLevelNode[],v?:reg.ApiWithVersions,path?:string):string{
     var result:string[]=[];
     var obj:any={};
     nodes=hl.prepareNodes(nodes);
     var hr=new HeaderRenderer(v);
     nodes=hr.consume(nodes);
     result.push(hr.render())
+
     nodes.forEach(x=>result.push(renderNode(x)));
+    if (path){
+        result.push("<hr/>");
+        result.push("<a href='"+path+"'>Get RAML</a>");
+    }
     return result.join("");
 }
 var ToSkip={"LogicalStructure":1,"EnumDescriptions":1,"is":1,"Id":1,"displayName":1}

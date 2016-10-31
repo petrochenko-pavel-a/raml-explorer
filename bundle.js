@@ -12,7 +12,7 @@ if (h && h.length > 1) {
     rv.showApi(url);
 }
 
-},{"./ramlTreeView":7,"./registryApp":8,"./workbench":12}],2:[function(require,module,exports){
+},{"./ramlTreeView":7,"./registryApp":8,"./workbench":13}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -358,21 +358,52 @@ function elementGroups(hl) {
     return groups;
 }
 exports.elementGroups = elementGroups;
-function loadApi(path, f) {
+function loadApi(path, f, setRoot) {
+    if (setRoot === void 0) { setRoot = true; }
     RAML.Parser.loadApi(path).then(function (api) {
         var hl = api.highLevel();
+        var res = null;
         var tr = hl.elements().filter(function (x) { return x.property().nameId() == "traits" || x.property().nameId() == "resourceTypes"; });
         if (tr.length > 0) {
-            root = api.expand ? api.expand().highLevel() : api.highLevel();
+            res = api.expand ? api.expand().highLevel() : api.highLevel();
+            if (setRoot) {
+                root = res;
+            }
         }
         else {
-            root = hl;
+            res = hl;
+            if (setRoot) {
+                root = hl;
+            }
         }
         libs = null;
-        f(root);
+        f(res);
     });
 }
 exports.loadApi = loadApi;
+function allOps(x) {
+    var mn = [];
+    gatherMethods(x, mn);
+    var result = {};
+    mn.forEach(function (x) {
+        result[resourceUrl(x.parent()) + "." + x.name()] = x;
+    });
+    return result;
+}
+exports.allOps = allOps;
+var colors = {
+    get: "#0f6ab4",
+    post: "#10a54a",
+    put: "#c5862b",
+    patch: "#c5862b",
+    delete: "#a41e22"
+};
+function methodKey(name) {
+    var color = "#10a54a";
+    color = colors[name];
+    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
+}
+exports.methodKey = methodKey;
 function subTypes(t) {
     var n = getDeclaration(t);
     var result = [];
@@ -827,6 +858,33 @@ function label(x) {
     return result;
 }
 exports.label = label;
+function groupTypes(types) {
+    var root = new TreeLike("");
+    types.forEach(function (x) {
+        var structure = [];
+        var ld = x.localType();
+        if (ld.isUnion()) {
+            structure.push("!!union");
+        }
+        else if (ld.isObject()) {
+            structure.push("!!object");
+        }
+        else if (ld.isArray()) {
+            structure.push("!!array");
+        }
+        else {
+            structure.push("!!scalar");
+        }
+        root.addItem(structure, 0, x);
+    });
+    if (root.values.length == 0) {
+        if (Object.keys(root.children).length == 1) {
+            return root.children[Object.keys(root.children)[0]];
+        }
+    }
+    return root;
+}
+exports.groupTypes = groupTypes;
 function groupMethods(methods) {
     var root = new TreeLike("");
     methods.forEach(function (x) {
@@ -1250,7 +1308,7 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes, v) {
+function renderNodesOverview(nodes, v, path) {
     var result = [];
     var obj = {};
     nodes = hl.prepareNodes(nodes);
@@ -1258,6 +1316,10 @@ function renderNodesOverview(nodes, v) {
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    if (path) {
+        result.push("<hr/>");
+        result.push("<a href='" + path + "'>Get RAML</a>");
+    }
     return result.join("");
 }
 exports.renderNodesOverview = renderNodesOverview;
@@ -1521,16 +1583,30 @@ var tr = require("./typeRender");
 var rr = require("./resourceRender");
 var nr = require("./nodeRender");
 var rrend = require("./registryRender");
+var usages = require("./usagesRegistry");
 exports.states = [];
 function back() {
     if (exports.states.length > 0) {
-        exports.ramlView.openNodeById(exports.states.pop());
+        if (bu) {
+            exports.ramlView.setUrl(bu, function () {
+                exports.ramlView.openNodeById(exports.states.pop());
+            });
+            bu = null;
+        }
+        else {
+            exports.ramlView.openNodeById(exports.states.pop());
+        }
     }
     else {
         init();
     }
 }
 exports.back = back;
+var bu = "";
+function setBackUrl(u) {
+    bu = u;
+}
+exports.setBackUrl = setBackUrl;
 var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
@@ -1557,7 +1633,9 @@ var RAMLDetailsView = (function (_super) {
         e.style.overflow = "auto";
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var cnt = new tr.TypeRenderer(null, false).render(this._element);
+                var rnd = new tr.TypeRenderer(null, false);
+                rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
+                var cnt = rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
@@ -1632,11 +1710,13 @@ var RAMLTreeView = (function (_super) {
             }
         });
     };
-    RAMLTreeView.prototype.setUrl = function (url) {
+    RAMLTreeView.prototype.setUrl = function (url, cb) {
         this.path = url;
         this.node = null;
         this.api = null;
         this.refresh();
+        this.cb = cb;
+        usages.setUrl(url);
     };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
@@ -1644,6 +1724,18 @@ var RAMLTreeView = (function (_super) {
             label: function (x) {
                 if (x instanceof hl.TreeLike) {
                     var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        var ss = t.id.substr(2);
+                        if (ss == "object") {
+                            return "<img src='object.gif'/> " + ss;
+                        }
+                        if (ss == "array") {
+                            return "<img src='arraytype_obj.gif'/> " + ss;
+                        }
+                        if (ss == "scalar") {
+                            return "<img src='string.gif'/> " + ss;
+                        }
+                    }
                     return t.id;
                 }
                 var result = "";
@@ -1666,6 +1758,9 @@ var RAMLTreeView = (function (_super) {
             icon: function (x) {
                 if (x instanceof hl.TreeLike) {
                     var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        return "";
+                    }
                     return "glyphicon glyphicon-cloud";
                 }
                 if (x instanceof hl.ProxyNode) {
@@ -1684,6 +1779,10 @@ var RAMLTreeView = (function (_super) {
         }
         else {
             _super.prototype.innerRender.call(this, e);
+            if (this.cb) {
+                this.cb();
+                this.cb = null;
+            }
         }
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
@@ -1715,7 +1814,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions);
+        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions, this.path);
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
@@ -1729,6 +1828,12 @@ var RAMLTreeView = (function (_super) {
         var groupedMethods = mgroups.allChildren();
         if (methods != null) {
             groups["methods"] = groupedMethods;
+        }
+        if (groups["types"]) {
+            var types = hl.groupTypes(groups["types"]);
+            if (types) {
+                groups["types"] = types.allChildren();
+            }
         }
         if (this.devMode || this.api.definition().nameId() == "Library") {
             this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
@@ -1788,6 +1893,8 @@ function showTitle(api) {
     });
 }
 exports.ramlView = new RAMLTreeView("");
+var w = window;
+w.ramlView = exports.ramlView;
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new rrend.RegistryView("API Registry");
 function init() {
@@ -1843,7 +1950,7 @@ function showApi(url) {
 }
 exports.showApi = showApi;
 
-},{"./controls":2,"./hl":3,"./nodeRender":5,"./registryRender":9,"./resourceRender":10,"./typeRender":11,"./workbench":12}],8:[function(require,module,exports){
+},{"./controls":2,"./hl":3,"./nodeRender":5,"./registryRender":9,"./resourceRender":10,"./typeRender":11,"./usagesRegistry":12,"./workbench":13}],8:[function(require,module,exports){
 "use strict";
 var workbench = require("./workbench");
 var rv = require("./ramlTreeView");
@@ -1872,7 +1979,7 @@ function showApi(s) {
 }
 exports.showApi = showApi;
 
-},{"./ramlTreeView":7,"./workbench":12}],9:[function(require,module,exports){
+},{"./ramlTreeView":7,"./workbench":13}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1881,6 +1988,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var workbench = require("./workbench");
 var ra = require("./registryApp");
+var usages = require("./usagesRegistry");
 function loadData(url, c) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -1974,6 +2082,9 @@ function mergeVersions(els) {
     });
     return groupNodes;
 }
+loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json", function (data, s) {
+    usages.loadedUsageData(data);
+});
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
@@ -1983,9 +2094,9 @@ var RegistryView = (function (_super) {
     RegistryView.prototype.load = function () {
         var _this = this;
         loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
-            console.log(data);
             _this.node = data;
             _this.refresh();
+            usages.reportData(data);
         });
     };
     RegistryView.prototype.setSelectedUrl = function (url) {
@@ -2040,7 +2151,7 @@ var RegistryView = (function (_super) {
 }(workbench.AccorditionTreeView));
 exports.RegistryView = RegistryView;
 
-},{"./registryApp":8,"./workbench":12}],10:[function(require,module,exports){
+},{"./registryApp":8,"./usagesRegistry":12,"./workbench":13}],10:[function(require,module,exports){
 "use strict";
 var hl = require("./hl");
 var tr = require("./typeRender");
@@ -2187,6 +2298,9 @@ exports.ResponseRenderer = ResponseRenderer;
 var hl = require("./hl");
 var or = require("./objectRender");
 var nr = require("./nodeRender");
+var usages = require("./usagesRegistry");
+var ramlTreeView_1 = require("./ramlTreeView");
+var rtv = require("./ramlTreeView");
 function renderTypeList(t) {
     var result = [];
     t.forEach(function (x) {
@@ -2225,6 +2339,8 @@ function renderTypeLink(x) {
     }
     if (x.isUnion()) {
         return renderTypeLink(x.union().leftType()) + " | " + renderTypeLink(x.union().rightType());
+    }
+    if (x.isBuiltIn()) {
     }
     var d = hl.getDeclaration(x);
     if (d) {
@@ -2460,6 +2576,7 @@ var expandProps = function (ts, ps, parent) {
     });
     return pm;
 };
+var usageIndex = 0;
 var TypeRenderer = (function () {
     function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
@@ -2467,7 +2584,11 @@ var TypeRenderer = (function () {
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
+    TypeRenderer.prototype.setUsages = function (v) {
+        this.usages = v;
+    };
     TypeRenderer.prototype.render = function (h) {
+        var _this = this;
         var at = h.localType();
         if (h.property().nameId() == "annotationTypes") {
             at = at.superTypes()[0];
@@ -2521,11 +2642,107 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.usages) {
+            result.push("<h4>External Usages:</h4>");
+            Object.keys(this.usages).forEach(function (x) {
+                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'><img src='expand.gif' id='Expand" + (usageIndex - 1) + "'/>" + usages.getTitle(x) + "</a>");
+                var v = _this.usages[x];
+                result.push("<span style='display: none' url='" + x + "'>");
+                if (v) {
+                    v.forEach(function (y) {
+                        result.push("<div>" + y + "</div>");
+                    });
+                }
+                result.push("</span>");
+                result.push("</div>");
+            });
+        }
         return result.join("");
     };
     return TypeRenderer;
 }());
 exports.TypeRenderer = TypeRenderer;
+var w = window;
+w.expandUsage = function (index) {
+    var el = document.getElementById("usage" + index);
+    var iel = document.getElementById("Expand" + index);
+    var eel = document.getElementById("ExpandLink" + index);
+    iel.src = "collapse.gif";
+    var span = el.getElementsByTagName("span");
+    var url = span.item(0).getAttribute("url");
+    var sp = document.createElement("div");
+    sp.innerText = "...";
+    el.appendChild(sp);
+    hl.loadApi(url, function (x, y) {
+        el.removeChild(sp);
+        var links = el.getElementsByTagName("div");
+        var allOps = hl.allOps(x);
+        var result = [];
+        var dups = {};
+        for (var i = 0; i < links.length; i++) {
+            var link = links.item(i).innerText;
+            if (dups[link]) {
+                continue;
+            }
+            else {
+                dups[link] = 1;
+            }
+            if (link.indexOf(";;R;") == 0) {
+                var mi = link.indexOf(";M;");
+                var rp = link.substring(";;R;".length, mi == -1 ? link.length : mi);
+                if (mi != -1) {
+                    var method = link.substr(mi + 3);
+                    var pn = method.indexOf(";");
+                    if (pn != -1) {
+                        method = method.substr(0, pn);
+                    }
+                    var operation = allOps[rp + "." + method];
+                    if (operation) {
+                        var label = hl.label(operation);
+                        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+                    }
+                }
+            }
+            else if (link.indexOf(";;T;") == 0) {
+                var rp = link.substring(";;T;".length);
+                if (mi != -1) {
+                    var type = x.elements().filter(function (x) { return x.name() == rp; });
+                    if (type.length == 1) {
+                        var label = hl.label(type[0]);
+                        result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                    }
+                }
+            }
+            else {
+                result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>");
+            }
+        }
+        sp = document.createElement("div");
+        sp.innerHTML = result.join("");
+        var children = sp.getElementsByTagName("div");
+        for (var i = 0; i < children.length; i++) {
+            var di = children.item(i);
+            var key = di.getAttribute("key");
+            var linkE = di.getElementsByTagName("a");
+            linkE.item(0).onclick = function () {
+                rtv.setBackUrl(ramlTreeView_1.ramlView.path);
+                var sel = ramlTreeView_1.ramlView.getSelection()[0];
+                rtv.states.push(sel.id());
+                ramlTreeView_1.ramlView.setUrl(url, function () {
+                    Workbench.open(key);
+                });
+            };
+        }
+        el.appendChild(sp);
+    }, false);
+    eel.onclick = function () {
+        el.removeChild(sp);
+        iel.src = "expand.gif";
+        eel.onclick = function () {
+            w.expandUsage(index);
+        };
+    };
+};
 function renderPropertyTable(name, ps, result, at) {
     result.push("<div style='padding-top: 10px'>");
     var pm = expandProps([at], ps);
@@ -2584,7 +2801,64 @@ function renderParameters(name, ps, result) {
 }
 exports.renderParameters = renderParameters;
 
-},{"./hl":3,"./nodeRender":5,"./objectRender":6}],12:[function(require,module,exports){
+},{"./hl":3,"./nodeRender":5,"./objectRender":6,"./ramlTreeView":7,"./usagesRegistry":12}],12:[function(require,module,exports){
+"use strict";
+exports.usages = {
+    usageRegistry: null
+};
+var locationToItem = {};
+function reportData(n) {
+    n.apis.forEach(function (x) {
+        locationToItem[x.location] = x;
+    });
+    n.libraries.forEach(function (x) {
+        locationToItem[x.location] = x;
+    });
+}
+exports.reportData = reportData;
+var numToFile = {};
+function loadedUsageData(d) {
+    exports.usages.usageRegistry = d;
+    Object.keys(exports.usages.usageRegistry.fileToNum).forEach(function (x) {
+        numToFile[exports.usages.usageRegistry.fileToNum[x]] = x;
+    });
+}
+exports.loadedUsageData = loadedUsageData;
+var gurl = null;
+function setUrl(url) {
+    console.log(url);
+    gurl = url;
+}
+exports.setUrl = setUrl;
+function getUsages(isType, name) {
+    var iN = (isType ? "T" : "A") + name;
+    var num = exports.usages.usageRegistry.fileToNum[gurl];
+    if (num) {
+        var entry = exports.usages.usageRegistry.usages[num];
+        if (entry) {
+            var result = entry.usages[iN];
+            if (result) {
+                var aRes = {};
+                Object.keys(result.usage).forEach(function (x) {
+                    aRes[numToFile[x]] = result.usage[x];
+                });
+                return aRes;
+            }
+        }
+    }
+    return null;
+}
+exports.getUsages = getUsages;
+function getTitle(url) {
+    if (locationToItem[url]) {
+        var ver = locationToItem[url].version;
+        return locationToItem[url].name + (ver ? (("(") + ver + ")") : "");
+    }
+    return url;
+}
+exports.getTitle = getTitle;
+
+},{}],13:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2958,6 +3232,7 @@ var TreeView = (function (_super) {
         if (n) {
             this.selection = [model];
             this.refresh();
+            $('#' + this.treeId).treeview("revealNode", n);
         }
     };
     TreeView.prototype.hasModel = function (model) {

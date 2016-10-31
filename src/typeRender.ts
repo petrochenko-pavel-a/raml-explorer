@@ -4,7 +4,10 @@ import hl=require("./hl")
 import {IHighLevelNode, IType, IProperty} from "./hl";
 import or=require("./objectRender")
 import nr=require("./nodeRender")
-
+import usages=require("./usagesRegistry")
+import workbench=require("./workbench")
+import {ramlView} from "./ramlTreeView";
+import rtv=require("./ramlTreeView");
 export function renderTypeList(t:hl.IType[]){
     var result:string[]=[];
     t.forEach(x=>{
@@ -43,6 +46,9 @@ function renderTypeLink(x:hl.IType):string{
     }
     if (x.isUnion()){
         return renderTypeLink(x.union().leftType())+" | "+renderTypeLink(x.union().rightType());
+    }
+    if (x.isBuiltIn()){
+
     }
     var d=hl.getDeclaration(x);
 
@@ -284,10 +290,17 @@ var expandProps = function (ts:hl.IType[],ps:hl.IProperty[],parent?:hl.IProperty
     })
     return pm;
 };
+var usageIndex=0;
 export class TypeRenderer{
 
     constructor(private extraCaption: string,private isSingle:boolean,private isAnnotationType:boolean=false){
 
+    }
+
+    usages:any
+
+    setUsages(v:any){
+        this.usages=v;
     }
 
     render(h:IHighLevelNode):string{
@@ -344,7 +357,114 @@ export class TypeRenderer{
             result.push("Union options:")
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.usages){
+            result.push("<h4>External Usages:</h4>");
+            Object.keys(this.usages).forEach(x=>{
+                result.push("<div id='usage"+(usageIndex++)+"' style='margin-right: 15px'><a id='ExpandLink"+(usageIndex-1)+"' style='cursor: hand' onclick='expandUsage("+(usageIndex-1)+")'><img src='expand.gif' id='Expand"+(usageIndex-1)+"'/>"+usages.getTitle(x)+"</a>")
+                var v=this.usages[x];
+                result.push("<span style='display: none' url='"+x+"'>")
+                if (v) {
+                    v.forEach(y=> {
+                        result.push("<div>" + y + "</div>")
+                    });
+                }
+                result.push("</span>")
+                result.push("</div>")
+
+            })
+            //console.log(this.usages)
+        }
         return result.join("");
+    }
+}
+
+var w:any=window;
+declare var Workbench:any;
+w.expandUsage=function (index) {
+    var el=document.getElementById("usage"+index);
+    var iel=<HTMLImageElement>document.getElementById("Expand"+index);
+    var eel=<HTMLImageElement>document.getElementById("ExpandLink"+index);
+    iel.src="collapse.gif";
+    var span=el.getElementsByTagName("span");
+    var url=span.item(0).getAttribute("url");
+    var sp=document.createElement("div");
+
+    sp.innerText="...";
+    el.appendChild(sp);
+    hl.loadApi(url,(x,y)=>{
+        el.removeChild(sp);
+        var links=el.getElementsByTagName("div");
+        var allOps=hl.allOps(x);
+        var result:string[]=[];
+        var dups={};
+        for (var i=0;i<links.length;i++){
+
+            var link=links.item(i).innerText;
+            if (dups[link]){
+                continue;
+            }
+            else {
+                dups[link] = 1;
+            }
+            if (link.indexOf(";;R;")==0){
+                var mi=link.indexOf(";M;");
+                var rp=link.substring(";;R;".length,mi==-1?link.length:mi);
+                if (mi!=-1){
+                    var method=link.substr(mi+3);
+                    var pn=method.indexOf(";");
+                    if (pn!=-1){
+                        method=method.substr(0,pn);
+                    }
+                    var operation=allOps[rp+"."+method];
+                    if (operation) {
+                        var label = hl.label(operation);
+                        result.push("<div style='padding-left: 20px;' key='"+operation.id()+"'>" + hl.methodKey(operation.name()) + "<a>"+label + "("+rp+")"+"</a></div>")
+                    }
+                }
+            }
+            else if (link.indexOf(";;T;")==0){
+
+                var rp=link.substring(";;T;".length);
+                if (mi!=-1){
+
+                    var type=x.elements().filter(x=>x.name()==rp);
+                    if (type.length==1) {
+                        var label = hl.label(type[0]);
+                        result.push("<div style='padding-left: 20px;' key='"+type[0].id()+"'><img src='typedef_obj.gif'/><a>" +  label+"</a></div>")
+                    }
+                }
+            }
+            else{
+                result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>")
+            }
+        }
+        sp=document.createElement("div");
+
+        sp.innerHTML=result.join("");
+        var children=sp.getElementsByTagName("div");
+        for (var i=0;i<children.length;i++){
+            var di=children.item(i);
+            var key=di.getAttribute("key");
+            var linkE=di.getElementsByTagName("a");
+
+            linkE.item(0).onclick=function(){
+                rtv.setBackUrl(ramlView.path)
+                var sel=ramlView.getSelection()[0];
+                rtv.states.push(sel.id());
+                ramlView.setUrl(url,()=>{
+
+                    Workbench.open(key);
+                });
+            };
+        }
+        el.appendChild(sp);
+    },false);
+    eel.onclick=function () {
+        el.removeChild(sp);
+        iel.src="expand.gif";
+        eel.onclick=function (){
+            w.expandUsage(index);
+        }
     }
 }
 export function renderPropertyTable(name:string,ps:IProperty[],result:string[],at:IType){

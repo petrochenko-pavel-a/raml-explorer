@@ -7,15 +7,28 @@ import  tr=require("./typeRender")
 import  rr=require("./resourceRender")
 import nr=require("./nodeRender")
 import rrend=require("./registryRender")
+import usages=require("./usagesRegistry")
 export var states: string[] = [];
 
 export function back(){
     if (states.length > 0) {
-        ramlView.openNodeById(states.pop());
+        if (bu){
+            ramlView.setUrl(bu,()=>{
+                ramlView.openNodeById(states.pop());
+            });
+            bu=null;
+        }
+        else {
+            ramlView.openNodeById(states.pop());
+        }
     }
     else{
         init();
     }
+}
+var bu:string="";
+export function setBackUrl(u:string){
+    bu=u;
 }
 declare var $:any
 export class RAMLDetailsView extends workbench.ViewPart{
@@ -52,7 +65,9 @@ export class RAMLDetailsView extends workbench.ViewPart{
         {
 
             if (this._element.property().nameId()=="types"||this._element.property().nameId()=="annotationTypes"){
-                var cnt=new tr.TypeRenderer(null,false).render(this._element);
+                var rnd=new tr.TypeRenderer(null,false);
+                rnd.setUsages(usages.getUsages(this._element.property().nameId()=="types",this._element.name()))
+                var cnt=rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId()=="resources"){
@@ -120,7 +135,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
     protected versions:rrend.ApiWithVersions;
     protected devMode: boolean
 
-    constructor(private path:string,title:string="Overview")
+    constructor(public path:string,title:string="Overview")
     {
         super(title)
     }
@@ -136,11 +151,14 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
             }
         })
     }
-    setUrl(url:string){
+    cb:()=>void;
+    setUrl(url:string,cb?:()=>void){
         this.path=url;
         this.node=null;
         this.api=null;
         this.refresh();
+        this.cb=cb;
+        usages.setUrl(url);
     }
     searchable=true;
 
@@ -150,6 +168,18 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
             label(x:any){
                 if (x instanceof hl.TreeLike){
                     var t:hl.TreeLike=x;
+                    if (t.id.indexOf("!!")==0){
+                        var ss=t.id.substr(2);
+                        if (ss=="object"){
+                            return "<img src='object.gif'/> "+ss;
+                        }
+                        if (ss=="array"){
+                            return "<img src='arraytype_obj.gif'/> "+ss;
+                        }
+                        if (ss=="scalar"){
+                            return "<img src='string.gif'/> "+ss;
+                        }
+                    }
                     return t.id;
                 }
                 var result="";
@@ -173,6 +203,9 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
             icon(x:any){
                 if (x instanceof hl.TreeLike){
                     var t:hl.TreeLike=x;
+                    if (t.id.indexOf("!!")==0){
+                        return ""
+                    }
                     return "glyphicon glyphicon-cloud";
                 }
                 if (x instanceof hl.ProxyNode){
@@ -195,6 +228,10 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         }
         else{
             super.innerRender(e);
+            if (this.cb){
+                this.cb();
+                this.cb=null;
+            }
         }
     }
 
@@ -233,7 +270,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
         //this.devMode=true;
-        var overview:string=nr.renderNodesOverview(this.api.attrs(),this.versions);
+        var overview:string=nr.renderNodesOverview(this.api.attrs(),this.versions,this.path);
         if (overview.length>0) {
             a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
         }
@@ -248,6 +285,12 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         var groupedMethods=mgroups.allChildren();
         if (methods!=null) {
             groups["methods"] = groupedMethods;
+        }
+        if (groups["types"]) {
+            var types = hl.groupTypes(<any>groups["types"]);
+            if (types) {
+                groups["types"]=types.allChildren();
+            }
         }
         if (this.devMode||this.api.definition().nameId()=="Library") {
             this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
@@ -314,6 +357,8 @@ function showTitle(api:hl.IHighLevelNode){
     })
 }
 export var ramlView=new RAMLTreeView("");
+var w:any=window;
+w.ramlView=ramlView;
 var details=new RAMLDetailsView("Details","Details");
 var regView=new rrend.RegistryView("API Registry")
 export function init(){
@@ -331,6 +376,7 @@ export function init(){
                     var sel:rrend.IRegistryObj=aw.versions[aw.versions.length-1];
                     ramlView.setKnownVersions(aw);
                     ramlView.setUrl(sel.location)
+
                 }
                 else {
                     if (v[0].location) {

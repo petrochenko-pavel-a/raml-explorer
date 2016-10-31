@@ -2,6 +2,9 @@
 var hl = require("./hl");
 var or = require("./objectRender");
 var nr = require("./nodeRender");
+var usages = require("./usagesRegistry");
+var ramlTreeView_1 = require("./ramlTreeView");
+var rtv = require("./ramlTreeView");
 function renderTypeList(t) {
     var result = [];
     t.forEach(function (x) {
@@ -40,6 +43,8 @@ function renderTypeLink(x) {
     }
     if (x.isUnion()) {
         return renderTypeLink(x.union().leftType()) + " | " + renderTypeLink(x.union().rightType());
+    }
+    if (x.isBuiltIn()) {
     }
     var d = hl.getDeclaration(x);
     if (d) {
@@ -275,6 +280,7 @@ var expandProps = function (ts, ps, parent) {
     });
     return pm;
 };
+var usageIndex = 0;
 var TypeRenderer = (function () {
     function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
@@ -282,7 +288,11 @@ var TypeRenderer = (function () {
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
+    TypeRenderer.prototype.setUsages = function (v) {
+        this.usages = v;
+    };
     TypeRenderer.prototype.render = function (h) {
+        var _this = this;
         var at = h.localType();
         if (h.property().nameId() == "annotationTypes") {
             at = at.superTypes()[0];
@@ -336,11 +346,107 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.usages) {
+            result.push("<h4>External Usages:</h4>");
+            Object.keys(this.usages).forEach(function (x) {
+                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'><img src='expand.gif' id='Expand" + (usageIndex - 1) + "'/>" + usages.getTitle(x) + "</a>");
+                var v = _this.usages[x];
+                result.push("<span style='display: none' url='" + x + "'>");
+                if (v) {
+                    v.forEach(function (y) {
+                        result.push("<div>" + y + "</div>");
+                    });
+                }
+                result.push("</span>");
+                result.push("</div>");
+            });
+        }
         return result.join("");
     };
     return TypeRenderer;
 }());
 exports.TypeRenderer = TypeRenderer;
+var w = window;
+w.expandUsage = function (index) {
+    var el = document.getElementById("usage" + index);
+    var iel = document.getElementById("Expand" + index);
+    var eel = document.getElementById("ExpandLink" + index);
+    iel.src = "collapse.gif";
+    var span = el.getElementsByTagName("span");
+    var url = span.item(0).getAttribute("url");
+    var sp = document.createElement("div");
+    sp.innerText = "...";
+    el.appendChild(sp);
+    hl.loadApi(url, function (x, y) {
+        el.removeChild(sp);
+        var links = el.getElementsByTagName("div");
+        var allOps = hl.allOps(x);
+        var result = [];
+        var dups = {};
+        for (var i = 0; i < links.length; i++) {
+            var link = links.item(i).innerText;
+            if (dups[link]) {
+                continue;
+            }
+            else {
+                dups[link] = 1;
+            }
+            if (link.indexOf(";;R;") == 0) {
+                var mi = link.indexOf(";M;");
+                var rp = link.substring(";;R;".length, mi == -1 ? link.length : mi);
+                if (mi != -1) {
+                    var method = link.substr(mi + 3);
+                    var pn = method.indexOf(";");
+                    if (pn != -1) {
+                        method = method.substr(0, pn);
+                    }
+                    var operation = allOps[rp + "." + method];
+                    if (operation) {
+                        var label = hl.label(operation);
+                        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+                    }
+                }
+            }
+            else if (link.indexOf(";;T;") == 0) {
+                var rp = link.substring(";;T;".length);
+                if (mi != -1) {
+                    var type = x.elements().filter(function (x) { return x.name() == rp; });
+                    if (type.length == 1) {
+                        var label = hl.label(type[0]);
+                        result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                    }
+                }
+            }
+            else {
+                result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>");
+            }
+        }
+        sp = document.createElement("div");
+        sp.innerHTML = result.join("");
+        var children = sp.getElementsByTagName("div");
+        for (var i = 0; i < children.length; i++) {
+            var di = children.item(i);
+            var key = di.getAttribute("key");
+            var linkE = di.getElementsByTagName("a");
+            linkE.item(0).onclick = function () {
+                rtv.setBackUrl(ramlTreeView_1.ramlView.path);
+                var sel = ramlTreeView_1.ramlView.getSelection()[0];
+                rtv.states.push(sel.id());
+                ramlTreeView_1.ramlView.setUrl(url, function () {
+                    Workbench.open(key);
+                });
+            };
+        }
+        el.appendChild(sp);
+    }, false);
+    eel.onclick = function () {
+        el.removeChild(sp);
+        iel.src = "expand.gif";
+        eel.onclick = function () {
+            w.expandUsage(index);
+        };
+    };
+};
 function renderPropertyTable(name, ps, result, at) {
     result.push("<div style='padding-top: 10px'>");
     var pm = expandProps([at], ps);

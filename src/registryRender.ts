@@ -7,7 +7,7 @@ import  tr=require("./typeRender")
 import  rr=require("./resourceRender")
 import nr=require("./nodeRender")
 import ra=require("./registryApp")
-
+import usages=require("./usagesRegistry")
 function loadData(url:string, c:(t:any,e?:number)=>void){
     var xhr = new XMLHttpRequest();
 
@@ -114,13 +114,16 @@ function mergeVersions(els:IRegistryObj[]):ApiWithVersions[]{
     return groupNodes;
 }
 
+loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json",(data:any,s:number)=>{
+     usages.loadedUsageData(data);
+})
 export class RegistryView extends workbench.AccorditionTreeView{
 
     protected load() {
         loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json",(data:any,s:number)=>{
-            console.log(data);
             this.node=data;
             this.refresh();
+            usages.reportData(data)
         })
     }
     protected url: string;

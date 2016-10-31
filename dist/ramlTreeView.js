@@ -11,16 +11,30 @@ var tr = require("./typeRender");
 var rr = require("./resourceRender");
 var nr = require("./nodeRender");
 var rrend = require("./registryRender");
+var usages = require("./usagesRegistry");
 exports.states = [];
 function back() {
     if (exports.states.length > 0) {
-        exports.ramlView.openNodeById(exports.states.pop());
+        if (bu) {
+            exports.ramlView.setUrl(bu, function () {
+                exports.ramlView.openNodeById(exports.states.pop());
+            });
+            bu = null;
+        }
+        else {
+            exports.ramlView.openNodeById(exports.states.pop());
+        }
     }
     else {
         init();
     }
 }
 exports.back = back;
+var bu = "";
+function setBackUrl(u) {
+    bu = u;
+}
+exports.setBackUrl = setBackUrl;
 var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
@@ -47,7 +61,9 @@ var RAMLDetailsView = (function (_super) {
         e.style.overflow = "auto";
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var cnt = new tr.TypeRenderer(null, false).render(this._element);
+                var rnd = new tr.TypeRenderer(null, false);
+                rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
+                var cnt = rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
@@ -122,11 +138,13 @@ var RAMLTreeView = (function (_super) {
             }
         });
     };
-    RAMLTreeView.prototype.setUrl = function (url) {
+    RAMLTreeView.prototype.setUrl = function (url, cb) {
         this.path = url;
         this.node = null;
         this.api = null;
         this.refresh();
+        this.cb = cb;
+        usages.setUrl(url);
     };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
@@ -134,6 +152,18 @@ var RAMLTreeView = (function (_super) {
             label: function (x) {
                 if (x instanceof hl.TreeLike) {
                     var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        var ss = t.id.substr(2);
+                        if (ss == "object") {
+                            return "<img src='object.gif'/> " + ss;
+                        }
+                        if (ss == "array") {
+                            return "<img src='arraytype_obj.gif'/> " + ss;
+                        }
+                        if (ss == "scalar") {
+                            return "<img src='string.gif'/> " + ss;
+                        }
+                    }
                     return t.id;
                 }
                 var result = "";
@@ -156,6 +186,9 @@ var RAMLTreeView = (function (_super) {
             icon: function (x) {
                 if (x instanceof hl.TreeLike) {
                     var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        return "";
+                    }
                     return "glyphicon glyphicon-cloud";
                 }
                 if (x instanceof hl.ProxyNode) {
@@ -174,6 +207,10 @@ var RAMLTreeView = (function (_super) {
         }
         else {
             _super.prototype.innerRender.call(this, e);
+            if (this.cb) {
+                this.cb();
+                this.cb = null;
+            }
         }
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
@@ -205,7 +242,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions);
+        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions, this.path);
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
@@ -219,6 +256,12 @@ var RAMLTreeView = (function (_super) {
         var groupedMethods = mgroups.allChildren();
         if (methods != null) {
             groups["methods"] = groupedMethods;
+        }
+        if (groups["types"]) {
+            var types = hl.groupTypes(groups["types"]);
+            if (types) {
+                groups["types"] = types.allChildren();
+            }
         }
         if (this.devMode || this.api.definition().nameId() == "Library") {
             this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
@@ -278,6 +321,8 @@ function showTitle(api) {
     });
 }
 exports.ramlView = new RAMLTreeView("");
+var w = window;
+w.ramlView = exports.ramlView;
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new rrend.RegistryView("API Registry");
 function init() {

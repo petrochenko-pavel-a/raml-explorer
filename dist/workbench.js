@@ -371,6 +371,7 @@ var TreeView = (function (_super) {
         if (n) {
             this.selection = [model];
             this.refresh();
+            $('#' + this.treeId).treeview("revealNode", n);
         }
     };
     TreeView.prototype.hasModel = function (model) {

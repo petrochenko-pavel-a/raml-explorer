@@ -212,23 +212,52 @@ export function elementGroups(hl:IHighLevelNode):ElementGroups{
     return groups;
 }
 
-export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void){
+export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void,setRoot:boolean=true){
     RAML.Parser.loadApi(path).then(
         function (api) {
             var hl=api.highLevel();
+            var res:IHighLevelNode=null;
             var tr=hl.elements().filter(x=>x.property().nameId()=="traits"||x.property().nameId()=="resourceTypes");
             if (tr.length>0) {
-                root = api.expand ? api.expand().highLevel() : api.highLevel();
+                res=api.expand ? api.expand().highLevel() : api.highLevel();
+                if (setRoot) {
+                    root = res;
+                }
             }
             else{
-                root=hl;
+                res=hl;
+                if (setRoot) {
+                    root = hl;
+                }
             }
             libs=null;
-            f(root);
+            f(res);
         }
     )
 }
 
+export function allOps(x:IHighLevelNode){
+    var mn:IHighLevelNode[]=[];
+    gatherMethods(x,mn);
+    var result:any={};
+    mn.forEach(x=>{
+        result[resourceUrl(x.parent())+"."+x.name()]=x;
+    })
+    return result;
+}
+var colors={
+
+    get:"#0f6ab4",
+    post:"#10a54a",
+    put:"#c5862b",
+    patch:"#c5862b",
+    delete:"#a41e22"
+}
+export function methodKey(name:string){
+    var color:string="#10a54a"
+    color=colors[name];
+    return `<span style="border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: ${color};font-size: small;padding: 3px"> </span>`
+}
 export function subTypes(t:IType):IType[]{
     var n=getDeclaration(t);
     var result:IType[]=[];
@@ -720,6 +749,32 @@ export function label(x:IHighLevelNode&{$name?:string}){
     return result;
 }
 
+export function groupTypes(types:IHighLevelNode[]):TreeLike{
+    var root=new TreeLike("");
+    types.forEach(x=>{
+        var structure=[];
+        var ld=x.localType();
+        if (ld.isUnion()){
+            structure.push("!!union");
+        }
+        else if (ld.isObject()){
+            structure.push("!!object");
+        }
+        else if (ld.isArray()){
+            structure.push("!!array");
+        }
+        else {
+            structure.push("!!scalar");
+        }
+        root.addItem(structure,0,x);
+    })
+    if (root.values.length==0){
+        if (Object.keys(root.children).length==1){
+            return root.children[Object.keys(root.children)[0]];
+        }
+    }
+    return root;
+}
 export function groupMethods(methods:IHighLevelNode[]):TreeLike{
     var root=new TreeLike("");
     methods.forEach(x=>{

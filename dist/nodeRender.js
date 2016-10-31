@@ -65,7 +65,7 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes, v) {
+function renderNodesOverview(nodes, v, path) {
     var result = [];
     var obj = {};
     nodes = hl.prepareNodes(nodes);
@@ -73,6 +73,10 @@ function renderNodesOverview(nodes, v) {
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    if (path) {
+        result.push("<hr/>");
+        result.push("<a href='" + path + "'>Get RAML</a>");
+    }
     return result.join("");
 }
 exports.renderNodesOverview = renderNodesOverview;
