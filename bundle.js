@@ -1735,6 +1735,7 @@ var RAMLTreeView = (function (_super) {
                         if (ss == "scalar") {
                             return "<img src='string.gif'/> " + ss;
                         }
+                        return "<img src='object.gif'/> " + ss;
                     }
                     return t.id;
                 }

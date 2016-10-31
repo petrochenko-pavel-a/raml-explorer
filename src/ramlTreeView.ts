@@ -179,6 +179,7 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
                         if (ss=="scalar"){
                             return "<img src='string.gif'/> "+ss;
                         }
+                        return "<img src='object.gif'/> "+ss;
                     }
                     return t.id;
                 }
