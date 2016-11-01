@@ -442,7 +442,15 @@ export interface INode{
 
     original: any;
 }
-
+function findNodeNoRecursion(nodes:INode[],v:any){
+    for (var i=0;i<nodes.length;i++){
+        var ch=nodes[i];
+        if (ch.original===v){
+            return ch;
+        }
+    }
+    return null;
+}
 function findNode(nodes:INode[],v:any){
     for (var i=0;i<nodes.length;i++){
         var ch=nodes[i];
@@ -482,7 +490,8 @@ export class TreeView extends ViewPart{
     }
 
     select(model: any){
-        var n=findNode(this.treeNodes,model);
+        var vs=$('#' + this.treeId).treeview(true);
+        var n=findNode(vs.all(),model);
         if (n) {
             this.selection=[model];
             this.refresh();

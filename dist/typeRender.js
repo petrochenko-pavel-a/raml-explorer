@@ -191,10 +191,24 @@ var Description = (function () {
     Description.prototype.id = function () { return "description"; };
     Description.prototype.caption = function () { return "Description"; };
     Description.prototype.render = function (p) {
-        return hl.description(p.range());
+        var desc = hl.description(p.range());
+        var s = marked(desc, { gfm: true });
+        while (true) {
+            var q = s;
+            s = s.replace("<h1", "<h4");
+            s = s.replace("</h1", "</h4");
+            s = s.replace("<h2", "<h4");
+            s = s.replace("</h2", "</h4");
+            if (q == s) {
+                break;
+            }
+        }
+        return s;
     };
     return Description;
 }());
+marked.Lexer.rules.gfm.heading = marked.Lexer.rules.normal.heading;
+marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 var Type = (function () {
     function Type() {
     }
@@ -281,6 +295,17 @@ var expandProps = function (ts, ps, parent) {
     return pm;
 };
 var usageIndex = 0;
+var renderClicableLink = function (root, result, label) {
+    if (root.property() && root.property().nameId() == "methods") {
+        result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "types") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "annotationTypes") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+};
 var TypeRenderer = (function () {
     function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
@@ -288,6 +313,9 @@ var TypeRenderer = (function () {
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
+    TypeRenderer.prototype.setGlobal = function (b) {
+        this.global = b;
+    };
     TypeRenderer.prototype.setUsages = function (v) {
         this.usages = v;
     };
@@ -346,6 +374,23 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.global) {
+            var usage = [];
+            hl.findUsages(h.root(), at, usage);
+            if (usage.length > 0) {
+                result.push("<h4>Usages:</h4>");
+                var roots = {};
+                usage.forEach(function (x) {
+                    var root = hl.findUsagesRoot(x);
+                    var label = hl.label(root);
+                    if (roots[label]) {
+                        return;
+                    }
+                    roots[label] = 1;
+                    renderClicableLink(root, result, label);
+                });
+            }
+        }
         if (this.usages) {
             result.push("<h4>External Usages:</h4>");
             Object.keys(this.usages).forEach(function (x) {
@@ -377,6 +422,11 @@ w.expandUsage = function (index) {
     var sp = document.createElement("div");
     sp.innerText = "...";
     el.appendChild(sp);
+    var rop = function (operation, result, rp) {
+        var label = hl.label(operation);
+        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+        return label;
+    };
     hl.loadApi(url, function (x, y) {
         el.removeChild(sp);
         var links = el.getElementsByTagName("div");
@@ -402,19 +452,37 @@ w.expandUsage = function (index) {
                     }
                     var operation = allOps[rp + "." + method];
                     if (operation) {
-                        var label = hl.label(operation);
-                        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+                        var label = rop(operation, result, rp);
                     }
+                }
+                else {
+                    rp = link.substring(";;R;".length);
+                    var pn = rp.indexOf(";");
+                    if (pn != -1) {
+                        rp = rp.substr(0, pn);
+                    }
+                    Object.keys(allOps).forEach(function (x) {
+                        if (x.indexOf(rp) == 0) {
+                            var operation = allOps[x];
+                            var label = rop(operation, result, rp);
+                        }
+                    });
                 }
             }
             else if (link.indexOf(";;T;") == 0) {
                 var rp = link.substring(";;T;".length);
-                if (mi != -1) {
-                    var type = x.elements().filter(function (x) { return x.name() == rp; });
-                    if (type.length == 1) {
-                        var label = hl.label(type[0]);
-                        result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                var lt = rp.indexOf(";");
+                if (lt != -1) {
+                    rp = rp.substr(0, lt);
+                }
+                var type = x.elements().filter(function (x) { return x.name() == rp; });
+                if (type.length == 1) {
+                    var label = hl.label(type[0]);
+                    if (dups[label]) {
+                        return;
                     }
+                    dups[label] = 1;
+                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
                 }
             }
             else {
@@ -426,14 +494,14 @@ w.expandUsage = function (index) {
         var children = sp.getElementsByTagName("div");
         for (var i = 0; i < children.length; i++) {
             var di = children.item(i);
-            var key = di.getAttribute("key");
             var linkE = di.getElementsByTagName("a");
-            linkE.item(0).onclick = function () {
+            linkE.item(0).onclick = function (x) {
+                var rs = x.target.parentElement.getAttribute("key");
                 rtv.setBackUrl(ramlTreeView_1.ramlView.path);
                 var sel = ramlTreeView_1.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
                 ramlTreeView_1.ramlView.setUrl(url, function () {
-                    Workbench.open(key);
+                    Workbench.open(rs);
                 });
             };
         }

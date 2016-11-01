@@ -332,6 +332,15 @@ var BasicSorter = (function () {
     return BasicSorter;
 }());
 exports.BasicSorter = BasicSorter;
+function findNodeNoRecursion(nodes, v) {
+    for (var i = 0; i < nodes.length; i++) {
+        var ch = nodes[i];
+        if (ch.original === v) {
+            return ch;
+        }
+    }
+    return null;
+}
 function findNode(nodes, v) {
     for (var i = 0; i < nodes.length; i++) {
         var ch = nodes[i];
@@ -367,7 +376,8 @@ var TreeView = (function (_super) {
         this.refresh();
     };
     TreeView.prototype.select = function (model) {
-        var n = findNode(this.treeNodes, model);
+        var vs = $('#' + this.treeId).treeview(true);
+        var n = findNode(vs.all(), model);
         if (n) {
             this.selection = [model];
             this.refresh();

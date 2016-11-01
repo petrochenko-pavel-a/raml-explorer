@@ -1,5 +1,7 @@
 import keywords=require("./keywords")
 import {trimDesc} from "./keywords";
+
+
 export interface IProperty{
     nameId():string
     isKey(): boolean
@@ -79,6 +81,71 @@ export function getDeclaration(n:IType,escP:boolean=true):IHighLevelNode{
         return options[0];
     }
     return ns;
+}
+var usageProps={
+    "queryParameters":1,
+    "uriParameters":1,
+    "types":1,
+    "properties":1,
+    "additionalProperties":1,
+    "items":1,
+    "headers":1,
+    "body":1,
+}
+const rootable={
+    "resources":1,
+    "methods":1,
+    "types":1,
+    "annotationTypes":1
+}
+export function findUsagesRoot(h:IHighLevelNode):IHighLevelNode{
+    while (h.property()!=null){
+        if (rootable[h.property().nameId()]){
+            return h;
+        }
+        h=h.parent();
+    }
+    return h;
+}
+export function findUsages(h:IHighLevelNode,n:IType,results:IHighLevelNode[]){
+    h.elements().forEach(x=>{
+        findUsages(x,n,results);
+    })
+    if (h.property()) {
+        if (usageProps[h.property().nameId()]) {
+            var lt = h.localType();
+            if (trackType(lt,n)){
+                results.push(h);
+            }
+        }
+    }
+}
+export function trackType(lt:IType,n:IType):boolean{
+    var rs=false;
+    lt.superTypes().forEach(t=>{
+        if (t.nameId()==n.nameId()){
+            rs=true;
+        }
+    });
+    if (rs){
+        return true;
+    }
+    if(lt.isArray()){
+        var ct=lt.componentType();
+        if (ct.nameId()==n.nameId()){
+            return true;
+        }
+        ct.superTypes().forEach(t=>{
+            if (t.nameId()==n.nameId()){
+                return true;
+            }
+        });
+        return false;
+    }
+    if(lt.isUnion()){
+        return trackType(lt.union().leftType(),n)||trackType(lt.union().rightType(),n);
+    }
+    return false;
 }
 
 export function getUsedLibrary(usesNode:IHighLevelNode){
@@ -241,7 +308,7 @@ export function allOps(x:IHighLevelNode){
     gatherMethods(x,mn);
     var result:any={};
     mn.forEach(x=>{
-        result[resourceUrl(x.parent())+"."+x.name()]=x;
+        result[resourceUrl(x.parent(),false)+"."+x.name()]=x;
     })
     return result;
 }
@@ -447,7 +514,7 @@ export function group(n:IHighLevelNode):number{
     }
     return 10;
 }
-export function resourceUrl(h:IHighLevelNode):string{
+export function resourceUrl(h:IHighLevelNode,skipSint:boolean=true):string{
     var result=""
     var o=h;
     while (h!=null&&h.property()!=null){
@@ -456,7 +523,7 @@ export function resourceUrl(h:IHighLevelNode):string{
     }
     var up=uriParameters(o);
     for (var i=0;i<up.length;i++){
-        if (isSyntetic(up[i])){
+        if (skipSint&&isSyntetic(up[i])){
             var nm=up[i].name();
             if (nm.charAt(nm.length-1)=="?"){
                 nm=nm.substr(0,nm.length-1);

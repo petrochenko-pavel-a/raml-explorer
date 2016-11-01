@@ -121,6 +121,13 @@ function highlight(v) {
 exports.highlight = highlight;
 function renderKeyValue(k, vl, small) {
     if (small === void 0) { small = false; }
+    if (k == "description" || k == "usage") {
+        if (typeof vl == "string") {
+            vl = marked(vl);
+        }
+        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
+        return res;
+    }
     var str = "" + vl;
     vl = highlight(str);
     if (str.length > 70 && str.indexOf('\n') != -1) {

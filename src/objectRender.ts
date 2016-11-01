@@ -2,6 +2,7 @@
  * Created by kor on 28/09/16.
  */
 
+import {IHighLevelNode} from "./hl";
 /**
  * library to render objects with aribtrary projects to html
  */
@@ -156,8 +157,21 @@ export function highlight(v:string):string{
     }
     return "<span style='color: darkred'>"+v+"</span>"
 }
+
+
+
+
+declare var marked:any
+
 export function renderKeyValue(k:string,vl:any,small:boolean=false):string{
     //k=small?k:k.charAt(0).toUpperCase()+k.substr(1);
+    if (k=="description"||k=="usage"){
+        if (typeof vl=="string"){
+            vl=marked(vl);
+        }
+        var res=`<h5 style="background: gainsboro">${k}: </h5><div>${vl}</div>`
+        return res;
+    }
     var str=""+vl;
 
     vl=highlight(str)

@@ -127,7 +127,7 @@ export class ResponseRenderer{
     render(h:IHighLevelNode):string{
         var result:string[]=[];
         var rs=h.elements().filter(x=>x.property().nameId()=="body")
-        if (this.isSingle&&rs.length>1) {
+        if (this.isSingle&&rs.length<1) {
             result.push(`<h3>Response: ${h.name()}</h3>`)
         }
         hl.prepareNodes(h.attrs()).forEach(x=> {
@@ -135,7 +135,7 @@ export class ResponseRenderer{
         });
         tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result)
 
-        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(rs.length==1&&this.isSingle?"Response payload":"Payload",rs.length==1)))
+        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(rs.length==1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1)))
         return result.join("");
     }
 }

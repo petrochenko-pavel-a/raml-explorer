@@ -125,14 +125,14 @@ var ResponseRenderer = (function () {
     ResponseRenderer.prototype.render = function (h) {
         var result = [];
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        if (this.isSingle && rs.length > 1) {
+        if (this.isSingle && rs.length < 1) {
             result.push("<h3>Response: " + h.name() + "</h3>");
         }
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response payload" : "Payload", rs.length == 1)));
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;

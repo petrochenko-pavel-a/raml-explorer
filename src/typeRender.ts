@@ -190,15 +190,32 @@ class Facets implements or.IColumn<hl.IProperty>{
         return "20em"
     }
 }
+declare var marked:any;
+
 class Description implements or.IColumn<hl.IProperty>{
 
     id(){return "description"}
     caption(){return "Description"}
     render(p:hl.IProperty){
-        
-        return hl.description(p.range());
+        var desc=hl.description(p.range());
+
+        var s= marked(desc,{gfm:true});
+
+        while (true) {
+            var q=s;
+            s = s.replace("<h1", "<h4");
+            s = s.replace("</h1", "</h4");
+            s = s.replace("<h2", "<h4");
+            s = s.replace("</h2", "</h4");
+            if (q==s){
+                break;
+            }
+        }
+        return s;
     }
 }
+marked.Lexer.rules.gfm.heading = marked.Lexer.rules.normal.heading;
+marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 class Type implements or.IColumn<hl.IProperty>{
 
     id(){return "description"}
@@ -291,12 +308,26 @@ var expandProps = function (ts:hl.IType[],ps:hl.IProperty[],parent?:hl.IProperty
     return pm;
 };
 var usageIndex=0;
+var renderClicableLink = function (root: IHighLevelNode, result: string[], label: string|any|string|string) {
+    if (root.property() && root.property().nameId() == "methods") {
+        result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>")
+    }
+    else if (root.property() && root.property().nameId() == "types") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+    }
+    else if (root.property() && root.property().nameId() == "annotationTypes") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+    }
+};
 export class TypeRenderer{
 
     constructor(private extraCaption: string,private isSingle:boolean,private isAnnotationType:boolean=false){
 
     }
-
+    global:boolean;
+    setGlobal(b:boolean){
+        this.global=b;
+    }
     usages:any
 
     setUsages(v:any){
@@ -357,6 +388,23 @@ export class TypeRenderer{
             result.push("Union options:")
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.global){
+            var usage:hl.IHighLevelNode[]=[];
+            hl.findUsages(h.root(),at,usage);
+            if (usage.length>0){
+                result.push("<h4>Usages:</h4>");
+                var roots={};
+                usage.forEach(x=>{
+                    var root=hl.findUsagesRoot(x);
+                    var label=hl.label(root);
+                    if (roots[label]){
+                        return;
+                    }
+                    roots[label]=1;
+                    renderClicableLink(root, result, label);
+                })
+            }
+        }
         if (this.usages){
             result.push("<h4>External Usages:</h4>");
             Object.keys(this.usages).forEach(x=>{
@@ -370,13 +418,13 @@ export class TypeRenderer{
                 }
                 result.push("</span>")
                 result.push("</div>")
-
             })
             //console.log(this.usages)
         }
         return result.join("");
     }
 }
+
 
 var w:any=window;
 declare var Workbench:any;
@@ -391,6 +439,11 @@ w.expandUsage=function (index) {
 
     sp.innerText="...";
     el.appendChild(sp);
+    var rop = function (operation: any, result: string[], rp: string) {
+        var label = hl.label(operation);
+        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>")
+        return label;
+    };
     hl.loadApi(url,(x,y)=>{
         el.removeChild(sp);
         var links=el.getElementsByTagName("div");
@@ -417,22 +470,41 @@ w.expandUsage=function (index) {
                     }
                     var operation=allOps[rp+"."+method];
                     if (operation) {
-                        var label = hl.label(operation);
-                        result.push("<div style='padding-left: 20px;' key='"+operation.id()+"'>" + hl.methodKey(operation.name()) + "<a>"+label + "("+rp+")"+"</a></div>")
+                        var label = rop(operation, result, rp);
                     }
+                }
+                else{
+                    rp=link.substring(";;R;".length)
+                    var pn=rp.indexOf(";");
+                    if (pn!=-1){
+                        rp=rp.substr(0,pn);
+                    }
+                    Object.keys(allOps).forEach(x=>{
+                        if (x.indexOf(rp)==0){
+                            var operation=allOps[x];
+                            var label = rop(operation, result, rp);
+                        }
+                    })
                 }
             }
             else if (link.indexOf(";;T;")==0){
 
                 var rp=link.substring(";;T;".length);
-                if (mi!=-1){
+                var lt=rp.indexOf(";");
+                if (lt!=-1){
+                    rp=rp.substr(0,lt);
+                }
 
                     var type=x.elements().filter(x=>x.name()==rp);
                     if (type.length==1) {
                         var label = hl.label(type[0]);
+                        if (dups[label]){
+                            return;
+                        }
+                        dups[label]=1;
                         result.push("<div style='padding-left: 20px;' key='"+type[0].id()+"'><img src='typedef_obj.gif'/><a>" +  label+"</a></div>")
                     }
-                }
+
             }
             else{
                 result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>")
@@ -444,16 +516,16 @@ w.expandUsage=function (index) {
         var children=sp.getElementsByTagName("div");
         for (var i=0;i<children.length;i++){
             var di=children.item(i);
-            var key=di.getAttribute("key");
             var linkE=di.getElementsByTagName("a");
 
-            linkE.item(0).onclick=function(){
+            linkE.item(0).onclick=function(x){
+                var rs=(<any>x).target.parentElement.getAttribute("key");
                 rtv.setBackUrl(ramlView.path)
                 var sel=ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
                 ramlView.setUrl(url,()=>{
 
-                    Workbench.open(key);
+                    Workbench.open(rs);
                 });
             };
         }

@@ -55,6 +55,74 @@ function getDeclaration(n, escP) {
     return ns;
 }
 exports.getDeclaration = getDeclaration;
+var usageProps = {
+    "queryParameters": 1,
+    "uriParameters": 1,
+    "types": 1,
+    "properties": 1,
+    "additionalProperties": 1,
+    "items": 1,
+    "headers": 1,
+    "body": 1,
+};
+var rootable = {
+    "resources": 1,
+    "methods": 1,
+    "types": 1,
+    "annotationTypes": 1
+};
+function findUsagesRoot(h) {
+    while (h.property() != null) {
+        if (rootable[h.property().nameId()]) {
+            return h;
+        }
+        h = h.parent();
+    }
+    return h;
+}
+exports.findUsagesRoot = findUsagesRoot;
+function findUsages(h, n, results) {
+    h.elements().forEach(function (x) {
+        findUsages(x, n, results);
+    });
+    if (h.property()) {
+        if (usageProps[h.property().nameId()]) {
+            var lt = h.localType();
+            if (trackType(lt, n)) {
+                results.push(h);
+            }
+        }
+    }
+}
+exports.findUsages = findUsages;
+function trackType(lt, n) {
+    var rs = false;
+    lt.superTypes().forEach(function (t) {
+        if (t.nameId() == n.nameId()) {
+            rs = true;
+        }
+    });
+    if (rs) {
+        return true;
+    }
+    if (lt.isArray()) {
+        var ct = lt.componentType();
+        if (ct.nameId() == n.nameId()) {
+            return true;
+        }
+        ct.superTypes().forEach(function (t) {
+            if (t.nameId() == n.nameId()) {
+                return true;
+            }
+        });
+        return false;
+    }
+    if (lt.isUnion()) {
+        return trackType(lt.union().leftType(), n) || trackType(lt.union().rightType(), n);
+    }
+    return false;
+}
+exports.trackType = trackType;
 function getUsedLibrary(usesNode) {
     var path = usesNode.attr("value");
     if (path) {
@@ -190,7 +258,7 @@ function allOps(x) {
     gatherMethods(x, mn);
     var result = {};
     mn.forEach(function (x) {
-        result[resourceUrl(x.parent()) + "." + x.name()] = x;
+        result[resourceUrl(x.parent(), false) + "." + x.name()] = x;
     });
     return result;
 }
@@ -376,7 +444,8 @@ function group(n) {
     return 10;
 }
 exports.group = group;
-function resourceUrl(h) {
+function resourceUrl(h, skipSint) {
+    if (skipSint === void 0) { skipSint = true; }
     var result = "";
     var o = h;
     while (h != null && h.property() != null) {
@@ -385,7 +454,7 @@ function resourceUrl(h) {
     }
     var up = uriParameters(o);
     for (var i = 0; i < up.length; i++) {
-        if (isSyntetic(up[i])) {
+        if (skipSint && isSyntetic(up[i])) {
             var nm = up[i].name();
             if (nm.charAt(nm.length - 1) == "?") {
                 nm = nm.substr(0, nm.length - 1);

@@ -251,6 +251,74 @@ function getDeclaration(n, escP) {
     return ns;
 }
 exports.getDeclaration = getDeclaration;
+var usageProps = {
+    "queryParameters": 1,
+    "uriParameters": 1,
+    "types": 1,
+    "properties": 1,
+    "additionalProperties": 1,
+    "items": 1,
+    "headers": 1,
+    "body": 1,
+};
+var rootable = {
+    "resources": 1,
+    "methods": 1,
+    "types": 1,
+    "annotationTypes": 1
+};
+function findUsagesRoot(h) {
+    while (h.property() != null) {
+        if (rootable[h.property().nameId()]) {
+            return h;
+        }
+        h = h.parent();
+    }
+    return h;
+}
+exports.findUsagesRoot = findUsagesRoot;
+function findUsages(h, n, results) {
+    h.elements().forEach(function (x) {
+        findUsages(x, n, results);
+    });
+    if (h.property()) {
+        if (usageProps[h.property().nameId()]) {
+            var lt = h.localType();
+            if (trackType(lt, n)) {
+                results.push(h);
+            }
+        }
+    }
+}
+exports.findUsages = findUsages;
+function trackType(lt, n) {
+    var rs = false;
+    lt.superTypes().forEach(function (t) {
+        if (t.nameId() == n.nameId()) {
+            rs = true;
+        }
+    });
+    if (rs) {
+        return true;
+    }
+    if (lt.isArray()) {
+        var ct = lt.componentType();
+        if (ct.nameId() == n.nameId()) {
+            return true;
+        }
+        ct.superTypes().forEach(function (t) {
+            if (t.nameId() == n.nameId()) {
+                return true;
+            }
+        });
+        return false;
+    }
+    if (lt.isUnion()) {
+        return trackType(lt.union().leftType(), n) || trackType(lt.union().rightType(), n);
+    }
+    return false;
+}
+exports.trackType = trackType;
 function getUsedLibrary(usesNode) {
     var path = usesNode.attr("value");
     if (path) {
@@ -386,7 +454,7 @@ function allOps(x) {
     gatherMethods(x, mn);
     var result = {};
     mn.forEach(function (x) {
-        result[resourceUrl(x.parent()) + "." + x.name()] = x;
+        result[resourceUrl(x.parent(), false) + "." + x.name()] = x;
     });
     return result;
 }
@@ -572,7 +640,8 @@ function group(n) {
     return 10;
 }
 exports.group = group;
-function resourceUrl(h) {
+function resourceUrl(h, skipSint) {
+    if (skipSint === void 0) { skipSint = true; }
     var result = "";
     var o = h;
     while (h != null && h.property() != null) {
@@ -581,7 +650,7 @@ function resourceUrl(h) {
     }
     var up = uriParameters(o);
     for (var i = 0; i < up.length; i++) {
-        if (isSyntetic(up[i])) {
+        if (skipSint && isSyntetic(up[i])) {
             var nm = up[i].name();
             if (nm.charAt(nm.length - 1) == "?") {
                 nm = nm.substr(0, nm.length - 1);
@@ -1538,6 +1607,13 @@ function highlight(v) {
 exports.highlight = highlight;
 function renderKeyValue(k, vl, small) {
     if (small === void 0) { small = false; }
+    if (k == "description" || k == "usage") {
+        if (typeof vl == "string") {
+            vl = marked(vl);
+        }
+        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
+        return res;
+    }
     var str = "" + vl;
     vl = highlight(str);
     if (str.length > 70 && str.indexOf('\n') != -1) {
@@ -1634,6 +1710,7 @@ var RAMLDetailsView = (function (_super) {
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
                 var rnd = new tr.TypeRenderer(null, false);
+                rnd.setGlobal(true);
                 rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
                 var cnt = rnd.render(this._element);
             }
@@ -2280,14 +2357,14 @@ var ResponseRenderer = (function () {
     ResponseRenderer.prototype.render = function (h) {
         var result = [];
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        if (this.isSingle && rs.length > 1) {
+        if (this.isSingle && rs.length < 1) {
             result.push("<h3>Response: " + h.name() + "</h3>");
         }
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response payload" : "Payload", rs.length == 1)));
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;
@@ -2488,10 +2565,24 @@ var Description = (function () {
     Description.prototype.id = function () { return "description"; };
     Description.prototype.caption = function () { return "Description"; };
     Description.prototype.render = function (p) {
-        return hl.description(p.range());
+        var desc = hl.description(p.range());
+        var s = marked(desc, { gfm: true });
+        while (true) {
+            var q = s;
+            s = s.replace("<h1", "<h4");
+            s = s.replace("</h1", "</h4");
+            s = s.replace("<h2", "<h4");
+            s = s.replace("</h2", "</h4");
+            if (q == s) {
+                break;
+            }
+        }
+        return s;
     };
     return Description;
 }());
+marked.Lexer.rules.gfm.heading = marked.Lexer.rules.normal.heading;
+marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 var Type = (function () {
     function Type() {
     }
@@ -2578,6 +2669,17 @@ var expandProps = function (ts, ps, parent) {
     return pm;
 };
 var usageIndex = 0;
+var renderClicableLink = function (root, result, label) {
+    if (root.property() && root.property().nameId() == "methods") {
+        result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "types") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "annotationTypes") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+};
 var TypeRenderer = (function () {
     function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
@@ -2585,6 +2687,9 @@ var TypeRenderer = (function () {
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
+    TypeRenderer.prototype.setGlobal = function (b) {
+        this.global = b;
+    };
     TypeRenderer.prototype.setUsages = function (v) {
         this.usages = v;
     };
@@ -2643,6 +2748,23 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
+        if (this.global) {
+            var usage = [];
+            hl.findUsages(h.root(), at, usage);
+            if (usage.length > 0) {
+                result.push("<h4>Usages:</h4>");
+                var roots = {};
+                usage.forEach(function (x) {
+                    var root = hl.findUsagesRoot(x);
+                    var label = hl.label(root);
+                    if (roots[label]) {
+                        return;
+                    }
+                    roots[label] = 1;
+                    renderClicableLink(root, result, label);
+                });
+            }
+        }
         if (this.usages) {
             result.push("<h4>External Usages:</h4>");
             Object.keys(this.usages).forEach(function (x) {
@@ -2674,6 +2796,11 @@ w.expandUsage = function (index) {
     var sp = document.createElement("div");
     sp.innerText = "...";
     el.appendChild(sp);
+    var rop = function (operation, result, rp) {
+        var label = hl.label(operation);
+        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+        return label;
+    };
     hl.loadApi(url, function (x, y) {
         el.removeChild(sp);
         var links = el.getElementsByTagName("div");
@@ -2699,19 +2826,37 @@ w.expandUsage = function (index) {
                     }
                     var operation = allOps[rp + "." + method];
                     if (operation) {
-                        var label = hl.label(operation);
-                        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+                        var label = rop(operation, result, rp);
                     }
+                }
+                else {
+                    rp = link.substring(";;R;".length);
+                    var pn = rp.indexOf(";");
+                    if (pn != -1) {
+                        rp = rp.substr(0, pn);
+                    }
+                    Object.keys(allOps).forEach(function (x) {
+                        if (x.indexOf(rp) == 0) {
+                            var operation = allOps[x];
+                            var label = rop(operation, result, rp);
+                        }
+                    });
                 }
             }
             else if (link.indexOf(";;T;") == 0) {
                 var rp = link.substring(";;T;".length);
-                if (mi != -1) {
-                    var type = x.elements().filter(function (x) { return x.name() == rp; });
-                    if (type.length == 1) {
-                        var label = hl.label(type[0]);
-                        result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                var lt = rp.indexOf(";");
+                if (lt != -1) {
+                    rp = rp.substr(0, lt);
+                }
+                var type = x.elements().filter(function (x) { return x.name() == rp; });
+                if (type.length == 1) {
+                    var label = hl.label(type[0]);
+                    if (dups[label]) {
+                        return;
                     }
+                    dups[label] = 1;
+                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
                 }
             }
             else {
@@ -2723,14 +2868,14 @@ w.expandUsage = function (index) {
         var children = sp.getElementsByTagName("div");
         for (var i = 0; i < children.length; i++) {
             var di = children.item(i);
-            var key = di.getAttribute("key");
             var linkE = di.getElementsByTagName("a");
-            linkE.item(0).onclick = function () {
+            linkE.item(0).onclick = function (x) {
+                var rs = x.target.parentElement.getAttribute("key");
                 rtv.setBackUrl(ramlTreeView_1.ramlView.path);
                 var sel = ramlTreeView_1.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
                 ramlTreeView_1.ramlView.setUrl(url, function () {
-                    Workbench.open(key);
+                    Workbench.open(rs);
                 });
             };
         }
@@ -3194,6 +3339,15 @@ var BasicSorter = (function () {
     return BasicSorter;
 }());
 exports.BasicSorter = BasicSorter;
+function findNodeNoRecursion(nodes, v) {
+    for (var i = 0; i < nodes.length; i++) {
+        var ch = nodes[i];
+        if (ch.original === v) {
+            return ch;
+        }
+    }
+    return null;
+}
 function findNode(nodes, v) {
     for (var i = 0; i < nodes.length; i++) {
         var ch = nodes[i];
@@ -3229,7 +3383,8 @@ var TreeView = (function (_super) {
         this.refresh();
     };
     TreeView.prototype.select = function (model) {
-        var n = findNode(this.treeNodes, model);
+        var vs = $('#' + this.treeId).treeview(true);
+        var n = findNode(vs.all(), model);
         if (n) {
             this.selection = [model];
             this.refresh();
