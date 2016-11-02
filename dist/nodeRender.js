@@ -106,8 +106,26 @@ function renderNode(h, small) {
                         var sd = h.root().elements().filter(function (x) { return x.property() && x.property().nameId() == "securitySchemes"; });
                         if (sd.length == 1) {
                             var toRend = v[Object.keys(v)[0]];
+                            var descriptions = hl.scopeDescriptionsofApi(h.root(), Object.keys(v)[0]);
                             var rs = [];
                             Object.keys(toRend).forEach(function (x) {
+                                if (x == "scopes" && descriptions) {
+                                    var scopes = toRend[x];
+                                    rs.push("scopes: ");
+                                    for (var i = 0; i < scopes.length; i++) {
+                                        if (descriptions[i]) {
+                                            rs.push(" <span ><a>" + scopes[i] + "</a> </span>");
+                                            rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descriptions[i] + "'></span>");
+                                            if (i != scopes.length - 1) {
+                                                rs.push(",");
+                                            }
+                                        }
+                                        else {
+                                            rs.push("<span ><a>" + scopes[i] + "</a> </span>" + (i == scopes.length - 1 ? "" : ", "));
+                                        }
+                                    }
+                                    return;
+                                }
                                 rs.push(or.renderKeyValue(x, toRend[x]));
                             });
                             return "<div>" + rs.join("") + "</div>";

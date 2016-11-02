@@ -39,6 +39,7 @@ var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
         _super.apply(this, arguments);
+        this.compact = false;
     }
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
@@ -55,23 +56,38 @@ var RAMLDetailsView = (function (_super) {
                 }
             ]
         });
+        var v = this;
+        holder.setToolbar({
+            items: [
+                {
+                    title: "",
+                    image: "glyphicon glyphicon-asterisk",
+                    checked: this.compact,
+                    run: function () {
+                        v.compact = !v.compact;
+                        v.refresh();
+                        v.init(v.holder);
+                    }
+                }
+            ]
+        });
         return _super.prototype.init.call(this, holder);
     };
     RAMLDetailsView.prototype.innerRender = function (e) {
         e.style.overflow = "auto";
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var rnd = new tr.TypeRenderer(null, false);
+                var rnd = new tr.TypeRenderer(this.compact, null, false);
                 rnd.setGlobal(true);
                 rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
                 var cnt = rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
-                    var cnt = new rr.ResourceRenderer().render(this._element);
+                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
                 }
                 if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer(true, true, false, true).render(this._element);
+                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
                 }
             }
             new controls_1.Label(this._element.name(), cnt).render(e);

@@ -698,6 +698,32 @@ function enumDescriptions(x) {
     return null;
 }
 exports.enumDescriptions = enumDescriptions;
+function scopeDescriptionsofApi(a, name) {
+    if (a.scopeDesc) {
+        return a.scopeDesc[name];
+    }
+    var defs = {};
+    var ss = a.elements().filter(function (x) { return x.property().nameId() == "securitySchemes"; });
+    for (var i = 0; i < ss.length; i++) {
+        var descs = scopeDescriptions(ss[i]);
+        defs[ss[i].name()] = descs;
+    }
+    a.scopeDesc = defs;
+    return a.scopeDesc[name];
+}
+exports.scopeDescriptionsofApi = scopeDescriptionsofApi;
+function scopeDescriptions(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && (d.nameId() == "OathScopeDescriptions")) {
+            var obj = asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return null;
+}
+exports.scopeDescriptions = scopeDescriptions;
 function uriParameters(h) {
     var result = [];
     while (h != null && h.property() != null) {
@@ -1420,8 +1446,26 @@ function renderNode(h, small) {
                         var sd = h.root().elements().filter(function (x) { return x.property() && x.property().nameId() == "securitySchemes"; });
                         if (sd.length == 1) {
                             var toRend = v[Object.keys(v)[0]];
+                            var descriptions = hl.scopeDescriptionsofApi(h.root(), Object.keys(v)[0]);
                             var rs = [];
                             Object.keys(toRend).forEach(function (x) {
+                                if (x == "scopes" && descriptions) {
+                                    var scopes = toRend[x];
+                                    rs.push("scopes: ");
+                                    for (var i = 0; i < scopes.length; i++) {
+                                        if (descriptions[i]) {
+                                            rs.push(" <span ><a>" + scopes[i] + "</a> </span>");
+                                            rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descriptions[i] + "'></span>");
+                                            if (i != scopes.length - 1) {
+                                                rs.push(",");
+                                            }
+                                        }
+                                        else {
+                                            rs.push("<span ><a>" + scopes[i] + "</a> </span>" + (i == scopes.length - 1 ? "" : ", "));
+                                        }
+                                    }
+                                    return;
+                                }
                                 rs.push(or.renderKeyValue(x, toRend[x]));
                             });
                             return "<div>" + rs.join("") + "</div>";
@@ -1701,6 +1745,7 @@ var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
         _super.apply(this, arguments);
+        this.compact = false;
     }
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
@@ -1717,23 +1762,38 @@ var RAMLDetailsView = (function (_super) {
                 }
             ]
         });
+        var v = this;
+        holder.setToolbar({
+            items: [
+                {
+                    title: "",
+                    image: "glyphicon glyphicon-asterisk",
+                    checked: this.compact,
+                    run: function () {
+                        v.compact = !v.compact;
+                        v.refresh();
+                        v.init(v.holder);
+                    }
+                }
+            ]
+        });
         return _super.prototype.init.call(this, holder);
     };
     RAMLDetailsView.prototype.innerRender = function (e) {
         e.style.overflow = "auto";
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var rnd = new tr.TypeRenderer(null, false);
+                var rnd = new tr.TypeRenderer(this.compact, null, false);
                 rnd.setGlobal(true);
                 rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
                 var cnt = rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId() == "resources") {
-                    var cnt = new rr.ResourceRenderer().render(this._element);
+                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
                 }
                 if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer(true, true, false, true).render(this._element);
+                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
                 }
             }
             new controls_1.Label(this._element.name(), cnt).render(e);
@@ -2249,8 +2309,9 @@ var hl = require("./hl");
 var tr = require("./typeRender");
 var nr = require("./nodeRender");
 var ResourceRenderer = (function () {
-    function ResourceRenderer(isAnnotationType) {
+    function ResourceRenderer(meta, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.isAnnotationType = isAnnotationType;
     }
     ResourceRenderer.prototype.render = function (h) {
@@ -2270,8 +2331,8 @@ var ResourceRenderer = (function () {
                 result.push(nr.renderNode(x, false));
             });
             result.push("</hr>");
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
-            result.push(new MethodRenderer(false, false, false, false).render(ms[0]));
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
+            result.push(new MethodRenderer(false, false, false, false, this.meta).render(ms[0]));
         }
         else {
             result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
@@ -2279,9 +2340,9 @@ var ResourceRenderer = (function () {
             hl.prepareNodes(h.attrs()).forEach(function (x) {
                 result.push(nr.renderNode(x, false));
             });
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
             if (ms.length > 0) {
-                result.push(renderTabFolder("Methods", ms, new MethodRenderer(false, ms.length == 1, false, true)));
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(this.meta, false, ms.length == 1, false, true)));
             }
         }
         return result.join("");
@@ -2317,8 +2378,9 @@ function escape(n) {
     return n.replace("/", "_");
 }
 var MethodRenderer = (function () {
-    function MethodRenderer(topLevel, isSingle, isAnnotationType, renderAttrs) {
+    function MethodRenderer(meta, topLevel, isSingle, isAnnotationType, renderAttrs) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.topLevel = topLevel;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
@@ -2345,17 +2407,17 @@ var MethodRenderer = (function () {
             });
         }
         if (this.topLevel) {
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result);
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result, this.meta);
         }
-        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result);
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
+        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result, this.meta);
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
         if (rs.length > 0) {
-            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer("Body", rs.length == 1)));
+            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer(this.meta, "Body", rs.length == 1)));
         }
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
         if (rs.length > 0) {
-            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(rs.length == 1)));
+            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(this.meta, rs.length == 1)));
         }
         return result.join("");
     };
@@ -2363,8 +2425,9 @@ var MethodRenderer = (function () {
 }());
 exports.MethodRenderer = MethodRenderer;
 var ResponseRenderer = (function () {
-    function ResponseRenderer(isSingle, isAnnotationType) {
+    function ResponseRenderer(meta, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
@@ -2377,8 +2440,8 @@ var ResponseRenderer = (function () {
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;
@@ -2600,7 +2663,7 @@ marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 var Type = (function () {
     function Type() {
     }
-    Type.prototype.id = function () { return "description"; };
+    Type.prototype.id = function () { return "type"; };
     Type.prototype.caption = function () { return "Type"; };
     Type.prototype.render = function (p) {
         var s = p.range();
@@ -2615,6 +2678,21 @@ var Type = (function () {
         return "15em";
     };
     return Type;
+}());
+var Meta = (function () {
+    function Meta() {
+    }
+    Meta.prototype.id = function () { return "meta"; };
+    Meta.prototype.caption = function () { return "Type &amp; Meta"; };
+    Meta.prototype.render = function (p) {
+        var v = new Type().render(p);
+        var f = new Facets().render(p);
+        return v + (f ? '(' + f + ')' : "");
+    };
+    Meta.prototype.width = function () {
+        return "15em";
+    };
+    return Meta;
 }());
 var WProperty = (function () {
     function WProperty(_orig, _o) {
@@ -2695,8 +2773,9 @@ var renderClicableLink = function (root, result, label) {
     }
 };
 var TypeRenderer = (function () {
-    function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
+    function TypeRenderer(meta, extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.extraCaption = extraCaption;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
@@ -2740,11 +2819,11 @@ var TypeRenderer = (function () {
         var ps = at.facets();
         var nm = "Facet declarations";
         if (ps.length > 0) {
-            renderPropertyTable(nm, ps, result, at);
+            renderPropertyTable(nm, ps, result, at, this.meta);
         }
         if (at.isObject()) {
             ps = at.allProperties();
-            renderPropertyTable("Properties", ps, result, at);
+            renderPropertyTable("Properties", ps, result, at, this.meta);
         }
         if (at.isArray()) {
             var ct = at.componentType();
@@ -2754,7 +2833,7 @@ var TypeRenderer = (function () {
                 result.push("</h5>");
                 ps = ct.allProperties();
                 if (ct.isObject()) {
-                    renderPropertyTable("Component type properties", ps, result, ct);
+                    renderPropertyTable("Component type properties", ps, result, ct, this.meta);
                 }
             }
         }
@@ -2903,18 +2982,27 @@ w.expandUsage = function (index) {
         };
     };
 };
-function renderPropertyTable(name, ps, result, at) {
+function renderPropertyTable(name, ps, result, at, isMeta) {
     result.push("<div style='padding-top: 10px'>");
     var pm = expandProps([at], ps);
-    result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-        hidden: function (c) {
-            return c.level() > 0;
-        }
-    }).render(pm));
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
     result.push("</div>");
 }
 exports.renderPropertyTable = renderPropertyTable;
-function renderParameters(name, ps, result) {
+function renderParameters(name, ps, result, isMeta) {
     ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
     if (ps.length == 0) {
         return;
@@ -2952,11 +3040,20 @@ function renderParameters(name, ps, result) {
         });
     });
     var pm = expandProps([], pr);
-    result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-        hidden: function (c) {
-            return c.level() > 0;
-        }
-    }).render(pm));
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
     result.push("</div>");
 }
 exports.renderParameters = renderParameters;

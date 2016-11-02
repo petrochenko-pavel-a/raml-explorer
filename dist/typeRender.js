@@ -212,7 +212,7 @@ marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 var Type = (function () {
     function Type() {
     }
-    Type.prototype.id = function () { return "description"; };
+    Type.prototype.id = function () { return "type"; };
     Type.prototype.caption = function () { return "Type"; };
     Type.prototype.render = function (p) {
         var s = p.range();
@@ -227,6 +227,21 @@ var Type = (function () {
         return "15em";
     };
     return Type;
+}());
+var Meta = (function () {
+    function Meta() {
+    }
+    Meta.prototype.id = function () { return "meta"; };
+    Meta.prototype.caption = function () { return "Type &amp; Meta"; };
+    Meta.prototype.render = function (p) {
+        var v = new Type().render(p);
+        var f = new Facets().render(p);
+        return v + (f ? '(' + f + ')' : "");
+    };
+    Meta.prototype.width = function () {
+        return "15em";
+    };
+    return Meta;
 }());
 var WProperty = (function () {
     function WProperty(_orig, _o) {
@@ -307,8 +322,9 @@ var renderClicableLink = function (root, result, label) {
     }
 };
 var TypeRenderer = (function () {
-    function TypeRenderer(extraCaption, isSingle, isAnnotationType) {
+    function TypeRenderer(meta, extraCaption, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.extraCaption = extraCaption;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
@@ -352,11 +368,11 @@ var TypeRenderer = (function () {
         var ps = at.facets();
         var nm = "Facet declarations";
         if (ps.length > 0) {
-            renderPropertyTable(nm, ps, result, at);
+            renderPropertyTable(nm, ps, result, at, this.meta);
         }
         if (at.isObject()) {
             ps = at.allProperties();
-            renderPropertyTable("Properties", ps, result, at);
+            renderPropertyTable("Properties", ps, result, at, this.meta);
         }
         if (at.isArray()) {
             var ct = at.componentType();
@@ -366,7 +382,7 @@ var TypeRenderer = (function () {
                 result.push("</h5>");
                 ps = ct.allProperties();
                 if (ct.isObject()) {
-                    renderPropertyTable("Component type properties", ps, result, ct);
+                    renderPropertyTable("Component type properties", ps, result, ct, this.meta);
                 }
             }
         }
@@ -515,18 +531,27 @@ w.expandUsage = function (index) {
         };
     };
 };
-function renderPropertyTable(name, ps, result, at) {
+function renderPropertyTable(name, ps, result, at, isMeta) {
     result.push("<div style='padding-top: 10px'>");
     var pm = expandProps([at], ps);
-    result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-        hidden: function (c) {
-            return c.level() > 0;
-        }
-    }).render(pm));
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
     result.push("</div>");
 }
 exports.renderPropertyTable = renderPropertyTable;
-function renderParameters(name, ps, result) {
+function renderParameters(name, ps, result, isMeta) {
     ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
     if (ps.length == 0) {
         return;
@@ -564,11 +589,20 @@ function renderParameters(name, ps, result) {
         });
     });
     var pm = expandProps([], pr);
-    result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-        hidden: function (c) {
-            return c.level() > 0;
-        }
-    }).render(pm));
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
     result.push("</div>");
 }
 exports.renderParameters = renderParameters;

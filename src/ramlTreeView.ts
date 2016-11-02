@@ -34,7 +34,7 @@ declare var $:any
 export class RAMLDetailsView extends workbench.ViewPart{
 
     _element:hl.IHighLevelNode;
-
+    compact:boolean=false;
     setSelection(v:hl.IHighLevelNode){
         this._element=v;
 
@@ -55,7 +55,22 @@ export class RAMLDetailsView extends workbench.ViewPart{
 
             ]
         })
-
+        var v=this;
+        holder.setToolbar({
+                items:[
+                    {
+                        title:"",
+                        image:"glyphicon glyphicon-asterisk",
+                        checked: this.compact,
+                        run(){
+                            v.compact=!v.compact;
+                            v.refresh();
+                            v.init(v.holder);
+                        }
+                    }
+                ]
+            }
+        )
         return super.init(holder);
     }
 
@@ -65,17 +80,17 @@ export class RAMLDetailsView extends workbench.ViewPart{
         {
 
             if (this._element.property().nameId()=="types"||this._element.property().nameId()=="annotationTypes"){
-                var rnd=new tr.TypeRenderer(null,false);
+                var rnd=new tr.TypeRenderer(this.compact,null,false);
                 rnd.setGlobal(true)
                 rnd.setUsages(usages.getUsages(this._element.property().nameId()=="types",this._element.name()))
                 var cnt=rnd.render(this._element);
             }
             else {
                 if (this._element.property().nameId()=="resources"){
-                    var cnt=new rr.ResourceRenderer().render(this._element);
+                    var cnt=new rr.ResourceRenderer(this.compact).render(this._element);
                 }
                 if (this._element.property().nameId()=="methods"){
-                    var cnt=new rr.MethodRenderer(true,true,false,true).render(this._element);
+                    var cnt=new rr.MethodRenderer(this.compact,true,true,false,true).render(this._element);
                 }
 
                 // var cnt = `<h3>${this._element.name()}</h3><hr/>` + renderNodes(this._element.attrs());

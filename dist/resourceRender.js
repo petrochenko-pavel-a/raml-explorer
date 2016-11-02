@@ -3,8 +3,9 @@ var hl = require("./hl");
 var tr = require("./typeRender");
 var nr = require("./nodeRender");
 var ResourceRenderer = (function () {
-    function ResourceRenderer(isAnnotationType) {
+    function ResourceRenderer(meta, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.isAnnotationType = isAnnotationType;
     }
     ResourceRenderer.prototype.render = function (h) {
@@ -24,8 +25,8 @@ var ResourceRenderer = (function () {
                 result.push(nr.renderNode(x, false));
             });
             result.push("</hr>");
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
-            result.push(new MethodRenderer(false, false, false, false).render(ms[0]));
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
+            result.push(new MethodRenderer(false, false, false, false, this.meta).render(ms[0]));
         }
         else {
             result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
@@ -33,9 +34,9 @@ var ResourceRenderer = (function () {
             hl.prepareNodes(h.attrs()).forEach(function (x) {
                 result.push(nr.renderNode(x, false));
             });
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result);
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
             if (ms.length > 0) {
-                result.push(renderTabFolder("Methods", ms, new MethodRenderer(false, ms.length == 1, false, true)));
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(this.meta, false, ms.length == 1, false, true)));
             }
         }
         return result.join("");
@@ -71,8 +72,9 @@ function escape(n) {
     return n.replace("/", "_");
 }
 var MethodRenderer = (function () {
-    function MethodRenderer(topLevel, isSingle, isAnnotationType, renderAttrs) {
+    function MethodRenderer(meta, topLevel, isSingle, isAnnotationType, renderAttrs) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.topLevel = topLevel;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
@@ -99,17 +101,17 @@ var MethodRenderer = (function () {
             });
         }
         if (this.topLevel) {
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result);
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result, this.meta);
         }
-        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result);
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
+        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result, this.meta);
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
         if (rs.length > 0) {
-            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer("Body", rs.length == 1)));
+            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer(this.meta, "Body", rs.length == 1)));
         }
         var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
         if (rs.length > 0) {
-            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(rs.length == 1)));
+            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(this.meta, rs.length == 1)));
         }
         return result.join("");
     };
@@ -117,8 +119,9 @@ var MethodRenderer = (function () {
 }());
 exports.MethodRenderer = MethodRenderer;
 var ResponseRenderer = (function () {
-    function ResponseRenderer(isSingle, isAnnotationType) {
+    function ResponseRenderer(meta, isSingle, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
         this.isSingle = isSingle;
         this.isAnnotationType = isAnnotationType;
     }
@@ -131,8 +134,8 @@ var ResponseRenderer = (function () {
         hl.prepareNodes(h.attrs()).forEach(function (x) {
             result.push(nr.renderNode(x, false));
         });
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;

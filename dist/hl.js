@@ -502,6 +502,32 @@ function enumDescriptions(x) {
     return null;
 }
 exports.enumDescriptions = enumDescriptions;
+function scopeDescriptionsofApi(a, name) {
+    if (a.scopeDesc) {
+        return a.scopeDesc[name];
+    }
+    var defs = {};
+    var ss = a.elements().filter(function (x) { return x.property().nameId() == "securitySchemes"; });
+    for (var i = 0; i < ss.length; i++) {
+        var descs = scopeDescriptions(ss[i]);
+        defs[ss[i].name()] = descs;
+    }
+    a.scopeDesc = defs;
+    return a.scopeDesc[name];
+}
+exports.scopeDescriptionsofApi = scopeDescriptionsofApi;
+function scopeDescriptions(x) {
+    var attrs = prepareNodes(x.attrs());
+    for (var i = 0; i < attrs.length; i++) {
+        var d = attrs[i].definition();
+        if (d && (d.nameId() == "OathScopeDescriptions")) {
+            var obj = asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return null;
+}
+exports.scopeDescriptions = scopeDescriptions;
 function uriParameters(h) {
     var result = [];
     while (h != null && h.property() != null) {

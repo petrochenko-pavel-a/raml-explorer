@@ -568,7 +568,31 @@ export function enumDescriptions(x:IHighLevelNode):string[]{
     }
     return null;
 }
+export function scopeDescriptionsofApi(a:IHighLevelNode,name:string):string[]{
+    if ((<any>a).scopeDesc){
+        return (<any>a).scopeDesc[name]
+    }
 
+    var defs={};
+    var ss=a.elements().filter(x=>x.property().nameId()=="securitySchemes");
+    for (var i=0;i<ss.length;i++){
+        var descs=scopeDescriptions(ss[i]);
+        defs[ss[i].name()]=descs;
+    }
+    (<any>a).scopeDesc=defs;
+    return (<any>a).scopeDesc[name]
+}
+export function scopeDescriptions(x:IHighLevelNode):string[]{
+    var attrs=prepareNodes(x.attrs());
+    for (var i=0;i<attrs.length;i++){
+        var d=attrs[i].definition();
+        if (d&&(d.nameId()=="OathScopeDescriptions")){
+            var obj= asObject(attrs[i]);
+            return obj[Object.keys(obj)[0]];
+        }
+    }
+    return null;
+}
 
 
 export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{

@@ -7,7 +7,7 @@ import nr=require("./nodeRender")
 
 export class ResourceRenderer{
 
-    constructor(private isAnnotationType:boolean=false){
+    constructor(private meta: boolean,private isAnnotationType:boolean=false){
     }
 
     render(h:IHighLevelNode):string{
@@ -27,8 +27,8 @@ export class ResourceRenderer{
                 result.push(nr.renderNode(x, false));
             });
             result.push("</hr>");
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result)
-            result.push(new MethodRenderer(false,false,false,false).render(ms[0]));
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result,this.meta)
+            result.push(new MethodRenderer(false,false,false,false,this.meta).render(ms[0]));
         }
         else {
             result.push("<h3>Resource:"+hl.resourceUrl(h)+"</h3>");
@@ -36,9 +36,9 @@ export class ResourceRenderer{
             hl.prepareNodes(h.attrs()).forEach(x=> {
                 result.push(nr.renderNode(x, false));
             });
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result)
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result,this.meta)
             if (ms.length > 0) {
-                result.push(renderTabFolder("Methods", ms, new MethodRenderer(false,ms.length == 1,false,true)));
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(this.meta,false,ms.length == 1,false,true)));
             }
         }
         return result.join("");
@@ -74,9 +74,10 @@ function escape(n:string){
 
 export class MethodRenderer{
 
-    constructor(private topLevel:boolean,private isSingle:boolean,private isAnnotationType:boolean=false,private renderAttrs:boolean){
+    constructor(private meta: boolean,private topLevel:boolean,private isSingle:boolean,private isAnnotationType:boolean=false,private renderAttrs:boolean){
 
     }
+
 
     render(h:IHighLevelNode):string{
         var result:string[]=[];
@@ -102,26 +103,26 @@ export class MethodRenderer{
             });
         }
         if (this.topLevel){
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result)
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result,this.meta)
         }
-        tr.renderParameters("Query Parameters",h.elements().filter(x=>x.property().nameId()=="queryParameters"),result)
-        tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result)
+        tr.renderParameters("Query Parameters",h.elements().filter(x=>x.property().nameId()=="queryParameters"),result,this.meta)
+        tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result,this.meta)
         var rs=h.elements().filter(x=>x.property().nameId()=="body")
         if (rs.length>0) {
-            result.push(renderTabFolder("Body",rs, new tr.TypeRenderer("Body",rs.length==1)))
+            result.push(renderTabFolder("Body",rs, new tr.TypeRenderer(this.meta,"Body",rs.length==1)))
         }
         var rs=h.elements().filter(x=>x.property().nameId()=="responses")
 
         if (rs.length>0)
         {
-            result.push(renderTabFolder("Responses",rs,new ResponseRenderer(rs.length==1)))
+            result.push(renderTabFolder("Responses",rs,new ResponseRenderer(this.meta,rs.length==1)))
         }
 
         return result.join("");
     }
 }
 export class ResponseRenderer{
-    constructor(protected isSingle: boolean,private isAnnotationType:boolean=false){
+    constructor(protected meta:boolean,protected isSingle: boolean,private isAnnotationType:boolean=false){
     }
 
     render(h:IHighLevelNode):string{
@@ -133,9 +134,9 @@ export class ResponseRenderer{
         hl.prepareNodes(h.attrs()).forEach(x=> {
             result.push(nr.renderNode(x,false));
         });
-        tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result)
+        tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result,this.meta)
 
-        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(rs.length==1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1)))
+        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(this.meta,rs.length==1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1)))
         return result.join("");
     }
 }

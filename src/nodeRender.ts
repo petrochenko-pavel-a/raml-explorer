@@ -115,14 +115,33 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
             if (pname=="securedBy"){
                 var v=hl.asObject(h);
                 v = v[Object.keys(v)[0]];
+
                 var result:string[]=[];
                 if (Object.keys(v).length==1){
                     if (h.parent()&&(h.parent().parent()!=null)) {
                         var sd = h.root().elements().filter(x=>x.property() && x.property().nameId() == "securitySchemes");
                         if (sd.length == 1) {
                             var toRend=v[Object.keys(v)[0]];
+                            var descriptions=hl.scopeDescriptionsofApi(h.root(),Object.keys(v)[0]);
                             var rs:string[]=[];
                             Object.keys(toRend).forEach(x=>{
+                                if (x=="scopes"&&descriptions){
+                                    var scopes=toRend[x];
+                                    rs.push("scopes: ")
+                                    for (var i=0;i<scopes.length;i++){
+                                        if (descriptions[i]){
+                                            rs.push(" <span ><a>"+scopes[i]+"</a> </span>");
+                                            rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='"+descriptions[i]+"'></span>");
+                                            if (i!=scopes.length-1){
+                                                rs.push(",")
+                                            }
+                                        }
+                                        else{
+                                            rs.push("<span ><a>"+scopes[i]+"</a> </span>"+(i==scopes.length-1?"":", "));
+                                        }
+                                    }
+                                    return;
+                                }
                                 rs.push(or.renderKeyValue(x,toRend[x]));
                             })
                             return "<div>"+rs.join("")+"</div>";
