@@ -424,6 +424,8 @@ var Locals = {
     "Id": -1,
     "Title": 1,
     "Version": -1,
+    "NextLinkBasedPagination": 200,
+    "TokenBasePagination": 200
 };
 var PLocals = {
     "usage": 2,

@@ -620,6 +620,8 @@ var Locals = {
     "Id": -1,
     "Title": 1,
     "Version": -1,
+    "NextLinkBasedPagination": 200,
+    "TokenBasePagination": 200
 };
 var PLocals = {
     "usage": 2,
@@ -1443,7 +1445,19 @@ function renderNode(h, small) {
             res = or.renderKeyValue(h.property().nameId(), vl, small);
         }
         else {
-            var res = or.renderKeyValue(h.definition().nameId(), vl, small);
+            if (vl.dumpNode) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var id = h.definition().nameId();
+            if (id == "StringType") {
+                id = h.name();
+            }
+            var res = or.renderKeyValue(id, vl, small);
         }
     }
     else {
@@ -2853,7 +2867,7 @@ w.expandUsage = function (index) {
                 if (type.length == 1) {
                     var label = hl.label(type[0]);
                     if (dups[label]) {
-                        return;
+                        continue;
                     }
                     dups[label] = 1;
                     result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");

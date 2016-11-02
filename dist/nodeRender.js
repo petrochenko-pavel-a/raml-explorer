@@ -131,7 +131,19 @@ function renderNode(h, small) {
             res = or.renderKeyValue(h.property().nameId(), vl, small);
         }
         else {
-            var res = or.renderKeyValue(h.definition().nameId(), vl, small);
+            if (vl.dumpNode) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var id = h.definition().nameId();
+            if (id == "StringType") {
+                id = h.name();
+            }
+            var res = or.renderKeyValue(id, vl, small);
         }
     }
     else {

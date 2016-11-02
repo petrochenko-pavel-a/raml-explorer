@@ -479,7 +479,7 @@ w.expandUsage = function (index) {
                 if (type.length == 1) {
                     var label = hl.label(type[0]);
                     if (dups[label]) {
-                        return;
+                        continue;
                     }
                     dups[label] = 1;
                     result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
