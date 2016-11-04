@@ -81,6 +81,13 @@ function findUsagesRoot(h) {
     return h;
 }
 exports.findUsagesRoot = findUsagesRoot;
+function isRAML08(x) {
+    if (x.definition().universe().version() == "RAML08") {
+        return true;
+    }
+    return false;
+}
+exports.isRAML08 = isRAML08;
 function findUsages(h, n, results) {
     h.elements().forEach(function (x) {
         findUsages(x, n, results);
@@ -404,7 +411,12 @@ var MergedNode = (function () {
         return this.vl;
     };
     MergedNode.prototype.lowLevel = function () {
-        return [];
+        var x = this;
+        return {
+            dumpToObject: function () {
+                return x.vl[0];
+            }
+        };
     };
     MergedNode.prototype.isAttr = function () {
         return true;
@@ -567,6 +579,7 @@ function uriParameters(h) {
                     isArray: function () { return false; },
                     isBoolean: function () { return false; },
                     isBuiltIn: function () { return false; },
+                    hasExternalInHierarchy: function () { return false; },
                     isString: function () { return false; },
                     isNumber: function () { return false; },
                     isUnion: function () { return false; },
@@ -576,7 +589,10 @@ function uriParameters(h) {
                     leftType: function () { return null; },
                     rightType: function () { return null; },
                     superTypes: function () { return []; },
-                    adapters: []
+                    adapters: [],
+                    universe: function () {
+                        return h.definition().universe();
+                    }
                 }, x));
             }
         });

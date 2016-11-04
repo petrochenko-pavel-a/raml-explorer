@@ -277,6 +277,13 @@ function findUsagesRoot(h) {
     return h;
 }
 exports.findUsagesRoot = findUsagesRoot;
+function isRAML08(x) {
+    if (x.definition().universe().version() == "RAML08") {
+        return true;
+    }
+    return false;
+}
+exports.isRAML08 = isRAML08;
 function findUsages(h, n, results) {
     h.elements().forEach(function (x) {
         findUsages(x, n, results);
@@ -600,7 +607,12 @@ var MergedNode = (function () {
         return this.vl;
     };
     MergedNode.prototype.lowLevel = function () {
-        return [];
+        var x = this;
+        return {
+            dumpToObject: function () {
+                return x.vl[0];
+            }
+        };
     };
     MergedNode.prototype.isAttr = function () {
         return true;
@@ -763,6 +775,7 @@ function uriParameters(h) {
                     isArray: function () { return false; },
                     isBoolean: function () { return false; },
                     isBuiltIn: function () { return false; },
+                    hasExternalInHierarchy: function () { return false; },
                     isString: function () { return false; },
                     isNumber: function () { return false; },
                     isUnion: function () { return false; },
@@ -772,7 +785,10 @@ function uriParameters(h) {
                     leftType: function () { return null; },
                     rightType: function () { return null; },
                     superTypes: function () { return []; },
-                    adapters: []
+                    adapters: [],
+                    universe: function () {
+                        return h.definition().universe();
+                    }
                 }, x));
             }
         });
@@ -1272,6 +1288,14 @@ function tryMergeToPlurals(val) {
                 delete val[op1];
                 return;
             }
+            if (op1.charAt(op1.length - 1) == "'") {
+                var sm = x.substring(0, op1.length - 1) + "s";
+                if (val[sm]) {
+                    val[sm] = val[sm].concat(val[x]);
+                    delete val[x];
+                    return;
+                }
+            }
             if (op1.charAt(op1.length - 1) == 'e') {
                 op1 = x.substring(0, op1.length - 1);
             }
@@ -1324,11 +1348,19 @@ function trimDesc(s) {
                 }
             }
             if (c == '.' || c == ';' || c == '\n' || c == '\r' || c == "<") {
+                if (c == '.') {
+                    if (i < s.length - 1) {
+                        var q = c.charAt(i + 1);
+                        if (isDigit(q) || isLetter(c)) {
+                            continue;
+                        }
+                    }
+                }
                 if (words.length >= 2) {
                     return s.substring(0, i);
                 }
             }
-            if (i > 50) {
+            if (i > 100) {
                 return s.substring(0, i) + "...";
             }
         }
@@ -1405,14 +1437,26 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes, v, path) {
+function renderNodesOverview(api, v, path) {
     var result = [];
+    var nodes = api.attrs();
     var obj = {};
+    var docs = api.elements().filter(function (x) { return x.property().nameId() == "documentation"; });
     nodes = hl.prepareNodes(nodes);
     var hr = new HeaderRenderer(v);
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    docs.forEach(function (x) {
+        var t = x.attr("title");
+        if (t) {
+            result.push("<h5 style='background-color: lightgray'>" + t.value() + "</h5>");
+        }
+        var c = x.attr("content");
+        if (c) {
+            result.push(marked(c.value()));
+        }
+    });
     if (path) {
         result.push("<hr/>");
         result.push("<a href='" + path + "'>Get RAML</a>");
@@ -1510,6 +1554,20 @@ function renderNode(h, small) {
         }
         if (h.isAttr()) {
             res = or.renderKeyValue(h.property().nameId(), vl, small);
+            return res;
+        }
+        var id = h.definition().nameId();
+        if (id == "StringType") {
+            id = h.name();
+            if (true) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var res = or.renderKeyValue(id, vl, true);
             return res;
         }
         var res = "<h5 style=\"background: gainsboro\">" + h.definition().nameId() + ":</h5>";
@@ -1674,7 +1732,7 @@ function renderKeyValue(k, vl, small) {
     }
     var str = "" + vl;
     vl = highlight(str);
-    if (str.length > 70 && str.indexOf('\n') != -1) {
+    if (str.length > 70 && str.indexOf('\n') != -1 && !small) {
         var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
         return res;
     }
@@ -1722,7 +1780,7 @@ exports.states = [];
 function back() {
     if (exports.states.length > 0) {
         if (bu) {
-            exports.ramlView.setUrl(bu, function () {
+            showApi(bu, function () {
                 exports.ramlView.openNodeById(exports.states.pop());
             });
             bu = null;
@@ -1745,7 +1803,7 @@ var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
         _super.apply(this, arguments);
-        this.compact = false;
+        this.compact = true;
     }
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
@@ -1802,6 +1860,9 @@ var RAMLDetailsView = (function (_super) {
             e.innerHTML = "";
         }
         $('[data-toggle="tooltip"]').tooltip();
+        $('pre code').each(function (i, block) {
+            hljs.highlightBlock(block);
+        });
     };
     return RAMLDetailsView;
 }(workbench.ViewPart));
@@ -1932,7 +1993,8 @@ var RAMLTreeView = (function (_super) {
         else {
             _super.prototype.innerRender.call(this, e);
             if (this.cb) {
-                this.cb();
+                var q = this.cb;
+                setTimeout(q, 100);
                 this.cb = null;
             }
         }
@@ -1966,7 +2028,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions, this.path);
+        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
@@ -2075,7 +2137,7 @@ function init() {
         }
     });
     function initSizes() {
-        var h = document.getElementById("header").clientHeight + 50;
+        var h = document.getElementById("header").clientHeight + 40;
         document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
     }
     initSizes();
@@ -2096,9 +2158,14 @@ exports.ramlView.addSelectionListener({
         }
     }
 });
-function showApi(url) {
-    exports.ramlView.setUrl(url);
-    regView.setSelectedUrl(url);
+function showApi(url, cb) {
+    var b = regView.setSelectedUrl(url);
+    if (b) {
+        exports.ramlView.cb = cb;
+    }
+    else {
+        exports.ramlView.setUrl(url, cb);
+    }
 }
 exports.showApi = showApi;
 
@@ -2200,7 +2267,9 @@ function groupBy(els, f) {
     });
     return result;
 }
+var apiCount = 0;
 function buildRegistryGroups(els) {
+    apiCount = 0;
     var groups = groupBy(els, function (x) { return x.org; });
     var groupNodes = [];
     Object.keys(groups).forEach(function (gr) {
@@ -2227,6 +2296,7 @@ function mergeVersions(els) {
     var groupNodes = [];
     Object.keys(groups).forEach(function (gr) {
         var g = new ApiWithVersions();
+        apiCount++;
         g.name = gr;
         g.versions = groups[gr];
         g.icon = g.versions[0].icon;
@@ -2237,6 +2307,27 @@ function mergeVersions(els) {
 loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json", function (data, s) {
     usages.loadedUsageData(data);
 });
+function findNodeWithUrl(d, url) {
+    for (var i = 0; i < d.length; i++) {
+        if (d[i] instanceof ApiWithVersions) {
+            var w = d[i];
+            for (var j = 0; j < w.versions.length; j++) {
+                if (w.versions[j].location == url) {
+                    return w;
+                }
+            }
+        }
+        else {
+            var gn = d[i];
+            var res = findNodeWithUrl(gn.children, url);
+            if (res) {
+                return res;
+            }
+        }
+    }
+    return null;
+}
+exports.findNodeWithUrl = findNodeWithUrl;
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
@@ -2252,12 +2343,30 @@ var RegistryView = (function (_super) {
         });
     };
     RegistryView.prototype.setSelectedUrl = function (url) {
+        var _this = this;
         this.url = url;
+        if (this.groups) {
+            var n = findNodeWithUrl(this.groups, url);
+            if (n) {
+                this.setSelection(n);
+                return true;
+            }
+            else {
+                this.node.libraries.forEach(function (x) {
+                    if (x.location == url) {
+                        _this.setSelection(x);
+                        return true;
+                    }
+                });
+            }
+        }
+        return false;
     };
     RegistryView.prototype.customizeAccordition = function (root, node) {
-        var _this = this;
+        var groups = buildRegistryGroups(node.apis);
+        this.groups = groups;
+        this.addTree("Apis", groups);
         this.addTree("Libraries", node.libraries);
-        this.addTree("Apis", buildRegistryGroups(node.apis));
         var v = this;
         this.getHolder().setContextMenu({
             items: [
@@ -2267,20 +2376,7 @@ var RegistryView = (function (_super) {
                     } }
             ]
         });
-        if (this.url != null) {
-            var selection = null;
-            node.libraries.forEach(function (x) {
-                if (x.location == _this.url) {
-                    selection = x;
-                }
-            });
-            var view = this;
-            if (selection) {
-                setTimeout(function () {
-                    view.setSelection(selection);
-                }, 100);
-            }
-        }
+        document.getElementById("stat").innerHTML = apiCount + " apis, " + node.apis.length + " unique api versions, and counting.";
     };
     RegistryView.prototype.customize = function (tree) {
         tree.setContentProvider(new RegistryContentProvider());
@@ -2794,6 +2890,23 @@ var TypeRenderer = (function () {
         }
         var result = [];
         result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
+        if (at.hasExternalInHierarchy()) {
+            var type = at;
+            var content = "";
+            while (type) {
+                if (type.schemaString) {
+                    content = type.schemaString.trim();
+                }
+                type = type.superTypes()[0];
+            }
+            if (at.superTypes().length == 1 && !at.superTypes()[0].isBuiltIn()) {
+                result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>");
+            }
+            if (content) {
+                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + content + "</code></pre>");
+            }
+            return result.join("");
+        }
         if (at.superTypes().length == 1 && h.children().length == 2) {
             result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
         }
@@ -2967,7 +3080,7 @@ w.expandUsage = function (index) {
                 rtv.setBackUrl(ramlTreeView_1.ramlView.path);
                 var sel = ramlTreeView_1.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
-                ramlTreeView_1.ramlView.setUrl(url, function () {
+                rtv.showApi(url, function () {
                     Workbench.open(rs);
                 });
             };
@@ -3034,6 +3147,12 @@ function renderParameters(name, ps, result, isMeta) {
                 }
                 if (r && r.value() == "true") {
                     return true;
+                }
+                if (hl.isRAML08(x)) {
+                    if (!x.property() || x.property().nameId() == "uriParameters") {
+                        return true;
+                    }
+                    return false;
                 }
                 return !(x.name().charAt(x.name().length - 1) == "?");
             }

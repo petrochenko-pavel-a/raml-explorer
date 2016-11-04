@@ -13,7 +13,7 @@ export var states: string[] = [];
 export function back(){
     if (states.length > 0) {
         if (bu){
-            ramlView.setUrl(bu,()=>{
+            showApi(bu,()=>{
                 ramlView.openNodeById(states.pop());
             });
             bu=null;
@@ -31,10 +31,11 @@ export function setBackUrl(u:string){
     bu=u;
 }
 declare var $:any
+declare var hljs:any;
 export class RAMLDetailsView extends workbench.ViewPart{
 
     _element:hl.IHighLevelNode;
-    compact:boolean=false;
+    compact:boolean=true;
     setSelection(v:hl.IHighLevelNode){
         this._element=v;
 
@@ -109,6 +110,9 @@ export class RAMLDetailsView extends workbench.ViewPart{
         }
 
         $('[data-toggle="tooltip"]').tooltip();
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
     }
 }
 
@@ -145,6 +149,7 @@ function methodKey(name:string){
     color=colors[name];
     return `<span style="border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: ${color};font-size: small;padding: 3px"> </span>`
 }
+declare var marked:any;
 export class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:IHighLevelNode;
@@ -246,7 +251,9 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         else{
             super.innerRender(e);
             if (this.cb){
-                this.cb();
+                var q=this.cb;
+                setTimeout(q,100);
+                //this.cb();
                 this.cb=null;
             }
         }
@@ -287,7 +294,8 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
         //this.devMode=true;
-        var overview:string=nr.renderNodesOverview(this.api.attrs(),this.versions,this.path);
+        var overview:string=nr.renderNodesOverview(this.api,this.versions,this.path);
+
         if (overview.length>0) {
             a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
         }
@@ -408,7 +416,7 @@ export function init(){
 
     })
     function initSizes(){
-        var h=document.getElementById("header").clientHeight+50;
+        var h=document.getElementById("header").clientHeight+40;
         document.getElementById("rest").setAttribute("style","height:"+(window.innerHeight-h)+"px");
     }
     initSizes();
@@ -428,7 +436,13 @@ ramlView.addSelectionListener({
         }
     }
 })
-export function showApi(url){
-    ramlView.setUrl(url);
-    regView.setSelectedUrl(url)
+export function showApi(url,cb?:()=>any){
+    var b=regView.setSelectedUrl(url)
+    if (b) {
+        ramlView.cb=cb;
+
+    }
+    else {
+        ramlView.setUrl(url,cb)
+    }
 }

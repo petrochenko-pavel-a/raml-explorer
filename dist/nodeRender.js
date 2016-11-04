@@ -65,14 +65,26 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(nodes, v, path) {
+function renderNodesOverview(api, v, path) {
     var result = [];
+    var nodes = api.attrs();
     var obj = {};
+    var docs = api.elements().filter(function (x) { return x.property().nameId() == "documentation"; });
     nodes = hl.prepareNodes(nodes);
     var hr = new HeaderRenderer(v);
     nodes = hr.consume(nodes);
     result.push(hr.render());
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    docs.forEach(function (x) {
+        var t = x.attr("title");
+        if (t) {
+            result.push("<h5 style='background-color: lightgray'>" + t.value() + "</h5>");
+        }
+        var c = x.attr("content");
+        if (c) {
+            result.push(marked(c.value()));
+        }
+    });
     if (path) {
         result.push("<hr/>");
         result.push("<a href='" + path + "'>Get RAML</a>");
@@ -170,6 +182,20 @@ function renderNode(h, small) {
         }
         if (h.isAttr()) {
             res = or.renderKeyValue(h.property().nameId(), vl, small);
+            return res;
+        }
+        var id = h.definition().nameId();
+        if (id == "StringType") {
+            id = h.name();
+            if (true) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var res = or.renderKeyValue(id, vl, true);
             return res;
         }
         var res = "<h5 style=\"background: gainsboro\">" + h.definition().nameId() + ":</h5>";

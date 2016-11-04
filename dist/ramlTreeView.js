@@ -16,7 +16,7 @@ exports.states = [];
 function back() {
     if (exports.states.length > 0) {
         if (bu) {
-            exports.ramlView.setUrl(bu, function () {
+            showApi(bu, function () {
                 exports.ramlView.openNodeById(exports.states.pop());
             });
             bu = null;
@@ -39,7 +39,7 @@ var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView() {
         _super.apply(this, arguments);
-        this.compact = false;
+        this.compact = true;
     }
     RAMLDetailsView.prototype.setSelection = function (v) {
         this._element = v;
@@ -96,6 +96,9 @@ var RAMLDetailsView = (function (_super) {
             e.innerHTML = "";
         }
         $('[data-toggle="tooltip"]').tooltip();
+        $('pre code').each(function (i, block) {
+            hljs.highlightBlock(block);
+        });
     };
     return RAMLDetailsView;
 }(workbench.ViewPart));
@@ -226,7 +229,8 @@ var RAMLTreeView = (function (_super) {
         else {
             _super.prototype.innerRender.call(this, e);
             if (this.cb) {
-                this.cb();
+                var q = this.cb;
+                setTimeout(q, 100);
                 this.cb = null;
             }
         }
@@ -260,7 +264,7 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api.attrs(), this.versions, this.path);
+        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
@@ -369,7 +373,7 @@ function init() {
         }
     });
     function initSizes() {
-        var h = document.getElementById("header").clientHeight + 50;
+        var h = document.getElementById("header").clientHeight + 40;
         document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
     }
     initSizes();
@@ -390,8 +394,13 @@ exports.ramlView.addSelectionListener({
         }
     }
 });
-function showApi(url) {
-    exports.ramlView.setUrl(url);
-    regView.setSelectedUrl(url);
+function showApi(url, cb) {
+    var b = regView.setSelectedUrl(url);
+    if (b) {
+        exports.ramlView.cb = cb;
+    }
+    else {
+        exports.ramlView.setUrl(url, cb);
+    }
 }
 exports.showApi = showApi;

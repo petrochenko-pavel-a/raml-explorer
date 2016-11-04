@@ -221,6 +221,15 @@ export function tryMergeToPlurals(val:{ [name:string]:any[]}){
                 delete val[op1];
                 return;
             }
+            if (op1.charAt(op1.length-1)=="'"){
+                var sm=x.substring(0,op1.length-1)+"s";
+                if (val[sm]){
+                    val[sm]=val[sm].concat(val[x]);
+                    delete val[x];
+                    return;
+                }
+            }
+
             if (op1.charAt(op1.length-1)=='e'){
                 op1=x.substring(0,op1.length-1);
             }
@@ -229,6 +238,7 @@ export function tryMergeToPlurals(val:{ [name:string]:any[]}){
                 delete val[op1];
                 return;
             }
+
             if (op1.charAt(op1.length-1)=='i'){
                 op1=x.substring(0,op1.length-1)+"y";
             }
@@ -272,11 +282,19 @@ export function trimDesc(s:string):string{
                 }
             }
             if (c=='.'||c==';'||c=='\n'||c=='\r'||c=="<"){
+                if (c=='.'){
+                    if (i<s.length-1){
+                        var q=c.charAt(i+1);
+                        if(isDigit(q)||isLetter(c)){
+                            continue;
+                        }
+                    }
+                }
                 if (words.length>=2){
                     return s.substring(0,i);
                 }
             }
-            if (i>50){
+            if (i>100){
                 return s.substring(0,i)+"...";
             }
         }

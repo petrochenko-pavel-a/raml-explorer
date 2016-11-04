@@ -27,7 +27,10 @@ export interface IType{
     leftType():IType
     rightType():IType
     superTypes(): IType[]
+    hasExternalInHierarchy():boolean
+    universe?():{version():string}
     adapters:any[];
+    schemaString?:string
 }
 
 var root:IHighLevelNode
@@ -106,6 +109,12 @@ export function findUsagesRoot(h:IHighLevelNode):IHighLevelNode{
         h=h.parent();
     }
     return h;
+}
+export function isRAML08(x:IHighLevelNode):boolean{
+    if (x.definition().universe().version()=="RAML08"){
+        return true;
+    }
+    return false;
 }
 export function findUsages(h:IHighLevelNode,n:IType,results:IHighLevelNode[]){
     h.elements().forEach(x=>{
@@ -473,7 +482,12 @@ export class MergedNode implements IHighLevelNode{
     }
 
     lowLevel():any {
-        return [];
+        var x=this;
+        return {
+            dumpToObject(){
+                return x.vl[0];
+            }
+        };
     }
 
     isAttr():boolean {
@@ -636,6 +650,7 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
                     isArray(){return false},
                     isBoolean(){return false},
                     isBuiltIn(){return false},
+                    hasExternalInHierarchy(){return false},
                     isString(){return false},
                     isNumber(){return false},
                     isUnion(){return false},
@@ -645,7 +660,10 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
                     leftType(){return null},
                     rightType(){return null},
                     superTypes(){return []},
-                    adapters:[]
+                    adapters:[],
+                    universe(){
+                        return h.definition().universe();
+                    }
 
                 },x))
             }
@@ -841,6 +859,7 @@ export function label(x:IHighLevelNode&{$name?:string}){
     mm.label=result;
     return result;
 }
+
 
 export function groupTypes(types:IHighLevelNode[]):TreeLike{
     var root=new TreeLike("");

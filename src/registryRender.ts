@@ -77,8 +77,9 @@ function groupBy(els:any[], f:(x)=>string){
     })
     return result;
 }
-
-function buildRegistryGroups(els:IRegistryObj[]){
+var apiCount=0;
+function buildRegistryGroups(els:IRegistryObj[]):(GroupNode|ApiWithVersions)[]{
+    apiCount=0;
     var groups=groupBy(els,x=>x.org);
     var groupNodes:GroupNode[]=[];
     Object.keys(groups).forEach(gr=>{
@@ -105,6 +106,7 @@ function mergeVersions(els:IRegistryObj[]):ApiWithVersions[]{
     var groupNodes:ApiWithVersions[]=[];
     Object.keys(groups).forEach(gr=>{
         var g=new ApiWithVersions();
+        apiCount++;
         g.name=gr;
 
         g.versions=groups[gr];
@@ -117,6 +119,28 @@ function mergeVersions(els:IRegistryObj[]):ApiWithVersions[]{
 loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json",(data:any,s:number)=>{
      usages.loadedUsageData(data);
 })
+
+export function findNodeWithUrl(d:(GroupNode|ApiWithVersions)[],url:string){
+    for (var i=0;i<d.length;i++){
+        if (d[i] instanceof ApiWithVersions){
+            var w:ApiWithVersions=<ApiWithVersions>d[i];
+            for (var j=0;j<w.versions.length;j++){
+                if (w.versions[j].location==url){
+                    return w;
+                }
+            }
+        }
+        else{
+            var gn:GroupNode=<GroupNode>d[i];
+            var res=findNodeWithUrl(gn.children,url);
+            if (res){
+                return res;
+            }
+        }
+    }
+    return null;
+}
+
 export class RegistryView extends workbench.AccorditionTreeView{
 
     protected load() {
@@ -129,12 +153,31 @@ export class RegistryView extends workbench.AccorditionTreeView{
     protected url: string;
     setSelectedUrl(url:string){
         this.url=url;
+        if (this.groups){
+            var n=findNodeWithUrl(this.groups,url);
+            if (n){
+                this.setSelection(n);
+                return true;
+            }
+            else {
+                this.node.libraries.forEach(x=>{
+                    if(x.location==url){
+                        this.setSelection(x);
+                        return true;
+                    }
+                })
+            }
+        }
+        return false;
     }
     searchable=true;
-
+    groups:(GroupNode|ApiWithVersions)[]
     protected customizeAccordition(root: Accordition, node: IRegistry) {
+
+        var groups=buildRegistryGroups(node.apis);
+        this.groups=groups;
+        this.addTree("Apis",groups)
         this.addTree("Libraries",node.libraries)
-        this.addTree("Apis",buildRegistryGroups(node.apis))
         var v=this;
         this.getHolder().setContextMenu({
             items:[
@@ -144,20 +187,21 @@ export class RegistryView extends workbench.AccorditionTreeView{
                 }}
             ]
         });
-        if (this.url!=null){
-            var selection=null;
-            node.libraries.forEach(x=>{
-                if (x.location==this.url){
-                    selection=x;
-                }
-            })
-            var view=this;
-            if (selection){
-                setTimeout(function () {
-                    view.setSelection(selection);
-                },100)
-            }
-        }
+        // if (this.url!=null){
+        //     var selection=null;
+        //     node.libraries.forEach(x=>{
+        //         if (x.location==this.url){
+        //             selection=x;
+        //         }
+        //     })
+        //     var view=this;
+        //     // if (selection){
+        //     //     setTimeout(function () {
+        //     //         view.setSelection(selection);
+        //     //     },100)
+        //     // }
+        // }
+        document.getElementById("stat").innerHTML=apiCount+" apis, "+node.apis.length+" unique api versions, and counting.";
     }
 
     protected customize(tree: workbench.TreeView) {

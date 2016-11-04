@@ -79,16 +79,29 @@ export class HeaderRenderer{
         return result.join("");
     }
 }
-
-export function renderNodesOverview(nodes:IHighLevelNode[],v?:reg.ApiWithVersions,path?:string):string{
+declare var marked:any;
+export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,path?:string):string{
     var result:string[]=[];
+    var nodes:IHighLevelNode[]=api.attrs();
     var obj:any={};
+    var docs=api.elements().filter(x=>x.property().nameId()=="documentation");
+
     nodes=hl.prepareNodes(nodes);
     var hr=new HeaderRenderer(v);
     nodes=hr.consume(nodes);
     result.push(hr.render())
 
     nodes.forEach(x=>result.push(renderNode(x)));
+    docs.forEach(x=>{
+        var t=x.attr("title");
+        if (t) {
+            result.push("<h5 style='background-color: lightgray'>" + t.value() + "</h5>");
+        }
+        var c=x.attr("content");
+        if (c) {
+            result.push(marked(c.value()));
+        }
+    })
     if (path){
         result.push("<hr/>");
         result.push("<a href='"+path+"'>Get RAML</a>");
@@ -190,6 +203,20 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
         }
         if (h.isAttr()){
             res=or.renderKeyValue(h.property().nameId(),vl,small)
+            return res;
+        }
+        var id=h.definition().nameId();
+        if (id=="StringType"){
+            id=h.name();
+            if (true){
+                var v=hl.asObject(h);
+                v=v[Object.keys(v)[0]]
+                vl=JSON.stringify(v,null,2);
+                var svl=""+vl;
+                svl=svl.replace(": null","")
+                vl=svl.substr(1,svl.length-2);
+            }
+            var res = or.renderKeyValue(id, vl, true);
             return res;
         }
         var res = `<h5 style="background: gainsboro">${h.definition().nameId()}:</h5>`

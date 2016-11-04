@@ -343,6 +343,23 @@ var TypeRenderer = (function () {
         }
         var result = [];
         result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
+        if (at.hasExternalInHierarchy()) {
+            var type = at;
+            var content = "";
+            while (type) {
+                if (type.schemaString) {
+                    content = type.schemaString.trim();
+                }
+                type = type.superTypes()[0];
+            }
+            if (at.superTypes().length == 1 && !at.superTypes()[0].isBuiltIn()) {
+                result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>");
+            }
+            if (content) {
+                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + content + "</code></pre>");
+            }
+            return result.join("");
+        }
         if (at.superTypes().length == 1 && h.children().length == 2) {
             result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
         }
@@ -516,7 +533,7 @@ w.expandUsage = function (index) {
                 rtv.setBackUrl(ramlTreeView_1.ramlView.path);
                 var sel = ramlTreeView_1.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
-                ramlTreeView_1.ramlView.setUrl(url, function () {
+                rtv.showApi(url, function () {
                     Workbench.open(rs);
                 });
             };
@@ -583,6 +600,12 @@ function renderParameters(name, ps, result, isMeta) {
                 }
                 if (r && r.value() == "true") {
                     return true;
+                }
+                if (hl.isRAML08(x)) {
+                    if (!x.property() || x.property().nameId() == "uriParameters") {
+                        return true;
+                    }
+                    return false;
                 }
                 return !(x.name().charAt(x.name().length - 1) == "?");
             }

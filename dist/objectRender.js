@@ -130,7 +130,7 @@ function renderKeyValue(k, vl, small) {
     }
     var str = "" + vl;
     vl = highlight(str);
-    if (str.length > 70 && str.indexOf('\n') != -1) {
+    if (str.length > 70 && str.indexOf('\n') != -1 && !small) {
         var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
         return res;
     }
