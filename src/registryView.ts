@@ -1,13 +1,15 @@
-import workbench=require("./workbench")
-import controls=require("./controls")
-import {Accordition, Label, Loading} from "./controls";
-import hl=require("./hl")
-import {IHighLevelNode} from "./hl";
-import  tr=require("./typeRender")
-import  rr=require("./resourceRender")
-import nr=require("./nodeRender")
+import workbench=require("./framework/workbench")
+import controls=require("./framework/controls")
+import {Accordition, Label, Loading} from "./framework/controls";
+import hl=require("./core/hl")
+import {IHighLevelNode} from "./core/hl";
+import  tr=require("./rendering/typeRender")
+import  rr=require("./rendering/resourceRender")
+import nr=require("./rendering/nodeRender")
 import ra=require("./registryApp")
-import usages=require("./usagesRegistry")
+import usages=require("./core/usagesRegistry")
+
+
 function loadData(url:string, c:(t:any,e?:number)=>void){
     var xhr = new XMLHttpRequest();
 
@@ -36,11 +38,6 @@ interface IRegistry{
     apis:any[]
     libraries:[IRegistryObj]
 }
-export class RegistryDetailsView extends workbench.ViewPart{
-
-    innerRender(e: Element) {
-    }
-}
 
 class GroupNode{
     name: string
@@ -52,6 +49,7 @@ export class ApiWithVersions{
     icon: string
     versions: IRegistryObj[]
 }
+
 class RegistryContentProvider implements workbench.ITreeContentProvider{
     elements(i:any):any[]{
         return i;
@@ -63,6 +61,7 @@ class RegistryContentProvider implements workbench.ITreeContentProvider{
         return []
     }
 }
+
 function groupBy(els:any[], f:(x)=>string){
     var result={};
     els.forEach(x=>{
@@ -172,8 +171,8 @@ export class RegistryView extends workbench.AccorditionTreeView{
     }
     searchable=true;
     groups:(GroupNode|ApiWithVersions)[]
-    protected customizeAccordition(root: Accordition, node: IRegistry) {
 
+    protected customizeAccordition(root: Accordition, node: IRegistry) {
         var groups=buildRegistryGroups(node.apis);
         this.groups=groups;
         this.addTree("Apis",groups)
@@ -187,20 +186,6 @@ export class RegistryView extends workbench.AccorditionTreeView{
                 }}
             ]
         });
-        // if (this.url!=null){
-        //     var selection=null;
-        //     node.libraries.forEach(x=>{
-        //         if (x.location==this.url){
-        //             selection=x;
-        //         }
-        //     })
-        //     var view=this;
-        //     // if (selection){
-        //     //     setTimeout(function () {
-        //     //         view.setSelection(selection);
-        //     //     },100)
-        //     // }
-        // }
         document.getElementById("stat").innerHTML=apiCount+" apis, "+node.apis.length+" unique api versions, and counting.";
     }
 
@@ -219,7 +204,6 @@ export class RegistryView extends workbench.AccorditionTreeView{
                     return c;
                 }
             }
-
         })
     }
 }

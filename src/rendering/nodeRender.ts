@@ -1,6 +1,6 @@
 import  or=require("./objectRender")
-import hl=require("./hl")
-import reg=require("./registryRender")
+import hl=require("../core/hl")
+import reg=require("../registryView")
 import IHighLevelNode=hl.IHighLevelNode;
 export function renderNodes(nodes:IHighLevelNode[]):string{
     var result:string[]=[];
@@ -18,7 +18,6 @@ export class HeaderRenderer{
     baseUrl: string
 
     constructor(private versions?:reg.ApiWithVersions){
-
     }
 
     consume(nodes:hl.IHighLevelNode[]):hl.IHighLevelNode[]{

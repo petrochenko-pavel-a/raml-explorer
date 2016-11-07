@@ -800,5 +800,4 @@ export abstract class AccorditionTreeView extends ViewPart{
             }
         }
     }
-
 }

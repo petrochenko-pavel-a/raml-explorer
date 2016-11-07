@@ -1,5 +1,3 @@
-
-
 export interface IControl{
     render(e:Element);
     dispose?();
@@ -62,8 +60,6 @@ export class Loading extends  Composite{
         e.innerHTML=`<div style="display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;"><div style="display: flex;flex-direction: row;justify-content: center"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>`
     }
 }
-
-
 export class Label extends Composite{
 
     constructor(title?:string,private content?:string){
@@ -200,4 +196,3 @@ export class Accordition extends Composite{
         });
     }
 }
-

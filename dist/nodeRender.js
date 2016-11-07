@@ -1,6 +1,6 @@
 "use strict";
 var or = require("./objectRender");
-var hl = require("./hl");
+var hl = require("./core/hl");
 function renderNodes(nodes) {
     var result = [];
     var obj = {};

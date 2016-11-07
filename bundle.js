@@ -1,9 +1,8 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
-var workbench = require("./workbench");
+var workbench = require("./framework/workbench");
 var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
-var reg = require("./registryApp");
 var url = "";
 var h = document.location.hash;
 reg.init();
@@ -12,188 +11,7 @@ if (h && h.length > 1) {
     rv.showApi(url);
 }
 
-},{"./ramlTreeView":7,"./registryApp":8,"./workbench":13}],2:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var Composite = (function () {
-    function Composite() {
-        this.children = [];
-    }
-    Composite.prototype.render = function (e) {
-        this._element = e;
-        this.innerRender(e);
-    };
-    Composite.prototype.refresh = function () {
-        if (this._element) {
-            this.innerRender(this._element);
-        }
-    };
-    Composite.prototype.add = function (c) {
-        this.children.push(c);
-        this.refresh();
-    };
-    Composite.prototype.remove = function (c) {
-        this.children = this.children.filter(function (x) { return x != c; });
-        this.refresh();
-    };
-    Composite.prototype.dispose = function () {
-        this._element = null;
-        this.children.forEach(function (x) {
-            if (x.dispose) {
-                x.dispose();
-            }
-        });
-    };
-    Composite.prototype.setTitle = function (title) {
-        this._title = title;
-    };
-    Composite.prototype.title = function () {
-        return this._title;
-    };
-    return Composite;
-}());
-exports.Composite = Composite;
-var globalId = 0;
-function nextId() {
-    return "el" + (globalId++);
-}
-var Loading = (function (_super) {
-    __extends(Loading, _super);
-    function Loading() {
-        _super.apply(this, arguments);
-    }
-    Loading.prototype.innerRender = function (e) {
-        e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>";
-    };
-    return Loading;
-}(Composite));
-exports.Loading = Loading;
-var Label = (function (_super) {
-    __extends(Label, _super);
-    function Label(title, content) {
-        _super.call(this);
-        this.content = content;
-        this.setTitle(title);
-    }
-    Label.prototype.innerRender = function (e) {
-        if (this.content) {
-            e.innerHTML = "<span style=\"padding: 5px;overflow: auto\">" + this.content + "</span>";
-        }
-        else {
-            e.innerHTML = "<span>" + this.title() + "</span>";
-        }
-    };
-    return Label;
-}(Composite));
-exports.Label = Label;
-var Accordition = (function (_super) {
-    __extends(Accordition, _super);
-    function Accordition() {
-        _super.apply(this, arguments);
-        this.disabled = {};
-    }
-    Accordition.prototype.expand = function (c) {
-        var index = this.children.indexOf(c);
-        this.expandIndex(index);
-    };
-    Accordition.prototype.getSelectedIndex = function () {
-        return this.selectedIndex;
-    };
-    Accordition.prototype.getSelectedTitle = function () {
-        if (this.selectedIndex != undefined) {
-            return this.children[this.selectedIndex].title();
-        }
-    };
-    Accordition.prototype.expandIndex = function (index) {
-        var bids = this.bids;
-        var gids = this.gids;
-        this.selectedIndex = index;
-        for (var j = 0; j < bids.length; j++) {
-            if (j != index) {
-                document.getElementById(bids[j]).style.display = "none";
-                document.getElementById(gids[j]).style.flex = null;
-            }
-            else {
-                document.getElementById(bids[j]).style.display = "flex";
-                document.getElementById(gids[j]).style.flex = "1 1 0";
-                document.getElementById(gids[j]).style.display = "flex";
-            }
-        }
-    };
-    Accordition.prototype.getHeader = function (c) {
-        var positon = this.children.indexOf(c);
-        if (positon = -1) {
-            return null;
-        }
-        return document.getElementById(this.headings[positon]);
-    };
-    Accordition.prototype.disable = function (c) {
-        var positon = this.children.indexOf(c);
-        if (positon == -1) {
-            return null;
-        }
-        document.getElementById(this.headings[positon]).style.color = "gray";
-        this.disabled[this.headings[positon]] = true;
-    };
-    Accordition.prototype.enable = function (c) {
-        var positon = this.children.indexOf(c);
-        if (positon == -1) {
-            return null;
-        }
-        delete this.disabled[this.headings[positon]];
-        document.getElementById(this.headings[positon]).style.color = "black";
-    };
-    Accordition.prototype.innerRender = function (e) {
-        var _this = this;
-        var topId = nextId();
-        var templates = [];
-        var headings = [];
-        this.headings = headings;
-        var bids = [];
-        var gids = [];
-        for (var i = 0; i < this.children.length; i++) {
-            var elId = nextId();
-            var hId = nextId();
-            var bid = nextId();
-            var gid = nextId();
-            bids.push(elId);
-            headings.push(hId);
-            gids.push(gid);
-            var styleExpanded = i == 0 ? "flex: 1 1 0" : "display: none";
-            var expanded = i == 0;
-            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\"><a>" + this.children[i].title() + "</a></h4>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
-            templates.push(s);
-        }
-        var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%\">\n             " + templates.join('') + "       \n        </div>";
-        e.innerHTML = content;
-        for (var i = 0; i < this.children.length; i++) {
-            var el = document.getElementById(bids[i]);
-            this.children[i].render(el);
-        }
-        var i = 0;
-        this.bids = bids;
-        this.gids = gids;
-        headings.forEach(function (x) {
-            var panelId = bids[i];
-            var containerId = gids[i];
-            var k = i;
-            document.getElementById(x).onclick = function () {
-                if (!_this.disabled[x]) {
-                    _this.expandIndex(k);
-                }
-            };
-            i++;
-        });
-    };
-    return Accordition;
-}(Composite));
-exports.Accordition = Accordition;
-
-},{}],3:[function(require,module,exports){
+},{"./framework/workbench":6,"./ramlTreeView":7}],2:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -862,6 +680,7 @@ var TreeLike = (function () {
         if (this.values.length > 12) {
             this.values = collapseValues(this.values);
         }
+        optimizeLabels(this.values);
     };
     return TreeLike;
 }());
@@ -1008,6 +827,34 @@ function groupMethods(methods) {
     return root;
 }
 exports.groupMethods = groupMethods;
+function optimizeLabels(methods) {
+    var mtl = {};
+    methods.forEach(function (x) {
+        if (x instanceof TreeLike) {
+            return;
+        }
+        var lab = label(x);
+        var rs = mtl[lab];
+        if (!rs) {
+            rs = [];
+            mtl[lab] = rs;
+        }
+        rs.push(x);
+    });
+    Object.keys(mtl).forEach(function (k) {
+        var s = mtl[k];
+        if (s.length > 1) {
+            s.forEach(function (v) { return addUrlToLabel(v); });
+        }
+    });
+}
+exports.optimizeLabels = optimizeLabels;
+function addUrlToLabel(h) {
+    var url = resourceUrl(h.parent());
+    if (h.label.indexOf(url) == -1) {
+        h.label = h.label + " " + url;
+    }
+}
 function prepareNodes(nodes) {
     var nodesToRender = [];
     nodes.forEach(function (v) {
@@ -1072,7 +919,7 @@ exports.collapseScalarArrays = function (nodesToRender) {
     return resultNodes;
 };
 
-},{"./keywords":4}],4:[function(require,module,exports){
+},{"./keywords":3}],3:[function(require,module,exports){
 "use strict";
 function isLetter(c) {
     return c.toLowerCase() != c.toUpperCase();
@@ -1369,1815 +1216,7 @@ function trimDesc(s) {
 }
 exports.trimDesc = trimDesc;
 
-},{}],5:[function(require,module,exports){
-"use strict";
-var or = require("./objectRender");
-var hl = require("./hl");
-function renderNodes(nodes) {
-    var result = [];
-    var obj = {};
-    nodes = hl.prepareNodes(nodes);
-    nodes.forEach(function (x) { return result.push(renderNode(x)); });
-    return result.join("");
-}
-exports.renderNodes = renderNodes;
-var HeaderRenderer = (function () {
-    function HeaderRenderer(versions) {
-        this.versions = versions;
-    }
-    HeaderRenderer.prototype.consume = function (nodes) {
-        var _this = this;
-        var result = [];
-        nodes.forEach(function (x) {
-            if (x.property().nameId() == "title") {
-                _this.title = x.value();
-                return;
-            }
-            if (x.property().nameId() == "version") {
-                _this.version = x.value();
-                return;
-            }
-            if (x.property().nameId() == "baseUri") {
-                _this.baseUrl = x.value();
-                return;
-            }
-            if (x.definition().nameId() === "Icons") {
-                var obj = x.lowLevel().dumpToObject(true);
-                obj = obj[Object.keys(obj)[0]];
-                _this.iconUrl = obj[0].url;
-                return;
-            }
-            result.push(x);
-        });
-        return result;
-    };
-    HeaderRenderer.prototype.render = function () {
-        var result = [];
-        if (this.iconUrl != null) {
-            result.push("<img src='" + this.iconUrl + "'/>");
-        }
-        if (this.title != null) {
-            result.push("<h4 style='display: inline'> " + this.title + "</h4>");
-        }
-        if (this.version != null) {
-            var mens = "";
-            if (this.versions && this.versions.versions.length > 1) {
-                mens = this.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("");
-                result.push("<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + this.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + mens + "\n                  </ul>\n                </div></h5>");
-            }
-            else {
-                result.push(or.renderKeyValue("Version", this.version, false));
-            }
-        }
-        if (this.baseUrl != null) {
-            result.push(or.renderKeyValue("Base url", this.baseUrl, false));
-        }
-        return result.join("");
-    };
-    return HeaderRenderer;
-}());
-exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(api, v, path) {
-    var result = [];
-    var nodes = api.attrs();
-    var obj = {};
-    var docs = api.elements().filter(function (x) { return x.property().nameId() == "documentation"; });
-    nodes = hl.prepareNodes(nodes);
-    var hr = new HeaderRenderer(v);
-    nodes = hr.consume(nodes);
-    result.push(hr.render());
-    nodes.forEach(function (x) { return result.push(renderNode(x)); });
-    docs.forEach(function (x) {
-        var t = x.attr("title");
-        if (t) {
-            result.push("<h5 style='background-color: lightgray'>" + t.value() + "</h5>");
-        }
-        var c = x.attr("content");
-        if (c) {
-            result.push(marked(c.value()));
-        }
-    });
-    if (path) {
-        result.push("<hr/>");
-        result.push("<a href='" + path + "'>Get RAML</a>");
-    }
-    return result.join("");
-}
-exports.renderNodesOverview = renderNodesOverview;
-var ToSkip = { "LogicalStructure": 1, "EnumDescriptions": 1, "is": 1, "Id": 1, "displayName": 1 };
-function renderNode(h, small) {
-    if (small === void 0) { small = false; }
-    if (h.definition && ToSkip[h.definition().nameId()]) {
-        return "";
-    }
-    var vl = h.value ? h.value() : null;
-    if (!h.definition) {
-        var obj = h.lowLevel().dumpToObject();
-        return or.renderObj(obj);
-    }
-    if (vl) {
-        if (h.isAttr()) {
-            var pname = h.property().nameId();
-            if (ToSkip[pname]) {
-                return "";
-            }
-            if (pname == "securedBy") {
-                var v = hl.asObject(h);
-                v = v[Object.keys(v)[0]];
-                var result = [];
-                if (Object.keys(v).length == 1) {
-                    if (h.parent() && (h.parent().parent() != null)) {
-                        var sd = h.root().elements().filter(function (x) { return x.property() && x.property().nameId() == "securitySchemes"; });
-                        if (sd.length == 1) {
-                            var toRend = v[Object.keys(v)[0]];
-                            var descriptions = hl.scopeDescriptionsofApi(h.root(), Object.keys(v)[0]);
-                            var rs = [];
-                            Object.keys(toRend).forEach(function (x) {
-                                if (x == "scopes" && descriptions) {
-                                    var scopes = toRend[x];
-                                    rs.push("scopes: ");
-                                    for (var i = 0; i < scopes.length; i++) {
-                                        if (descriptions[i]) {
-                                            rs.push(" <span ><a>" + scopes[i] + "</a> </span>");
-                                            rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descriptions[i] + "'></span>");
-                                            if (i != scopes.length - 1) {
-                                                rs.push(",");
-                                            }
-                                        }
-                                        else {
-                                            rs.push("<span ><a>" + scopes[i] + "</a> </span>" + (i == scopes.length - 1 ? "" : ", "));
-                                        }
-                                    }
-                                    return;
-                                }
-                                rs.push(or.renderKeyValue(x, toRend[x]));
-                            });
-                            return "<div>" + rs.join("") + "</div>";
-                        }
-                    }
-                }
-            }
-            if (typeof vl === "object") {
-                if (!Array.isArray(vl)) {
-                    var v = hl.asObject(h);
-                    v = v[Object.keys(v)[0]];
-                    vl = JSON.stringify(v, null, 2);
-                    var svl = "" + vl;
-                    svl = svl.replace(": null", "");
-                    vl = svl.substr(1, svl.length - 2);
-                }
-                else {
-                    vl = vl.join(", ");
-                }
-            }
-            res = or.renderKeyValue(h.property().nameId(), vl, small);
-        }
-        else {
-            if (vl.dumpNode) {
-                var v = hl.asObject(h);
-                v = v[Object.keys(v)[0]];
-                vl = JSON.stringify(v, null, 2);
-                var svl = "" + vl;
-                svl = svl.replace(": null", "");
-                vl = svl.substr(1, svl.length - 2);
-            }
-            var id = h.definition().nameId();
-            if (id == "StringType") {
-                id = h.name();
-            }
-            var res = or.renderKeyValue(id, vl, small);
-        }
-    }
-    else {
-        if (typeof vl === "string") {
-            return;
-        }
-        if (h.isAttr()) {
-            res = or.renderKeyValue(h.property().nameId(), vl, small);
-            return res;
-        }
-        var id = h.definition().nameId();
-        if (id == "StringType") {
-            id = h.name();
-            if (true) {
-                var v = hl.asObject(h);
-                v = v[Object.keys(v)[0]];
-                vl = JSON.stringify(v, null, 2);
-                var svl = "" + vl;
-                svl = svl.replace(": null", "");
-                vl = svl.substr(1, svl.length - 2);
-            }
-            var res = or.renderKeyValue(id, vl, true);
-            return res;
-        }
-        var res = "<h5 style=\"background: gainsboro\">" + h.definition().nameId() + ":</h5>";
-        var ch = h.children();
-        res += renderNodes(ch);
-    }
-    return res;
-}
-exports.renderNode = renderNode;
-var AttrProperty = (function () {
-    function AttrProperty(_id, _caption) {
-        this._id = _id;
-        this._caption = _caption;
-    }
-    AttrProperty.prototype.id = function () {
-        return this._id;
-    };
-    AttrProperty.prototype.caption = function () {
-        return this._caption;
-    };
-    AttrProperty.prototype.render = function (o) {
-        var atr = o.attr(this._id);
-        if (atr) {
-            return or.renderObj(atr.value());
-        }
-        return "";
-    };
-    return AttrProperty;
-}());
-exports.AttrProperty = AttrProperty;
-
-},{"./hl":3,"./objectRender":6}],6:[function(require,module,exports){
-"use strict";
-var RenderMode;
-(function (RenderMode) {
-    RenderMode[RenderMode["FULL_VIEW"] = 0] = "FULL_VIEW";
-    RenderMode[RenderMode["ROW_VIEW"] = 1] = "ROW_VIEW";
-    RenderMode[RenderMode["COMPACT_VIEW"] = 2] = "COMPACT_VIEW";
-})(RenderMode || (RenderMode = {}));
-var Link = (function () {
-    function Link(target, _name) {
-        this.target = target;
-        this._name = _name;
-    }
-    Link.prototype.getUrl = function () {
-        return this.target.id();
-    };
-    Link.prototype.render = function () {
-        return "<a onclick=\"Workbench.open('" + this.getUrl() + "')\">" + this._name + "</a>";
-    };
-    return Link;
-}());
-exports.Link = Link;
-var mm = 0;
-var TableRenderer = (function () {
-    function TableRenderer(_caption, props, st) {
-        this._caption = _caption;
-        this.props = props;
-        this.st = st;
-    }
-    TableRenderer.prototype.render = function (hl) {
-        var _this = this;
-        var result = [];
-        var fp = this.props.filter(function (p) {
-            return hl.filter(function (x) { return p.render(x); }).length > 0;
-        });
-        hl.forEach(function (x) {
-            var h = _this.st.hidden(x) ? "none" : "table-row";
-            result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
-            fp.forEach(function (p) {
-                var pn = p.nowrap;
-                var es = pn ? "white-space: nowrap" : "";
-                result.push("<td style='" + es + "'>");
-                result.push(p.render(x, "tr" + mm));
-                result.push("</td>");
-            });
-            result.push("</tr>");
-            mm = mm + 1;
-        });
-        var header = [];
-        header.push("<tr>");
-        fp.forEach(function (p) {
-            var cw = p.width ? "width: " + p.width() : "";
-            header.push("<th style='border-bottom: inherit;" + cw + "'>");
-            header.push(p.caption());
-            header.push("</th>");
-        });
-        header.push("</tr>");
-        return "<div class=\"panel panel-default\">\n            <div class=\"panel-heading\">" + this._caption + "</div><div class=\"panel-body\" style=\"padding: 0px\"><div><table class=\"table table-hover\" style=\"margin: 0px\">\n            <caption style=\"height: 0px;display: none\"></caption>\n            <thead>" + header.join("") + "</thead>\n            " + result.join("") + "\n            </table>\n            </div></div></div>";
-    };
-    return TableRenderer;
-}());
-exports.TableRenderer = TableRenderer;
-var w = window;
-w.toggleRow = function (id) {
-    var el = document.getElementById(id);
-    var nm = el.parentElement.getElementsByTagName("tr");
-    if (!document.getElementById("tricon" + id)) {
-        return;
-    }
-    var vis = el.getAttribute("expanded");
-    var style = "table-row";
-    if (vis == "true") {
-        style = "none";
-        el.setAttribute("expanded", "false");
-        document.getElementById("tricon" + id).classList.add("glyphicon-plus-sign");
-        document.getElementById("tricon" + id).classList.remove("glyphicon-minus-sign");
-    }
-    else {
-        el.setAttribute("expanded", "true");
-        document.getElementById("tricon" + id).classList.remove("glyphicon-plus-sign");
-        document.getElementById("tricon" + id).classList.add("glyphicon-minus-sign");
-    }
-    var tn = false;
-    var ll = parseInt(el.getAttribute("level"));
-    for (var i = 0; i < nm.length; i++) {
-        var it = nm.item(i);
-        if (it == el) {
-            tn = true;
-            continue;
-        }
-        if (tn) {
-            var il = parseInt(it.getAttribute("level"));
-            if (il <= ll) {
-                tn = false;
-            }
-            else {
-                if (il == ll + 1 || style == 'none') {
-                    if (style == 'none') {
-                        it.setAttribute("expanded", "false");
-                    }
-                    it.style.display = style;
-                }
-            }
-        }
-    }
-};
-function highlight(v) {
-    if (v.indexOf("http://") == 0 || v.indexOf("https://") == 0) {
-        return "<a href=\"" + v + "\">" + v + "</a>";
-    }
-    if (!isNaN(parseFloat(v))) {
-        return "<span style='color: purple'>" + v + "</span>";
-    }
-    if (!isNaN(parseInt(v))) {
-        return "<span style='color: purple'>" + v + "</span>";
-    }
-    if (v == "true" || v == "false") {
-        return "<span style='color: blue'>" + v + "</span>";
-    }
-    return "<span style='color: darkred'>" + v + "</span>";
-}
-exports.highlight = highlight;
-function renderKeyValue(k, vl, small) {
-    if (small === void 0) { small = false; }
-    if (k == "description" || k == "usage") {
-        if (typeof vl == "string") {
-            vl = marked(vl);
-        }
-        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
-        return res;
-    }
-    var str = "" + vl;
-    vl = highlight(str);
-    if (str.length > 70 && str.indexOf('\n') != -1 && !small) {
-        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
-        return res;
-    }
-    if (small) {
-        return "<i>" + k + ": " + vl + "</i>";
-    }
-    return "<h5>" + k + ": " + vl + "</h5>";
-}
-exports.renderKeyValue = renderKeyValue;
-function renderObj(v) {
-    if (Array.isArray(v)) {
-        var r = v;
-        return r.map(function (x) { return renderObj(x); }).join("");
-    }
-    if (typeof v === "string") {
-        return v;
-    }
-    if (typeof v === "number") {
-        return "" + v;
-    }
-    var result = [];
-    Object.getOwnPropertyNames(v).forEach(function (p) {
-        result.push(renderKeyValue(p, v[p]));
-    });
-    return result.join("");
-}
-exports.renderObj = renderObj;
-
-},{}],7:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var workbench = require("./workbench");
-var controls_1 = require("./controls");
-var hl = require("./hl");
-var tr = require("./typeRender");
-var rr = require("./resourceRender");
-var nr = require("./nodeRender");
-var rrend = require("./registryRender");
-var usages = require("./usagesRegistry");
-exports.states = [];
-function back() {
-    if (exports.states.length > 0) {
-        if (bu) {
-            showApi(bu, function () {
-                exports.ramlView.openNodeById(exports.states.pop());
-            });
-            bu = null;
-        }
-        else {
-            exports.ramlView.openNodeById(exports.states.pop());
-        }
-    }
-    else {
-        init();
-    }
-}
-exports.back = back;
-var bu = "";
-function setBackUrl(u) {
-    bu = u;
-}
-exports.setBackUrl = setBackUrl;
-var RAMLDetailsView = (function (_super) {
-    __extends(RAMLDetailsView, _super);
-    function RAMLDetailsView() {
-        _super.apply(this, arguments);
-        this.compact = true;
-    }
-    RAMLDetailsView.prototype.setSelection = function (v) {
-        this._element = v;
-        this.refresh();
-    };
-    RAMLDetailsView.prototype.init = function (holder) {
-        holder.setContextMenu({
-            items: [
-                {
-                    title: "Back",
-                    run: function () {
-                        back();
-                    }
-                }
-            ]
-        });
-        var v = this;
-        holder.setToolbar({
-            items: [
-                {
-                    title: "",
-                    image: "glyphicon glyphicon-asterisk",
-                    checked: this.compact,
-                    run: function () {
-                        v.compact = !v.compact;
-                        v.refresh();
-                        v.init(v.holder);
-                    }
-                }
-            ]
-        });
-        return _super.prototype.init.call(this, holder);
-    };
-    RAMLDetailsView.prototype.innerRender = function (e) {
-        e.style.overflow = "auto";
-        if (this._element && this._element.property) {
-            if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var rnd = new tr.TypeRenderer(this.compact, null, false);
-                rnd.setGlobal(true);
-                rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
-                var cnt = rnd.render(this._element);
-            }
-            else {
-                if (this._element.property().nameId() == "resources") {
-                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
-                }
-                if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
-                }
-            }
-            new controls_1.Label(this._element.name(), cnt).render(e);
-        }
-        else {
-            e.innerHTML = "";
-        }
-        $('[data-toggle="tooltip"]').tooltip();
-        $('pre code').each(function (i, block) {
-            hljs.highlightBlock(block);
-        });
-    };
-    return RAMLDetailsView;
-}(workbench.ViewPart));
-exports.RAMLDetailsView = RAMLDetailsView;
-var RAMLTreeProvider = (function () {
-    function RAMLTreeProvider() {
-    }
-    RAMLTreeProvider.prototype.children = function (x) {
-        if (x instanceof hl.TreeLike) {
-            var c = x;
-            return c.allChildren();
-        }
-        if (x instanceof hl.ProxyNode) {
-            var pn = x;
-            return pn.children();
-        }
-        if (x.property().nameId() == "resources") {
-            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
-        }
-        return [];
-    };
-    RAMLTreeProvider.prototype.elements = function (x) {
-        return x;
-    };
-    return RAMLTreeProvider;
-}());
-exports.RAMLTreeProvider = RAMLTreeProvider;
-var colors = {
-    get: "#0f6ab4",
-    post: "#10a54a",
-    put: "#c5862b",
-    patch: "#c5862b",
-    delete: "#a41e22"
-};
-function methodKey(name) {
-    var color = "#10a54a";
-    color = colors[name];
-    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
-}
-var RAMLTreeView = (function (_super) {
-    __extends(RAMLTreeView, _super);
-    function RAMLTreeView(path, title) {
-        if (title === void 0) { title = "Overview"; }
-        _super.call(this, title);
-        this.path = path;
-        this.searchable = true;
-        this.trees = [];
-    }
-    RAMLTreeView.prototype.setKnownVersions = function (r) {
-        this.versions = r;
-    };
-    RAMLTreeView.prototype.setVersion = function (ver) {
-        var _this = this;
-        this.versions.versions.forEach(function (x) {
-            if (x.version == ver) {
-                _this.setUrl(x.location);
-            }
-        });
-    };
-    RAMLTreeView.prototype.setUrl = function (url, cb) {
-        this.path = url;
-        this.node = null;
-        this.api = null;
-        this.refresh();
-        this.cb = cb;
-        usages.setUrl(url);
-    };
-    RAMLTreeView.prototype.customize = function (tree) {
-        tree.setContentProvider(new RAMLTreeProvider());
-        tree.setLabelProvider({
-            label: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        var ss = t.id.substr(2);
-                        if (ss == "object") {
-                            return "<img src='object.gif'/> " + ss;
-                        }
-                        if (ss == "array") {
-                            return "<img src='arraytype_obj.gif'/> " + ss;
-                        }
-                        if (ss == "scalar") {
-                            return "<img src='string.gif'/> " + ss;
-                        }
-                        return "<img src='object.gif'/> " + ss;
-                    }
-                    return t.id;
-                }
-                var result = "";
-                var pr = x.property ? x.property() : null;
-                var isMethod = pr && pr.nameId() == "methods";
-                var isType = pr && pr.nameId() == "types";
-                var isAType = pr && pr.nameId() == "annotationTypes";
-                result = hl.label(x);
-                if (isMethod) {
-                    result = methodKey(x.name()) + result;
-                }
-                if (isType) {
-                    result = "<img src='typedef_obj.gif'/> " + result;
-                }
-                if (isAType) {
-                    result = "<img src='annotation_obj.gif'/>" + result;
-                }
-                return result;
-            },
-            icon: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        return "";
-                    }
-                    return "glyphicon glyphicon-cloud";
-                }
-                if (x instanceof hl.ProxyNode) {
-                    return "glyphicon glyphicon-tasks";
-                }
-                if (x.property().nameId() == "resources") {
-                    return "glyphicon glyphicon-link";
-                }
-                return "";
-            }
-        });
-    };
-    RAMLTreeView.prototype.innerRender = function (e) {
-        if (this.path == "") {
-            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
-        }
-        else {
-            _super.prototype.innerRender.call(this, e);
-            if (this.cb) {
-                var q = this.cb;
-                setTimeout(q, 100);
-                this.cb = null;
-            }
-        }
-    };
-    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
-        var toRender = [];
-        libs.forEach(function (x) {
-            var childrenOfKind = x.children().filter(function (y) { return y.property().nameId() == id; });
-            if (childrenOfKind.length > 0) {
-                toRender.push(new hl.ProxyNode(x.name(), x, childrenOfKind));
-            }
-        });
-        if (groups[id]) {
-            toRender = toRender.concat(groups[id]);
-        }
-        if (toRender.length > 0) {
-            var at = toRender;
-            var types = this.createTree(label);
-            types.setInput(at);
-            this.control.add(types);
-            this.trees.push(types);
-        }
-        ;
-    };
-    RAMLTreeView.prototype.openNodeById = function (id) {
-        var node = hl.findById(id);
-        if (node) {
-            this.setSelection(node);
-        }
-    };
-    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
-        var x = this.api.elements();
-        var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
-        if (overview.length > 0) {
-            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
-        }
-        if (!this.devMode) {
-            libs = [];
-        }
-        var groups = hl.elementGroups(this.api);
-        var methods = [];
-        var ts = hl.gatherMethods(this.api, methods);
-        var mgroups = hl.groupMethods(methods);
-        var groupedMethods = mgroups.allChildren();
-        if (methods != null) {
-            groups["methods"] = groupedMethods;
-        }
-        if (groups["types"]) {
-            var types = hl.groupTypes(groups["types"]);
-            if (types) {
-                groups["types"] = types.allChildren();
-            }
-        }
-        if (this.devMode || this.api.definition().nameId() == "Library") {
-            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
-        }
-        this.renderArraySection("methods", "Operations", groups, libs);
-        this.renderArraySection("types", "Data Types", groups, libs);
-        if (this.devMode) {
-            this.renderArraySection("resources", "API Paths", groups, libs);
-        }
-        var lt = null;
-    };
-    RAMLTreeView.prototype.load = function () {
-        var _this = this;
-        hl.loadApi(this.path, function (api) {
-            _this.api = api;
-            _this.node = api;
-            _this.refresh();
-            showTitle(_this.api);
-        });
-    };
-    RAMLTreeView.prototype.init = function (holder) {
-        holder.setContextMenu({
-            items: [
-                {
-                    title: "Back",
-                    run: function () {
-                        back();
-                    }
-                }
-            ]
-        });
-        var v = this;
-        holder.setToolbar({
-            items: [
-                {
-                    title: "",
-                    image: "glyphicon glyphicon-asterisk",
-                    checked: this.devMode,
-                    run: function () {
-                        v.devMode = !v.devMode;
-                        v.refresh();
-                        v.init(v.holder);
-                    }
-                }
-            ]
-        });
-        return _super.prototype.init.call(this, holder);
-    };
-    return RAMLTreeView;
-}(workbench.AccorditionTreeView));
-exports.RAMLTreeView = RAMLTreeView;
-function showTitle(api) {
-    hl.prepareNodes(api.attrs()).forEach(function (x) {
-        if (x.name() == "(Title)" || x.name() == "title") {
-            document.getElementById("title").innerHTML = x.value();
-        }
-    });
-}
-exports.ramlView = new RAMLTreeView("");
-var w = window;
-w.ramlView = exports.ramlView;
-var details = new RAMLDetailsView("Details", "Details");
-var regView = new rrend.RegistryView("API Registry");
-function init() {
-    var page = new workbench.Page("rest");
-    page.addView(details, "*", 100, workbench.Relation.LEFT);
-    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
-    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
-    regView.addSelectionListener({
-        selectionChanged: function (v) {
-            if (v.length > 0) {
-                if (v[0] instanceof rrend.ApiWithVersions) {
-                    var aw = v[0];
-                    var sel = aw.versions[aw.versions.length - 1];
-                    exports.ramlView.setKnownVersions(aw);
-                    exports.ramlView.setUrl(sel.location);
-                }
-                else {
-                    if (v[0].location) {
-                        exports.ramlView.setUrl(v[0].location);
-                    }
-                }
-            }
-            else {
-                details.setSelection(null);
-            }
-        }
-    });
-    function initSizes() {
-        var h = document.getElementById("header").clientHeight + 40;
-        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
-    }
-    initSizes();
-    window.onresize = initSizes;
-    var w = window;
-    w.openVersion = function (x) {
-        exports.ramlView.setVersion(x);
-    };
-}
-exports.init = init;
-exports.ramlView.addSelectionListener({
-    selectionChanged: function (v) {
-        if (v.length > 0) {
-            details.setSelection(v[0]);
-        }
-        else {
-            details.setSelection(null);
-        }
-    }
-});
-function showApi(url, cb) {
-    var b = regView.setSelectedUrl(url);
-    if (b) {
-        exports.ramlView.cb = cb;
-    }
-    else {
-        exports.ramlView.setUrl(url, cb);
-    }
-}
-exports.showApi = showApi;
-
-},{"./controls":2,"./hl":3,"./nodeRender":5,"./registryRender":9,"./resourceRender":10,"./typeRender":11,"./usagesRegistry":12,"./workbench":13}],8:[function(require,module,exports){
-"use strict";
-var workbench = require("./workbench");
-var rv = require("./ramlTreeView");
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        rv.back();
-    };
-}
-workbench.registerHandler(function (x) {
-    if (history.pushState) {
-        var node = rv.ramlView.getSelection();
-        if (node && node.length > 0) {
-            rv.states.push(node[0].id());
-        }
-        history.pushState({ page: x }, document.title, document.location.toString());
-    }
-    rv.ramlView.openNodeById(x);
-    return true;
-});
-function init() {
-    rv.init();
-}
-exports.init = init;
-function showApi(s) {
-    rv.showApi(s);
-}
-exports.showApi = showApi;
-
-},{"./ramlTreeView":7,"./workbench":13}],9:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var workbench = require("./workbench");
-var ra = require("./registryApp");
-var usages = require("./usagesRegistry");
-function loadData(url, c) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.send();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState != 4)
-            return;
-        c(JSON.parse(xhr.responseText), xhr.status);
-    };
-}
-var RegistryDetailsView = (function (_super) {
-    __extends(RegistryDetailsView, _super);
-    function RegistryDetailsView() {
-        _super.apply(this, arguments);
-    }
-    RegistryDetailsView.prototype.innerRender = function (e) {
-    };
-    return RegistryDetailsView;
-}(workbench.ViewPart));
-exports.RegistryDetailsView = RegistryDetailsView;
-var GroupNode = (function () {
-    function GroupNode() {
-    }
-    return GroupNode;
-}());
-var ApiWithVersions = (function () {
-    function ApiWithVersions() {
-    }
-    return ApiWithVersions;
-}());
-exports.ApiWithVersions = ApiWithVersions;
-var RegistryContentProvider = (function () {
-    function RegistryContentProvider() {
-    }
-    RegistryContentProvider.prototype.elements = function (i) {
-        return i;
-    };
-    RegistryContentProvider.prototype.children = function (i) {
-        if (i instanceof GroupNode) {
-            return i.children;
-        }
-        return [];
-    };
-    return RegistryContentProvider;
-}());
-function groupBy(els, f) {
-    var result = {};
-    els.forEach(function (x) {
-        var group = f(x);
-        if (result[group]) {
-            result[group].push(x);
-        }
-        else {
-            result[group] = [];
-            result[group].push(x);
-        }
-    });
-    return result;
-}
-var apiCount = 0;
-function buildRegistryGroups(els) {
-    apiCount = 0;
-    var groups = groupBy(els, function (x) { return x.org; });
-    var groupNodes = [];
-    Object.keys(groups).forEach(function (gr) {
-        var g = new GroupNode();
-        g.name = gr;
-        g.children = mergeVersions(groups[gr]);
-        groupNodes.push(g);
-    });
-    var result = [];
-    groupNodes.forEach(function (x) {
-        if (x.children.length == 1) {
-            result.push(x.children[0]);
-        }
-        else {
-            result.push(x);
-            var v = x.children[0];
-            x.icon = v.icon;
-        }
-    });
-    return result;
-}
-function mergeVersions(els) {
-    var groups = groupBy(els, function (x) { return x.name; });
-    var groupNodes = [];
-    Object.keys(groups).forEach(function (gr) {
-        var g = new ApiWithVersions();
-        apiCount++;
-        g.name = gr;
-        g.versions = groups[gr];
-        g.icon = g.versions[0].icon;
-        groupNodes.push(g);
-    });
-    return groupNodes;
-}
-loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json", function (data, s) {
-    usages.loadedUsageData(data);
-});
-function findNodeWithUrl(d, url) {
-    for (var i = 0; i < d.length; i++) {
-        if (d[i] instanceof ApiWithVersions) {
-            var w = d[i];
-            for (var j = 0; j < w.versions.length; j++) {
-                if (w.versions[j].location == url) {
-                    return w;
-                }
-            }
-        }
-        else {
-            var gn = d[i];
-            var res = findNodeWithUrl(gn.children, url);
-            if (res) {
-                return res;
-            }
-        }
-    }
-    return null;
-}
-exports.findNodeWithUrl = findNodeWithUrl;
-var RegistryView = (function (_super) {
-    __extends(RegistryView, _super);
-    function RegistryView() {
-        _super.apply(this, arguments);
-        this.searchable = true;
-    }
-    RegistryView.prototype.load = function () {
-        var _this = this;
-        loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
-            _this.node = data;
-            _this.refresh();
-            usages.reportData(data);
-        });
-    };
-    RegistryView.prototype.setSelectedUrl = function (url) {
-        var _this = this;
-        this.url = url;
-        if (this.groups) {
-            var n = findNodeWithUrl(this.groups, url);
-            if (n) {
-                this.setSelection(n);
-                return true;
-            }
-            else {
-                this.node.libraries.forEach(function (x) {
-                    if (x.location == url) {
-                        _this.setSelection(x);
-                        return true;
-                    }
-                });
-            }
-        }
-        return false;
-    };
-    RegistryView.prototype.customizeAccordition = function (root, node) {
-        var groups = buildRegistryGroups(node.apis);
-        this.groups = groups;
-        this.addTree("Apis", groups);
-        this.addTree("Libraries", node.libraries);
-        var v = this;
-        this.getHolder().setContextMenu({
-            items: [
-                { title: "Open", run: function () {
-                        var api = v.getSelection()[0];
-                        ra.showApi(api.location);
-                    } }
-            ]
-        });
-        document.getElementById("stat").innerHTML = apiCount + " apis, " + node.apis.length + " unique api versions, and counting.";
-    };
-    RegistryView.prototype.customize = function (tree) {
-        tree.setContentProvider(new RegistryContentProvider());
-        tree.setLabelProvider({
-            label: function (e) {
-                if (e.name) {
-                    if (e.icon) {
-                        return "<img src='" + e.icon + "' /> " + e.name + "";
-                    }
-                    return "" + e.name + "";
-                }
-                else {
-                    var c = Object.keys(e)[0];
-                    return c;
-                }
-            }
-        });
-    };
-    return RegistryView;
-}(workbench.AccorditionTreeView));
-exports.RegistryView = RegistryView;
-
-},{"./registryApp":8,"./usagesRegistry":12,"./workbench":13}],10:[function(require,module,exports){
-"use strict";
-var hl = require("./hl");
-var tr = require("./typeRender");
-var nr = require("./nodeRender");
-var ResourceRenderer = (function () {
-    function ResourceRenderer(meta, isAnnotationType) {
-        if (isAnnotationType === void 0) { isAnnotationType = false; }
-        this.meta = meta;
-        this.isAnnotationType = isAnnotationType;
-    }
-    ResourceRenderer.prototype.render = function (h) {
-        var ms = h.elements().filter(function (x) { return x.property().nameId() == "methods"; });
-        var result = [];
-        var pn = hl.uriParameters(h);
-        if (ms.length == 1) {
-            var dn = ms[0].attr("displayName");
-            if (dn && (dn.value())) {
-                result.push("<h3>" + dn.value() + "</h3>");
-                result.push("<h5>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h5>");
-            }
-            else {
-                result.push("<h3>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h3>");
-            }
-            hl.prepareNodes(ms[0].attrs()).forEach(function (x) {
-                result.push(nr.renderNode(x, false));
-            });
-            result.push("</hr>");
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
-            result.push(new MethodRenderer(false, false, false, false, this.meta).render(ms[0]));
-        }
-        else {
-            result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
-            result.push("</hr>");
-            hl.prepareNodes(h.attrs()).forEach(function (x) {
-                result.push(nr.renderNode(x, false));
-            });
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
-            if (ms.length > 0) {
-                result.push(renderTabFolder("Methods", ms, new MethodRenderer(this.meta, false, ms.length == 1, false, true)));
-            }
-        }
-        return result.join("");
-    };
-    return ResourceRenderer;
-}());
-exports.ResourceRenderer = ResourceRenderer;
-var num = 0;
-function renderTabFolder(caption, nodes, r) {
-    if (nodes.length == 0) {
-        return "";
-    }
-    if (nodes.length == 1) {
-        return r.render(nodes[0]);
-    }
-    var result = [];
-    if (caption) {
-        result.push("<h3>" + caption + "</h3>");
-    }
-    result.push("<ul class=\"nav nav-tabs\">");
-    var num = 0;
-    nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (escape(x.name()) + "Tab" + num) + "\">" + x.name() + "</a></li>"); });
-    result.push("</ul>");
-    num = 0;
-    result.push("<div class=\"tab-content\">");
-    nodes.forEach(function (x) { return result.push("<div class=\"tab-pane fade " + (num++ == 0 ? "in active" : "") + "\" id=\"" + (escape(x.name()) + "Tab" + num) + "\">" + r.render(x) + "</div>"); });
-    result.push('</div>');
-    num++;
-    return result.join("");
-}
-exports.renderTabFolder = renderTabFolder;
-function escape(n) {
-    return n.replace("/", "_");
-}
-var MethodRenderer = (function () {
-    function MethodRenderer(meta, topLevel, isSingle, isAnnotationType, renderAttrs) {
-        if (isAnnotationType === void 0) { isAnnotationType = false; }
-        this.meta = meta;
-        this.topLevel = topLevel;
-        this.isSingle = isSingle;
-        this.isAnnotationType = isAnnotationType;
-        this.renderAttrs = renderAttrs;
-    }
-    MethodRenderer.prototype.render = function (h) {
-        var result = [];
-        if (this.topLevel) {
-            var dn = h.attr("displayName");
-            if (dn) {
-                result.push("<h3>" + dn.value() + "</h3>");
-            }
-            result.push("<h5>Resource: " + hl.resourceUrl(h.parent()) + " Method: " + h.name() + "</h5>");
-        }
-        else if (this.isSingle) {
-            result.push("<h3>Method: " + h.name() + "</h3>");
-        }
-        if (this.renderAttrs) {
-            hl.prepareNodes(h.attrs()).forEach(function (x) {
-                if (x.name() == "displayName") {
-                    return;
-                }
-                result.push(nr.renderNode(x, false));
-            });
-        }
-        if (this.topLevel) {
-            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result, this.meta);
-        }
-        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result, this.meta);
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
-        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        if (rs.length > 0) {
-            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer(this.meta, "Body", rs.length == 1)));
-        }
-        var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
-        if (rs.length > 0) {
-            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(this.meta, rs.length == 1)));
-        }
-        return result.join("");
-    };
-    return MethodRenderer;
-}());
-exports.MethodRenderer = MethodRenderer;
-var ResponseRenderer = (function () {
-    function ResponseRenderer(meta, isSingle, isAnnotationType) {
-        if (isAnnotationType === void 0) { isAnnotationType = false; }
-        this.meta = meta;
-        this.isSingle = isSingle;
-        this.isAnnotationType = isAnnotationType;
-    }
-    ResponseRenderer.prototype.render = function (h) {
-        var result = [];
-        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
-        if (this.isSingle && rs.length < 1) {
-            result.push("<h3>Response: " + h.name() + "</h3>");
-        }
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            result.push(nr.renderNode(x, false));
-        });
-        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
-        return result.join("");
-    };
-    return ResponseRenderer;
-}());
-exports.ResponseRenderer = ResponseRenderer;
-
-},{"./hl":3,"./nodeRender":5,"./typeRender":11}],11:[function(require,module,exports){
-"use strict";
-var hl = require("./hl");
-var or = require("./objectRender");
-var nr = require("./nodeRender");
-var usages = require("./usagesRegistry");
-var ramlTreeView_1 = require("./ramlTreeView");
-var rtv = require("./ramlTreeView");
-function renderTypeList(t) {
-    var result = [];
-    t.forEach(function (x) {
-        result.push(renderTypeLink(x));
-    });
-    return result;
-}
-exports.renderTypeList = renderTypeList;
-function escapeBuiltIn(n) {
-    if (n === "StringType") {
-        n = "string";
-    }
-    if (n === "DateTimeType") {
-        n = "date-time";
-    }
-    if (n === "BooleanType") {
-        n = "boolean";
-    }
-    if (n === "NumberType") {
-        n = "number";
-    }
-    if (n === "IntegerType") {
-        n = "integer";
-    }
-    return n;
-}
-function renderTypeLink(x) {
-    var result = [];
-    if (x.isArray()) {
-        var cp = x.componentType();
-        var lnk = renderTypeLink(cp);
-        if (cp.isUnion()) {
-            lnk = "(" + lnk + ")";
-        }
-        return lnk + "[]";
-    }
-    if (x.isUnion()) {
-        return renderTypeLink(x.union().leftType()) + " | " + renderTypeLink(x.union().rightType());
-    }
-    if (x.isBuiltIn()) {
-    }
-    var d = hl.getDeclaration(x);
-    if (d) {
-        var name = x.nameId();
-        if (!name) {
-            if (x.superTypes().length == 1) {
-                name = x.superTypes()[0].nameId();
-            }
-        }
-        name = escapeBuiltIn(name);
-        result.push(new or.Link(d, name).render() + "");
-    }
-    else {
-        var name = x.nameId();
-        if (!name) {
-            if (x.superTypes().length == 1) {
-                name = x.superTypes()[0].nameId();
-            }
-        }
-        name = escapeBuiltIn(name);
-        result.push("<span>" + name + "</span> ");
-    }
-    return result.join("");
-}
-var NameColumn = (function () {
-    function NameColumn() {
-        this.nowrap = true;
-    }
-    NameColumn.prototype.id = function () { return "name"; };
-    NameColumn.prototype.caption = function () { return "Name"; };
-    NameColumn.prototype.width = function () { return "15em;"; };
-    NameColumn.prototype.render = function (p, rowId) {
-        var rs = p.nameId();
-        var s = p.range();
-        if (p.local || (!s.isBuiltIn() && !s.isArray() && !s.isUnion())) {
-            while (s.superTypes().length == 1 && !s.isBuiltIn()) {
-                s = s.superTypes()[0];
-            }
-        }
-        if (p.range().isObject()) {
-            rs = "<img src='object.gif'/> " + rs;
-        }
-        if (p.range().isArray()) {
-            rs = "<img src='arraytype_obj.gif'/> " + rs;
-        }
-        else if (s.nameId() == "StringType") {
-            rs = "<img src='string.gif'/> " + rs;
-        }
-        else if (s.nameId() == "BooleanType") {
-            rs = "<img src='boolean.gif'/> " + rs;
-        }
-        else if (s.nameId() == "NumberType") {
-            rs = "<img src='number.png'/> " + rs;
-        }
-        else if (s.nameId() == "IntegerType") {
-            rs = "<img src='number.png'/> " + rs;
-        }
-        else if (s.nameId().indexOf("Date") != -1) {
-            rs = "<img src='date.gif'/> " + rs;
-        }
-        else if (s.nameId().indexOf("File") != -1) {
-            rs = "<img src='file.gif'/> " + rs;
-        }
-        if (rs.length == 0) {
-            rs = "additionalProperties";
-        }
-        if (p instanceof WProperty) {
-            var wp = p;
-            if (wp._children.length > 0) {
-                rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span id=\"" + ("tricon" + rowId) + "\" class=\"glyphicon glyphicon-plus-sign\" ></span> ") + rs;
-            }
-            else {
-                var st = "glyphicon-record";
-                if (wp.recursive) {
-                    st = "glyphicon-repeat";
-                }
-                rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
-            }
-        }
-        if (p.isRequired()) {
-            rs += " <small style='color: red'>(required)</small>";
-        }
-        return rs;
-    };
-    return NameColumn;
-}());
-var skipProps = {
-    "description": true,
-    "example": true,
-    "examples": true,
-    "type": true,
-    "required": true,
-    "items": true
-};
-var Facets = (function () {
-    function Facets() {
-    }
-    Facets.prototype.id = function () { return "name"; };
-    Facets.prototype.caption = function () { return "Facets &amp; Annotations"; };
-    Facets.prototype.render = function (p) {
-        var decl = hl.getDeclaration(p.range(), false);
-        var rs = [];
-        if (decl) {
-            hl.prepareNodes(decl.attrs()).forEach(function (x) {
-                if (skipProps[x.name()]) {
-                    return;
-                }
-                if (x.property && x.property().nameId() == "enum") {
-                    var descs = hl.enumDescriptions(decl);
-                    if (descs) {
-                        var vl = x.value();
-                        rs.push("enum: ");
-                        for (var i = 0; i < vl.length; i++) {
-                            if (descs[i]) {
-                                rs.push(" <span style='color: darkred'>" + vl[i] + " </span>");
-                                rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descs[i] + "'></span>");
-                                if (i != vl.length - 1) {
-                                    rs.push(",");
-                                }
-                            }
-                            else {
-                                rs.push("<span style='color: darkred'>" + vl[i] + "</span>" + (i == vl.length - 1 ? "" : ", "));
-                            }
-                        }
-                        return;
-                    }
-                }
-                var nd = nr.renderNode(x, true);
-                if (nd) {
-                    rs.push(nd + "; ");
-                }
-            });
-        }
-        return rs.join("");
-    };
-    Facets.prototype.width = function () {
-        return "20em";
-    };
-    return Facets;
-}());
-var Description = (function () {
-    function Description() {
-    }
-    Description.prototype.id = function () { return "description"; };
-    Description.prototype.caption = function () { return "Description"; };
-    Description.prototype.render = function (p) {
-        var desc = hl.description(p.range());
-        var s = marked(desc, { gfm: true });
-        while (true) {
-            var q = s;
-            s = s.replace("<h1", "<h4");
-            s = s.replace("</h1", "</h4");
-            s = s.replace("<h2", "<h4");
-            s = s.replace("</h2", "</h4");
-            if (q == s) {
-                break;
-            }
-        }
-        return s;
-    };
-    return Description;
-}());
-marked.Lexer.rules.gfm.heading = marked.Lexer.rules.normal.heading;
-marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
-var Type = (function () {
-    function Type() {
-    }
-    Type.prototype.id = function () { return "type"; };
-    Type.prototype.caption = function () { return "Type"; };
-    Type.prototype.render = function (p) {
-        var s = p.range();
-        if (p.local || (!s.nameId() && !s.isArray() && !s.isUnion())) {
-            if (s.superTypes().length == 1) {
-                s = s.superTypes()[0];
-            }
-        }
-        return "<span style='white-space: nowrap;'>" + renderTypeLink(s) + "</span>";
-    };
-    Type.prototype.width = function () {
-        return "15em";
-    };
-    return Type;
-}());
-var Meta = (function () {
-    function Meta() {
-    }
-    Meta.prototype.id = function () { return "meta"; };
-    Meta.prototype.caption = function () { return "Type &amp; Meta"; };
-    Meta.prototype.render = function (p) {
-        var v = new Type().render(p);
-        var f = new Facets().render(p);
-        return v + (f ? '(' + f + ')' : "");
-    };
-    Meta.prototype.width = function () {
-        return "15em";
-    };
-    return Meta;
-}());
-var WProperty = (function () {
-    function WProperty(_orig, _o) {
-        this._orig = _orig;
-        this._o = _o;
-        this._children = [];
-        this.recursive = false;
-        if (_orig instanceof WProperty) {
-            _orig._children.push(_o);
-        }
-        if (_o.local) {
-            this.local = true;
-        }
-    }
-    WProperty.prototype.level = function () {
-        if (this._orig) {
-            if (this._orig instanceof WProperty) {
-                var wp = this._orig;
-                return wp.level() + 1;
-            }
-        }
-        return 0;
-    };
-    WProperty.prototype.nameId = function () {
-        return this._o.nameId();
-    };
-    WProperty.prototype.isKey = function () {
-        return this._o.isKey();
-    };
-    WProperty.prototype.range = function () {
-        return this._o.range();
-    };
-    WProperty.prototype.isRequired = function () {
-        return this._o.isRequired();
-    };
-    return WProperty;
-}());
-var expandProps = function (ts, ps, parent) {
-    var pm = [];
-    ps.forEach(function (x) {
-        x = new WProperty(parent, x);
-        pm.push(x);
-        var r = x.range();
-        if (ts.indexOf(r) == -1) {
-            ts.push(r);
-            if (r.isObject()) {
-                var ps = r.allProperties();
-                if (ps.length > 0) {
-                    expandProps(ts, ps, x).forEach(function (y) { return pm.push(y); });
-                }
-            }
-            else if (x.range().isArray() && !x.range().nameId()) {
-                if (x.range().isObject()) {
-                    var as = x.range().componentType().allProperties();
-                    if (as.length > 0) {
-                        expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
-                    }
-                }
-            }
-            ts.pop();
-        }
-        else {
-            x.recursive = true;
-        }
-    });
-    return pm;
-};
-var usageIndex = 0;
-var renderClicableLink = function (root, result, label) {
-    if (root.property() && root.property().nameId() == "methods") {
-        result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
-    }
-    else if (root.property() && root.property().nameId() == "types") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
-    }
-    else if (root.property() && root.property().nameId() == "annotationTypes") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
-    }
-};
-var TypeRenderer = (function () {
-    function TypeRenderer(meta, extraCaption, isSingle, isAnnotationType) {
-        if (isAnnotationType === void 0) { isAnnotationType = false; }
-        this.meta = meta;
-        this.extraCaption = extraCaption;
-        this.isSingle = isSingle;
-        this.isAnnotationType = isAnnotationType;
-    }
-    TypeRenderer.prototype.setGlobal = function (b) {
-        this.global = b;
-    };
-    TypeRenderer.prototype.setUsages = function (v) {
-        this.usages = v;
-    };
-    TypeRenderer.prototype.render = function (h) {
-        var _this = this;
-        var at = h.localType();
-        if (h.property().nameId() == "annotationTypes") {
-            at = at.superTypes()[0];
-        }
-        var result = [];
-        result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
-        if (at.hasExternalInHierarchy()) {
-            var type = at;
-            var content = "";
-            while (type) {
-                if (type.schemaString) {
-                    content = type.schemaString.trim();
-                }
-                type = type.superTypes()[0];
-            }
-            if (at.superTypes().length == 1 && !at.superTypes()[0].isBuiltIn()) {
-                result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>");
-            }
-            if (content) {
-                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + content + "</code></pre>");
-            }
-            return result.join("");
-        }
-        if (at.superTypes().length == 1 && h.children().length == 2) {
-            result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
-        }
-        else {
-            result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
-        }
-        var desc = hl.description(at);
-        if (desc) {
-            result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>" + desc + "</span>");
-        }
-        hl.prepareNodes(h.attrs()).forEach(function (x) {
-            if (skipProps[x.name()]) {
-                return;
-            }
-            result.push(nr.renderNode(x, false));
-        });
-        if (!this.isAnnotationType) {
-            var st = hl.subTypes(at);
-            if (st.length > 0) {
-                result.push("<h5>Direct known subtypes: " + renderTypeList(st));
-            }
-        }
-        var ps = at.facets();
-        var nm = "Facet declarations";
-        if (ps.length > 0) {
-            renderPropertyTable(nm, ps, result, at, this.meta);
-        }
-        if (at.isObject()) {
-            ps = at.allProperties();
-            renderPropertyTable("Properties", ps, result, at, this.meta);
-        }
-        if (at.isArray()) {
-            var ct = at.componentType();
-            if (ct) {
-                result.push("<h5>Component type:");
-                result.push(renderTypeList([ct]).join(""));
-                result.push("</h5>");
-                ps = ct.allProperties();
-                if (ct.isObject()) {
-                    renderPropertyTable("Component type properties", ps, result, ct, this.meta);
-                }
-            }
-        }
-        if (at.isUnion()) {
-            result.push("Union options:");
-            result.push(renderTypeList([at]).join(""));
-        }
-        if (this.global) {
-            var usage = [];
-            hl.findUsages(h.root(), at, usage);
-            if (usage.length > 0) {
-                result.push("<h4>Usages:</h4>");
-                var roots = {};
-                usage.forEach(function (x) {
-                    var root = hl.findUsagesRoot(x);
-                    var label = hl.label(root);
-                    if (roots[label]) {
-                        return;
-                    }
-                    roots[label] = 1;
-                    renderClicableLink(root, result, label);
-                });
-            }
-        }
-        if (this.usages) {
-            result.push("<h4>External Usages:</h4>");
-            Object.keys(this.usages).forEach(function (x) {
-                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'><img src='expand.gif' id='Expand" + (usageIndex - 1) + "'/>" + usages.getTitle(x) + "</a>");
-                var v = _this.usages[x];
-                result.push("<span style='display: none' url='" + x + "'>");
-                if (v) {
-                    v.forEach(function (y) {
-                        result.push("<div>" + y + "</div>");
-                    });
-                }
-                result.push("</span>");
-                result.push("</div>");
-            });
-        }
-        return result.join("");
-    };
-    return TypeRenderer;
-}());
-exports.TypeRenderer = TypeRenderer;
-var w = window;
-w.expandUsage = function (index) {
-    var el = document.getElementById("usage" + index);
-    var iel = document.getElementById("Expand" + index);
-    var eel = document.getElementById("ExpandLink" + index);
-    iel.src = "collapse.gif";
-    var span = el.getElementsByTagName("span");
-    var url = span.item(0).getAttribute("url");
-    var sp = document.createElement("div");
-    sp.innerText = "...";
-    el.appendChild(sp);
-    var rop = function (operation, result, rp) {
-        var label = hl.label(operation);
-        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
-        return label;
-    };
-    hl.loadApi(url, function (x, y) {
-        el.removeChild(sp);
-        var links = el.getElementsByTagName("div");
-        var allOps = hl.allOps(x);
-        var result = [];
-        var dups = {};
-        for (var i = 0; i < links.length; i++) {
-            var link = links.item(i).innerText;
-            if (dups[link]) {
-                continue;
-            }
-            else {
-                dups[link] = 1;
-            }
-            if (link.indexOf(";;R;") == 0) {
-                var mi = link.indexOf(";M;");
-                var rp = link.substring(";;R;".length, mi == -1 ? link.length : mi);
-                if (mi != -1) {
-                    var method = link.substr(mi + 3);
-                    var pn = method.indexOf(";");
-                    if (pn != -1) {
-                        method = method.substr(0, pn);
-                    }
-                    var operation = allOps[rp + "." + method];
-                    if (operation) {
-                        var label = rop(operation, result, rp);
-                    }
-                }
-                else {
-                    rp = link.substring(";;R;".length);
-                    var pn = rp.indexOf(";");
-                    if (pn != -1) {
-                        rp = rp.substr(0, pn);
-                    }
-                    Object.keys(allOps).forEach(function (x) {
-                        if (x.indexOf(rp) == 0) {
-                            var operation = allOps[x];
-                            var label = rop(operation, result, rp);
-                        }
-                    });
-                }
-            }
-            else if (link.indexOf(";;T;") == 0) {
-                var rp = link.substring(";;T;".length);
-                var lt = rp.indexOf(";");
-                if (lt != -1) {
-                    rp = rp.substr(0, lt);
-                }
-                var type = x.elements().filter(function (x) { return x.name() == rp; });
-                if (type.length == 1) {
-                    var label = hl.label(type[0]);
-                    if (dups[label]) {
-                        continue;
-                    }
-                    dups[label] = 1;
-                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
-                }
-            }
-            else {
-                result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>");
-            }
-        }
-        sp = document.createElement("div");
-        sp.innerHTML = result.join("");
-        var children = sp.getElementsByTagName("div");
-        for (var i = 0; i < children.length; i++) {
-            var di = children.item(i);
-            var linkE = di.getElementsByTagName("a");
-            linkE.item(0).onclick = function (x) {
-                var rs = x.target.parentElement.getAttribute("key");
-                rtv.setBackUrl(ramlTreeView_1.ramlView.path);
-                var sel = ramlTreeView_1.ramlView.getSelection()[0];
-                rtv.states.push(sel.id());
-                rtv.showApi(url, function () {
-                    Workbench.open(rs);
-                });
-            };
-        }
-        el.appendChild(sp);
-    }, false);
-    eel.onclick = function () {
-        el.removeChild(sp);
-        iel.src = "expand.gif";
-        eel.onclick = function () {
-            w.expandUsage(index);
-        };
-    };
-};
-function renderPropertyTable(name, ps, result, at, isMeta) {
-    result.push("<div style='padding-top: 10px'>");
-    var pm = expandProps([at], ps);
-    if (isMeta) {
-        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
-            hidden: function (c) {
-                return c.level() > 0;
-            }
-        }).render(pm));
-    }
-    else {
-        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-            hidden: function (c) {
-                return c.level() > 0;
-            }
-        }).render(pm));
-    }
-    result.push("</div>");
-}
-exports.renderPropertyTable = renderPropertyTable;
-function renderParameters(name, ps, result, isMeta) {
-    ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
-    if (ps.length == 0) {
-        return;
-    }
-    result.push("<div style='padding-top: 10px'>");
-    var pr = [];
-    ps.forEach(function (x) {
-        pr.push({
-            nameId: function () {
-                if (x.name().charAt(x.name().length - 1) == "?") {
-                    var r = x.attr("required");
-                    if (!r) {
-                        return x.name().substr(0, x.name().length - 1);
-                    }
-                }
-                return x.name();
-            },
-            isKey: function () {
-                return false;
-            },
-            local: true,
-            range: function () {
-                return x.localType();
-            },
-            isRequired: function () {
-                var r = x.attr("required");
-                if (r && r.value() === "false") {
-                    return false;
-                }
-                if (r && r.value() == "true") {
-                    return true;
-                }
-                if (hl.isRAML08(x)) {
-                    if (!x.property() || x.property().nameId() == "uriParameters") {
-                        return true;
-                    }
-                    return false;
-                }
-                return !(x.name().charAt(x.name().length - 1) == "?");
-            }
-        });
-    });
-    var pm = expandProps([], pr);
-    if (isMeta) {
-        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
-            hidden: function (c) {
-                return c.level() > 0;
-            }
-        }).render(pm));
-    }
-    else {
-        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
-            hidden: function (c) {
-                return c.level() > 0;
-            }
-        }).render(pm));
-    }
-    result.push("</div>");
-}
-exports.renderParameters = renderParameters;
-
-},{"./hl":3,"./nodeRender":5,"./objectRender":6,"./ramlTreeView":7,"./usagesRegistry":12}],12:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 exports.usages = {
     usageRegistry: null
@@ -3234,7 +1273,188 @@ function getTitle(url) {
 }
 exports.getTitle = getTitle;
 
-},{}],13:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Composite = (function () {
+    function Composite() {
+        this.children = [];
+    }
+    Composite.prototype.render = function (e) {
+        this._element = e;
+        this.innerRender(e);
+    };
+    Composite.prototype.refresh = function () {
+        if (this._element) {
+            this.innerRender(this._element);
+        }
+    };
+    Composite.prototype.add = function (c) {
+        this.children.push(c);
+        this.refresh();
+    };
+    Composite.prototype.remove = function (c) {
+        this.children = this.children.filter(function (x) { return x != c; });
+        this.refresh();
+    };
+    Composite.prototype.dispose = function () {
+        this._element = null;
+        this.children.forEach(function (x) {
+            if (x.dispose) {
+                x.dispose();
+            }
+        });
+    };
+    Composite.prototype.setTitle = function (title) {
+        this._title = title;
+    };
+    Composite.prototype.title = function () {
+        return this._title;
+    };
+    return Composite;
+}());
+exports.Composite = Composite;
+var globalId = 0;
+function nextId() {
+    return "el" + (globalId++);
+}
+var Loading = (function (_super) {
+    __extends(Loading, _super);
+    function Loading() {
+        _super.apply(this, arguments);
+    }
+    Loading.prototype.innerRender = function (e) {
+        e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>";
+    };
+    return Loading;
+}(Composite));
+exports.Loading = Loading;
+var Label = (function (_super) {
+    __extends(Label, _super);
+    function Label(title, content) {
+        _super.call(this);
+        this.content = content;
+        this.setTitle(title);
+    }
+    Label.prototype.innerRender = function (e) {
+        if (this.content) {
+            e.innerHTML = "<span style=\"padding: 5px;overflow: auto\">" + this.content + "</span>";
+        }
+        else {
+            e.innerHTML = "<span>" + this.title() + "</span>";
+        }
+    };
+    return Label;
+}(Composite));
+exports.Label = Label;
+var Accordition = (function (_super) {
+    __extends(Accordition, _super);
+    function Accordition() {
+        _super.apply(this, arguments);
+        this.disabled = {};
+    }
+    Accordition.prototype.expand = function (c) {
+        var index = this.children.indexOf(c);
+        this.expandIndex(index);
+    };
+    Accordition.prototype.getSelectedIndex = function () {
+        return this.selectedIndex;
+    };
+    Accordition.prototype.getSelectedTitle = function () {
+        if (this.selectedIndex != undefined) {
+            return this.children[this.selectedIndex].title();
+        }
+    };
+    Accordition.prototype.expandIndex = function (index) {
+        var bids = this.bids;
+        var gids = this.gids;
+        this.selectedIndex = index;
+        for (var j = 0; j < bids.length; j++) {
+            if (j != index) {
+                document.getElementById(bids[j]).style.display = "none";
+                document.getElementById(gids[j]).style.flex = null;
+            }
+            else {
+                document.getElementById(bids[j]).style.display = "flex";
+                document.getElementById(gids[j]).style.flex = "1 1 0";
+                document.getElementById(gids[j]).style.display = "flex";
+            }
+        }
+    };
+    Accordition.prototype.getHeader = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon = -1) {
+            return null;
+        }
+        return document.getElementById(this.headings[positon]);
+    };
+    Accordition.prototype.disable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        document.getElementById(this.headings[positon]).style.color = "gray";
+        this.disabled[this.headings[positon]] = true;
+    };
+    Accordition.prototype.enable = function (c) {
+        var positon = this.children.indexOf(c);
+        if (positon == -1) {
+            return null;
+        }
+        delete this.disabled[this.headings[positon]];
+        document.getElementById(this.headings[positon]).style.color = "black";
+    };
+    Accordition.prototype.innerRender = function (e) {
+        var _this = this;
+        var topId = nextId();
+        var templates = [];
+        var headings = [];
+        this.headings = headings;
+        var bids = [];
+        var gids = [];
+        for (var i = 0; i < this.children.length; i++) {
+            var elId = nextId();
+            var hId = nextId();
+            var bid = nextId();
+            var gid = nextId();
+            bids.push(elId);
+            headings.push(hId);
+            gids.push(gid);
+            var styleExpanded = i == 0 ? "flex: 1 1 0" : "display: none";
+            var expanded = i == 0;
+            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\"><a>" + this.children[i].title() + "</a></h4>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
+            templates.push(s);
+        }
+        var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%\">\n             " + templates.join('') + "       \n        </div>";
+        e.innerHTML = content;
+        for (var i = 0; i < this.children.length; i++) {
+            var el = document.getElementById(bids[i]);
+            this.children[i].render(el);
+        }
+        var i = 0;
+        this.bids = bids;
+        this.gids = gids;
+        headings.forEach(function (x) {
+            var panelId = bids[i];
+            var containerId = gids[i];
+            var k = i;
+            document.getElementById(x).onclick = function () {
+                if (!_this.disabled[x]) {
+                    _this.expandIndex(k);
+                }
+            };
+            i++;
+        });
+    };
+    return Accordition;
+}(Composite));
+exports.Accordition = Accordition;
+
+},{}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -3893,4 +2113,1807 @@ var AccorditionTreeView = (function (_super) {
 }(ViewPart));
 exports.AccorditionTreeView = AccorditionTreeView;
 
-},{"./controls":2}]},{},[1]);
+},{"./controls":5}],7:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var workbench = require("./framework/workbench");
+var controls_1 = require("./framework/controls");
+var hl = require("./core/hl");
+var tr = require("./rendering/typeRender");
+var rr = require("./rendering/resourceRender");
+var nr = require("./rendering/nodeRender");
+var rrend = require("./registryView");
+var usages = require("./core/usagesRegistry");
+exports.states = [];
+function back() {
+    if (exports.states.length > 0) {
+        if (bu) {
+            showApi(bu, function () {
+                exports.ramlView.openNodeById(exports.states.pop());
+            });
+            bu = null;
+        }
+        else {
+            exports.ramlView.openNodeById(exports.states.pop());
+        }
+    }
+    else {
+        init();
+    }
+}
+exports.back = back;
+var bu = "";
+function setBackUrl(u) {
+    bu = u;
+}
+exports.setBackUrl = setBackUrl;
+var RAMLDetailsView = (function (_super) {
+    __extends(RAMLDetailsView, _super);
+    function RAMLDetailsView() {
+        _super.apply(this, arguments);
+        this.compact = true;
+    }
+    RAMLDetailsView.prototype.setSelection = function (v) {
+        this._element = v;
+        this.refresh();
+    };
+    RAMLDetailsView.prototype.init = function (holder) {
+        holder.setContextMenu({
+            items: [
+                {
+                    title: "Back",
+                    run: function () {
+                        back();
+                    }
+                }
+            ]
+        });
+        var v = this;
+        holder.setToolbar({
+            items: [
+                {
+                    title: "",
+                    image: "glyphicon glyphicon-asterisk",
+                    checked: this.compact,
+                    run: function () {
+                        v.compact = !v.compact;
+                        v.refresh();
+                        v.init(v.holder);
+                    }
+                }
+            ]
+        });
+        return _super.prototype.init.call(this, holder);
+    };
+    RAMLDetailsView.prototype.innerRender = function (e) {
+        e.style.overflow = "auto";
+        if (this._element && this._element.property) {
+            if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
+                var rnd = new tr.TypeRenderer(this.compact, null, false);
+                rnd.setGlobal(true);
+                rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
+                var cnt = rnd.render(this._element);
+            }
+            else {
+                if (this._element.property().nameId() == "resources") {
+                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
+                }
+                if (this._element.property().nameId() == "methods") {
+                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
+                }
+            }
+            new controls_1.Label(this._element.name(), cnt).render(e);
+        }
+        else {
+            e.innerHTML = "";
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+        $('pre code').each(function (i, block) {
+            hljs.highlightBlock(block);
+        });
+    };
+    return RAMLDetailsView;
+}(workbench.ViewPart));
+exports.RAMLDetailsView = RAMLDetailsView;
+var RAMLTreeProvider = (function () {
+    function RAMLTreeProvider() {
+    }
+    RAMLTreeProvider.prototype.children = function (x) {
+        if (x instanceof hl.TreeLike) {
+            var c = x;
+            return c.allChildren();
+        }
+        if (x instanceof hl.ProxyNode) {
+            var pn = x;
+            return pn.children();
+        }
+        if (x.property().nameId() == "resources") {
+            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
+        }
+        return [];
+    };
+    RAMLTreeProvider.prototype.elements = function (x) {
+        return x;
+    };
+    return RAMLTreeProvider;
+}());
+exports.RAMLTreeProvider = RAMLTreeProvider;
+var colors = {
+    get: "#0f6ab4",
+    post: "#10a54a",
+    put: "#c5862b",
+    patch: "#c5862b",
+    delete: "#a41e22"
+};
+function methodKey(name) {
+    var color = "#10a54a";
+    color = colors[name];
+    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
+}
+var RAMLTreeView = (function (_super) {
+    __extends(RAMLTreeView, _super);
+    function RAMLTreeView(path, title) {
+        if (title === void 0) { title = "Overview"; }
+        _super.call(this, title);
+        this.path = path;
+        this.searchable = true;
+        this.trees = [];
+    }
+    RAMLTreeView.prototype.setKnownVersions = function (r) {
+        this.versions = r;
+    };
+    RAMLTreeView.prototype.setVersion = function (ver) {
+        var _this = this;
+        this.versions.versions.forEach(function (x) {
+            if (x.version == ver) {
+                _this.setUrl(x.location);
+            }
+        });
+    };
+    RAMLTreeView.prototype.setUrl = function (url, cb) {
+        this.path = url;
+        this.node = null;
+        this.api = null;
+        this.refresh();
+        this.cb = cb;
+        usages.setUrl(url);
+    };
+    RAMLTreeView.prototype.customize = function (tree) {
+        tree.setContentProvider(new RAMLTreeProvider());
+        tree.setLabelProvider({
+            label: function (x) {
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        var ss = t.id.substr(2);
+                        if (ss == "object") {
+                            return "<img src='./images/object.gif'/> " + ss;
+                        }
+                        if (ss == "array") {
+                            return "<img src='./images/arraytype_obj.gif'/> " + ss;
+                        }
+                        if (ss == "scalar") {
+                            return "<img src='./images/string.gif'/> " + ss;
+                        }
+                        return "<img src='./images/object.gif'/> " + ss;
+                    }
+                    return t.id;
+                }
+                var result = "";
+                var pr = x.property ? x.property() : null;
+                var isMethod = pr && pr.nameId() == "methods";
+                var isType = pr && pr.nameId() == "types";
+                var isAType = pr && pr.nameId() == "annotationTypes";
+                result = hl.label(x);
+                if (isMethod) {
+                    result = methodKey(x.name()) + result;
+                }
+                if (isType) {
+                    result = "<img src='./images/typedef_obj.gif'/> " + result;
+                }
+                if (isAType) {
+                    result = "<img src='./images/annotation_obj.gif'/>" + result;
+                }
+                return result;
+            },
+            icon: function (x) {
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        return "";
+                    }
+                    return "glyphicon glyphicon-cloud";
+                }
+                if (x instanceof hl.ProxyNode) {
+                    return "glyphicon glyphicon-tasks";
+                }
+                if (x.property().nameId() == "resources") {
+                    return "glyphicon glyphicon-link";
+                }
+                return "";
+            }
+        });
+    };
+    RAMLTreeView.prototype.innerRender = function (e) {
+        if (this.path == "") {
+            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
+        }
+        else {
+            _super.prototype.innerRender.call(this, e);
+            if (this.cb) {
+                var q = this.cb;
+                setTimeout(q, 100);
+                this.cb = null;
+            }
+        }
+    };
+    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
+        var toRender = [];
+        libs.forEach(function (x) {
+            var childrenOfKind = x.children().filter(function (y) { return y.property().nameId() == id; });
+            if (childrenOfKind.length > 0) {
+                toRender.push(new hl.ProxyNode(x.name(), x, childrenOfKind));
+            }
+        });
+        if (groups[id]) {
+            toRender = toRender.concat(groups[id]);
+        }
+        if (toRender.length > 0) {
+            var at = toRender;
+            var types = this.createTree(label);
+            types.setInput(at);
+            this.control.add(types);
+            this.trees.push(types);
+        }
+        ;
+    };
+    RAMLTreeView.prototype.openNodeById = function (id) {
+        var node = hl.findById(id);
+        if (node) {
+            this.setSelection(node);
+        }
+    };
+    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
+        var x = this.api.elements();
+        var libs = hl.getUsedLibraries(this.api);
+        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
+        if (overview.length > 0) {
+            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
+        }
+        if (!this.devMode) {
+            libs = [];
+        }
+        var groups = hl.elementGroups(this.api);
+        var methods = [];
+        var ts = hl.gatherMethods(this.api, methods);
+        var mgroups = hl.groupMethods(methods);
+        var groupedMethods = mgroups.allChildren();
+        if (methods != null) {
+            groups["methods"] = groupedMethods;
+        }
+        if (groups["types"]) {
+            var types = hl.groupTypes(groups["types"]);
+            if (types) {
+                groups["types"] = types.allChildren();
+            }
+        }
+        if (this.devMode || this.api.definition().nameId() == "Library") {
+            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        }
+        this.renderArraySection("methods", "Operations", groups, libs);
+        this.renderArraySection("types", "Data Types", groups, libs);
+        if (this.devMode) {
+            this.renderArraySection("resources", "API Paths", groups, libs);
+        }
+        var lt = null;
+    };
+    RAMLTreeView.prototype.load = function () {
+        var _this = this;
+        hl.loadApi(this.path, function (api) {
+            _this.api = api;
+            _this.node = api;
+            _this.refresh();
+            showTitle(_this.api);
+        });
+    };
+    RAMLTreeView.prototype.init = function (holder) {
+        holder.setContextMenu({
+            items: [
+                {
+                    title: "Back",
+                    run: function () {
+                        back();
+                    }
+                }
+            ]
+        });
+        var v = this;
+        holder.setToolbar({
+            items: [
+                {
+                    title: "",
+                    image: "glyphicon glyphicon-asterisk",
+                    checked: this.devMode,
+                    run: function () {
+                        v.devMode = !v.devMode;
+                        v.refresh();
+                        v.init(v.holder);
+                    }
+                }
+            ]
+        });
+        return _super.prototype.init.call(this, holder);
+    };
+    return RAMLTreeView;
+}(workbench.AccorditionTreeView));
+exports.RAMLTreeView = RAMLTreeView;
+function showTitle(api) {
+    hl.prepareNodes(api.attrs()).forEach(function (x) {
+        if (x.name() == "(Title)" || x.name() == "title") {
+            document.getElementById("title").innerHTML = x.value();
+        }
+    });
+}
+exports.ramlView = new RAMLTreeView("");
+var w = window;
+w.ramlView = exports.ramlView;
+var details = new RAMLDetailsView("Details", "Details");
+var regView = new rrend.RegistryView("API Registry");
+function init() {
+    var page = new workbench.Page("rest");
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
+    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
+    regView.addSelectionListener({
+        selectionChanged: function (v) {
+            if (v.length > 0) {
+                if (v[0] instanceof rrend.ApiWithVersions) {
+                    var aw = v[0];
+                    var sel = aw.versions[aw.versions.length - 1];
+                    exports.ramlView.setKnownVersions(aw);
+                    exports.ramlView.setUrl(sel.location);
+                }
+                else {
+                    if (v[0].location) {
+                        exports.ramlView.setUrl(v[0].location);
+                    }
+                }
+            }
+            else {
+                details.setSelection(null);
+            }
+        }
+    });
+    function initSizes() {
+        var h = document.getElementById("header").clientHeight + 40;
+        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
+    }
+    initSizes();
+    window.onresize = initSizes;
+    var w = window;
+    w.openVersion = function (x) {
+        exports.ramlView.setVersion(x);
+    };
+}
+exports.init = init;
+exports.ramlView.addSelectionListener({
+    selectionChanged: function (v) {
+        if (v.length > 0) {
+            details.setSelection(v[0]);
+        }
+        else {
+            details.setSelection(null);
+        }
+    }
+});
+function showApi(url, cb) {
+    var b = regView.setSelectedUrl(url);
+    if (b) {
+        exports.ramlView.cb = cb;
+    }
+    else {
+        exports.ramlView.setUrl(url, cb);
+    }
+}
+exports.showApi = showApi;
+
+},{"./core/hl":2,"./core/usagesRegistry":4,"./framework/controls":5,"./framework/workbench":6,"./registryView":9,"./rendering/nodeRender":10,"./rendering/resourceRender":12,"./rendering/typeRender":13}],8:[function(require,module,exports){
+"use strict";
+var workbench = require("./framework/workbench");
+var rv = require("./ramlTreeView");
+if (history && history.pushState) {
+    window.onpopstate = function (event) {
+        rv.back();
+    };
+}
+workbench.registerHandler(function (x) {
+    if (history.pushState) {
+        var node = rv.ramlView.getSelection();
+        if (node && node.length > 0) {
+            rv.states.push(node[0].id());
+        }
+        history.pushState({ page: x }, document.title, document.location.toString());
+    }
+    rv.ramlView.openNodeById(x);
+    return true;
+});
+function init() {
+    rv.init();
+}
+exports.init = init;
+function showApi(s) {
+    rv.showApi(s);
+}
+exports.showApi = showApi;
+
+},{"./framework/workbench":6,"./ramlTreeView":7}],9:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var workbench = require("./framework/workbench");
+var ra = require("./registryApp");
+var usages = require("./core/usagesRegistry");
+function loadData(url, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.send();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        c(JSON.parse(xhr.responseText), xhr.status);
+    };
+}
+var GroupNode = (function () {
+    function GroupNode() {
+    }
+    return GroupNode;
+}());
+var ApiWithVersions = (function () {
+    function ApiWithVersions() {
+    }
+    return ApiWithVersions;
+}());
+exports.ApiWithVersions = ApiWithVersions;
+var RegistryContentProvider = (function () {
+    function RegistryContentProvider() {
+    }
+    RegistryContentProvider.prototype.elements = function (i) {
+        return i;
+    };
+    RegistryContentProvider.prototype.children = function (i) {
+        if (i instanceof GroupNode) {
+            return i.children;
+        }
+        return [];
+    };
+    return RegistryContentProvider;
+}());
+function groupBy(els, f) {
+    var result = {};
+    els.forEach(function (x) {
+        var group = f(x);
+        if (result[group]) {
+            result[group].push(x);
+        }
+        else {
+            result[group] = [];
+            result[group].push(x);
+        }
+    });
+    return result;
+}
+var apiCount = 0;
+function buildRegistryGroups(els) {
+    apiCount = 0;
+    var groups = groupBy(els, function (x) { return x.org; });
+    var groupNodes = [];
+    Object.keys(groups).forEach(function (gr) {
+        var g = new GroupNode();
+        g.name = gr;
+        g.children = mergeVersions(groups[gr]);
+        groupNodes.push(g);
+    });
+    var result = [];
+    groupNodes.forEach(function (x) {
+        if (x.children.length == 1) {
+            result.push(x.children[0]);
+        }
+        else {
+            result.push(x);
+            var v = x.children[0];
+            x.icon = v.icon;
+        }
+    });
+    return result;
+}
+function mergeVersions(els) {
+    var groups = groupBy(els, function (x) { return x.name; });
+    var groupNodes = [];
+    Object.keys(groups).forEach(function (gr) {
+        var g = new ApiWithVersions();
+        apiCount++;
+        g.name = gr;
+        g.versions = groups[gr];
+        g.icon = g.versions[0].icon;
+        groupNodes.push(g);
+    });
+    return groupNodes;
+}
+loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json", function (data, s) {
+    usages.loadedUsageData(data);
+});
+function findNodeWithUrl(d, url) {
+    for (var i = 0; i < d.length; i++) {
+        if (d[i] instanceof ApiWithVersions) {
+            var w = d[i];
+            for (var j = 0; j < w.versions.length; j++) {
+                if (w.versions[j].location == url) {
+                    return w;
+                }
+            }
+        }
+        else {
+            var gn = d[i];
+            var res = findNodeWithUrl(gn.children, url);
+            if (res) {
+                return res;
+            }
+        }
+    }
+    return null;
+}
+exports.findNodeWithUrl = findNodeWithUrl;
+var RegistryView = (function (_super) {
+    __extends(RegistryView, _super);
+    function RegistryView() {
+        _super.apply(this, arguments);
+        this.searchable = true;
+    }
+    RegistryView.prototype.load = function () {
+        var _this = this;
+        loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
+            _this.node = data;
+            _this.refresh();
+            usages.reportData(data);
+        });
+    };
+    RegistryView.prototype.setSelectedUrl = function (url) {
+        var _this = this;
+        this.url = url;
+        if (this.groups) {
+            var n = findNodeWithUrl(this.groups, url);
+            if (n) {
+                this.setSelection(n);
+                return true;
+            }
+            else {
+                this.node.libraries.forEach(function (x) {
+                    if (x.location == url) {
+                        _this.setSelection(x);
+                        return true;
+                    }
+                });
+            }
+        }
+        return false;
+    };
+    RegistryView.prototype.customizeAccordition = function (root, node) {
+        var groups = buildRegistryGroups(node.apis);
+        this.groups = groups;
+        this.addTree("Apis", groups);
+        this.addTree("Libraries", node.libraries);
+        var v = this;
+        this.getHolder().setContextMenu({
+            items: [
+                { title: "Open", run: function () {
+                        var api = v.getSelection()[0];
+                        ra.showApi(api.location);
+                    } }
+            ]
+        });
+        document.getElementById("stat").innerHTML = apiCount + " apis, " + node.apis.length + " unique api versions, and counting.";
+    };
+    RegistryView.prototype.customize = function (tree) {
+        tree.setContentProvider(new RegistryContentProvider());
+        tree.setLabelProvider({
+            label: function (e) {
+                if (e.name) {
+                    if (e.icon) {
+                        return "<img src='" + e.icon + "' /> " + e.name + "";
+                    }
+                    return "" + e.name + "";
+                }
+                else {
+                    var c = Object.keys(e)[0];
+                    return c;
+                }
+            }
+        });
+    };
+    return RegistryView;
+}(workbench.AccorditionTreeView));
+exports.RegistryView = RegistryView;
+
+},{"./core/usagesRegistry":4,"./framework/workbench":6,"./registryApp":8}],10:[function(require,module,exports){
+"use strict";
+var or = require("./objectRender");
+var hl = require("../core/hl");
+function renderNodes(nodes) {
+    var result = [];
+    var obj = {};
+    nodes = hl.prepareNodes(nodes);
+    nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    return result.join("");
+}
+exports.renderNodes = renderNodes;
+var HeaderRenderer = (function () {
+    function HeaderRenderer(versions) {
+        this.versions = versions;
+    }
+    HeaderRenderer.prototype.consume = function (nodes) {
+        var _this = this;
+        var result = [];
+        nodes.forEach(function (x) {
+            if (x.property().nameId() == "title") {
+                _this.title = x.value();
+                return;
+            }
+            if (x.property().nameId() == "version") {
+                _this.version = x.value();
+                return;
+            }
+            if (x.property().nameId() == "baseUri") {
+                _this.baseUrl = x.value();
+                return;
+            }
+            if (x.definition().nameId() === "Icons") {
+                var obj = x.lowLevel().dumpToObject(true);
+                obj = obj[Object.keys(obj)[0]];
+                _this.iconUrl = obj[0].url;
+                return;
+            }
+            result.push(x);
+        });
+        return result;
+    };
+    HeaderRenderer.prototype.render = function () {
+        var result = [];
+        if (this.iconUrl != null) {
+            result.push("<img src='" + this.iconUrl + "'/>");
+        }
+        if (this.title != null) {
+            result.push("<h4 style='display: inline'> " + this.title + "</h4>");
+        }
+        if (this.version != null) {
+            var mens = "";
+            if (this.versions && this.versions.versions.length > 1) {
+                mens = this.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("");
+                result.push("<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + this.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + mens + "\n                  </ul>\n                </div></h5>");
+            }
+            else {
+                result.push(or.renderKeyValue("Version", this.version, false));
+            }
+        }
+        if (this.baseUrl != null) {
+            result.push(or.renderKeyValue("Base url", this.baseUrl, false));
+        }
+        return result.join("");
+    };
+    return HeaderRenderer;
+}());
+exports.HeaderRenderer = HeaderRenderer;
+function renderNodesOverview(api, v, path) {
+    var result = [];
+    var nodes = api.attrs();
+    var obj = {};
+    var docs = api.elements().filter(function (x) { return x.property().nameId() == "documentation"; });
+    nodes = hl.prepareNodes(nodes);
+    var hr = new HeaderRenderer(v);
+    nodes = hr.consume(nodes);
+    result.push(hr.render());
+    nodes.forEach(function (x) { return result.push(renderNode(x)); });
+    docs.forEach(function (x) {
+        var t = x.attr("title");
+        if (t) {
+            result.push("<h5 style='background-color: lightgray'>" + t.value() + "</h5>");
+        }
+        var c = x.attr("content");
+        if (c) {
+            result.push(marked(c.value()));
+        }
+    });
+    if (path) {
+        result.push("<hr/>");
+        result.push("<a href='" + path + "'>Get RAML</a>");
+    }
+    return result.join("");
+}
+exports.renderNodesOverview = renderNodesOverview;
+var ToSkip = { "LogicalStructure": 1, "EnumDescriptions": 1, "is": 1, "Id": 1, "displayName": 1 };
+function renderNode(h, small) {
+    if (small === void 0) { small = false; }
+    if (h.definition && ToSkip[h.definition().nameId()]) {
+        return "";
+    }
+    var vl = h.value ? h.value() : null;
+    if (!h.definition) {
+        var obj = h.lowLevel().dumpToObject();
+        return or.renderObj(obj);
+    }
+    if (vl) {
+        if (h.isAttr()) {
+            var pname = h.property().nameId();
+            if (ToSkip[pname]) {
+                return "";
+            }
+            if (pname == "securedBy") {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                var result = [];
+                if (Object.keys(v).length == 1) {
+                    if (h.parent() && (h.parent().parent() != null)) {
+                        var sd = h.root().elements().filter(function (x) { return x.property() && x.property().nameId() == "securitySchemes"; });
+                        if (sd.length == 1) {
+                            var toRend = v[Object.keys(v)[0]];
+                            var descriptions = hl.scopeDescriptionsofApi(h.root(), Object.keys(v)[0]);
+                            var rs = [];
+                            Object.keys(toRend).forEach(function (x) {
+                                if (x == "scopes" && descriptions) {
+                                    var scopes = toRend[x];
+                                    rs.push("scopes: ");
+                                    for (var i = 0; i < scopes.length; i++) {
+                                        if (descriptions[i]) {
+                                            rs.push(" <span ><a>" + scopes[i] + "</a> </span>");
+                                            rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descriptions[i] + "'></span>");
+                                            if (i != scopes.length - 1) {
+                                                rs.push(",");
+                                            }
+                                        }
+                                        else {
+                                            rs.push("<span ><a>" + scopes[i] + "</a> </span>" + (i == scopes.length - 1 ? "" : ", "));
+                                        }
+                                    }
+                                    return;
+                                }
+                                rs.push(or.renderKeyValue(x, toRend[x]));
+                            });
+                            return "<div>" + rs.join("") + "</div>";
+                        }
+                    }
+                }
+            }
+            if (typeof vl === "object") {
+                if (!Array.isArray(vl)) {
+                    var v = hl.asObject(h);
+                    v = v[Object.keys(v)[0]];
+                    vl = JSON.stringify(v, null, 2);
+                    var svl = "" + vl;
+                    svl = svl.replace(": null", "");
+                    vl = svl.substr(1, svl.length - 2);
+                }
+                else {
+                    vl = vl.join(", ");
+                }
+            }
+            res = or.renderKeyValue(h.property().nameId(), vl, small);
+        }
+        else {
+            if (vl.dumpNode) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var id = h.definition().nameId();
+            if (id == "StringType") {
+                id = h.name();
+            }
+            var res = or.renderKeyValue(id, vl, small);
+        }
+    }
+    else {
+        if (typeof vl === "string") {
+            return;
+        }
+        if (h.isAttr()) {
+            res = or.renderKeyValue(h.property().nameId(), vl, small);
+            return res;
+        }
+        var id = h.definition().nameId();
+        if (id == "StringType") {
+            id = h.name();
+            if (true) {
+                var v = hl.asObject(h);
+                v = v[Object.keys(v)[0]];
+                vl = JSON.stringify(v, null, 2);
+                var svl = "" + vl;
+                svl = svl.replace(": null", "");
+                vl = svl.substr(1, svl.length - 2);
+            }
+            var res = or.renderKeyValue(id, vl, true);
+            return res;
+        }
+        var res = "<h5 style=\"background: gainsboro\">" + h.definition().nameId() + ":</h5>";
+        var ch = h.children();
+        res += renderNodes(ch);
+    }
+    return res;
+}
+exports.renderNode = renderNode;
+var AttrProperty = (function () {
+    function AttrProperty(_id, _caption) {
+        this._id = _id;
+        this._caption = _caption;
+    }
+    AttrProperty.prototype.id = function () {
+        return this._id;
+    };
+    AttrProperty.prototype.caption = function () {
+        return this._caption;
+    };
+    AttrProperty.prototype.render = function (o) {
+        var atr = o.attr(this._id);
+        if (atr) {
+            return or.renderObj(atr.value());
+        }
+        return "";
+    };
+    return AttrProperty;
+}());
+exports.AttrProperty = AttrProperty;
+
+},{"../core/hl":2,"./objectRender":11}],11:[function(require,module,exports){
+"use strict";
+function encode(r) {
+    return r.replace(/[\x26\x0A\<>'"]/g, function (r) { return "&#" + r.charCodeAt(0) + ";"; });
+}
+exports.encode = encode;
+var RenderMode;
+(function (RenderMode) {
+    RenderMode[RenderMode["FULL_VIEW"] = 0] = "FULL_VIEW";
+    RenderMode[RenderMode["ROW_VIEW"] = 1] = "ROW_VIEW";
+    RenderMode[RenderMode["COMPACT_VIEW"] = 2] = "COMPACT_VIEW";
+})(RenderMode || (RenderMode = {}));
+var Link = (function () {
+    function Link(target, _name) {
+        this.target = target;
+        this._name = _name;
+    }
+    Link.prototype.getUrl = function () {
+        return this.target.id();
+    };
+    Link.prototype.render = function () {
+        return "<a onclick=\"Workbench.open('" + this.getUrl() + "')\">" + this._name + "</a>";
+    };
+    return Link;
+}());
+exports.Link = Link;
+var mm = 0;
+var TableRenderer = (function () {
+    function TableRenderer(_caption, props, st) {
+        this._caption = _caption;
+        this.props = props;
+        this.st = st;
+    }
+    TableRenderer.prototype.render = function (hl) {
+        var _this = this;
+        var result = [];
+        var fp = this.props.filter(function (p) {
+            return hl.filter(function (x) { return p.render(x); }).length > 0;
+        });
+        hl.forEach(function (x) {
+            var h = _this.st.hidden(x) ? "none" : "table-row";
+            result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
+            fp.forEach(function (p) {
+                var pn = p.nowrap;
+                var es = pn ? "white-space: nowrap" : "";
+                result.push("<td style='" + es + "'>");
+                result.push(p.render(x, "tr" + mm));
+                result.push("</td>");
+            });
+            result.push("</tr>");
+            mm = mm + 1;
+        });
+        var header = [];
+        header.push("<tr>");
+        fp.forEach(function (p) {
+            var cw = p.width ? "width: " + p.width() : "";
+            header.push("<th style='border-bottom: inherit;" + cw + "'>");
+            header.push(p.caption());
+            header.push("</th>");
+        });
+        header.push("</tr>");
+        return "<div class=\"panel panel-default\">\n            <div class=\"panel-heading\">" + this._caption + "</div><div class=\"panel-body\" style=\"padding: 0px\"><div><table class=\"table table-hover\" style=\"margin: 0px\">\n            <caption style=\"height: 0px;display: none\"></caption>\n            <thead>" + header.join("") + "</thead>\n            " + result.join("") + "\n            </table>\n            </div></div></div>";
+    };
+    return TableRenderer;
+}());
+exports.TableRenderer = TableRenderer;
+var w = window;
+w.toggleRow = function (id) {
+    var el = document.getElementById(id);
+    var nm = el.parentElement.getElementsByTagName("tr");
+    if (!document.getElementById("tricon" + id)) {
+        return;
+    }
+    var vis = el.getAttribute("expanded");
+    var style = "table-row";
+    if (vis == "true") {
+        style = "none";
+        el.setAttribute("expanded", "false");
+        document.getElementById("tricon" + id).classList.add("glyphicon-plus-sign");
+        document.getElementById("tricon" + id).classList.remove("glyphicon-minus-sign");
+    }
+    else {
+        el.setAttribute("expanded", "true");
+        document.getElementById("tricon" + id).classList.remove("glyphicon-plus-sign");
+        document.getElementById("tricon" + id).classList.add("glyphicon-minus-sign");
+    }
+    var tn = false;
+    var ll = parseInt(el.getAttribute("level"));
+    for (var i = 0; i < nm.length; i++) {
+        var it = nm.item(i);
+        if (it == el) {
+            tn = true;
+            continue;
+        }
+        if (tn) {
+            var il = parseInt(it.getAttribute("level"));
+            if (il <= ll) {
+                tn = false;
+            }
+            else {
+                if (il == ll + 1 || style == 'none') {
+                    if (style == 'none') {
+                        it.setAttribute("expanded", "false");
+                    }
+                    it.style.display = style;
+                }
+            }
+        }
+    }
+};
+function highlight(v) {
+    v = encode(v);
+    if (v.indexOf("http://") == 0 || v.indexOf("https://") == 0) {
+        return "<a href=\"" + v + "\">" + v + "</a>";
+    }
+    if (!isNaN(parseFloat(v))) {
+        return "<span style='color: purple'>" + v + "</span>";
+    }
+    if (!isNaN(parseInt(v))) {
+        return "<span style='color: purple'>" + v + "</span>";
+    }
+    if (v == "true" || v == "false") {
+        return "<span style='color: blue'>" + v + "</span>";
+    }
+    return "<span style='color: darkred'>" + v + "</span>";
+}
+exports.highlight = highlight;
+function renderKeyValue(k, vl, small) {
+    if (small === void 0) { small = false; }
+    if (k == "description" || k == "usage") {
+        if (typeof vl == "string") {
+            vl = marked(vl);
+        }
+        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
+        return res;
+    }
+    var str = "" + vl;
+    vl = highlight(str);
+    if (str.length > 70 && str.indexOf('\n') != -1 && !small) {
+        var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
+        return res;
+    }
+    if (small) {
+        return "<i>" + k + ": " + vl + "</i>";
+    }
+    return "<h5>" + k + ": " + vl + "</h5>";
+}
+exports.renderKeyValue = renderKeyValue;
+function renderObj(v) {
+    if (Array.isArray(v)) {
+        var r = v;
+        return r.map(function (x) { return renderObj(x); }).join("");
+    }
+    if (typeof v === "string") {
+        return v;
+    }
+    if (typeof v === "number") {
+        return "" + v;
+    }
+    var result = [];
+    Object.getOwnPropertyNames(v).forEach(function (p) {
+        result.push(renderKeyValue(p, v[p]));
+    });
+    return result.join("");
+}
+exports.renderObj = renderObj;
+
+},{}],12:[function(require,module,exports){
+"use strict";
+var hl = require("../core/hl");
+var tr = require("./typeRender");
+var nr = require("./nodeRender");
+var ResourceRenderer = (function () {
+    function ResourceRenderer(meta, isAnnotationType) {
+        if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
+        this.isAnnotationType = isAnnotationType;
+    }
+    ResourceRenderer.prototype.render = function (h) {
+        var ms = h.elements().filter(function (x) { return x.property().nameId() == "methods"; });
+        var result = [];
+        var pn = hl.uriParameters(h);
+        if (ms.length == 1) {
+            var dn = ms[0].attr("displayName");
+            if (dn && (dn.value())) {
+                result.push("<h3>" + dn.value() + "</h3>");
+                result.push("<h5>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h5>");
+            }
+            else {
+                result.push("<h3>Resource: " + hl.resourceUrl(h) + " Method: " + ms[0].name() + "</h3>");
+            }
+            hl.prepareNodes(ms[0].attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            result.push("</hr>");
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
+            result.push(new MethodRenderer(false, false, false, false, this.meta).render(ms[0]));
+        }
+        else {
+            result.push("<h3>Resource:" + hl.resourceUrl(h) + "</h3>");
+            result.push("</hr>");
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                result.push(nr.renderNode(x, false));
+            });
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h), result, this.meta);
+            if (ms.length > 0) {
+                result.push(renderTabFolder("Methods", ms, new MethodRenderer(this.meta, false, ms.length == 1, false, true)));
+            }
+        }
+        return result.join("");
+    };
+    return ResourceRenderer;
+}());
+exports.ResourceRenderer = ResourceRenderer;
+var num = 0;
+function renderTabFolder(caption, nodes, r) {
+    if (nodes.length == 0) {
+        return "";
+    }
+    if (nodes.length == 1) {
+        return r.render(nodes[0]);
+    }
+    var result = [];
+    if (caption) {
+        result.push("<h3>" + caption + "</h3>");
+    }
+    result.push("<ul class=\"nav nav-tabs\">");
+    var num = 0;
+    nodes.forEach(function (x) { return result.push("<li class=\"" + (num++ == 0 ? "active" : "") + "\"><a data-toggle=\"tab\" href=\"#" + (escape(x.name()) + "Tab" + num) + "\">" + x.name() + "</a></li>"); });
+    result.push("</ul>");
+    num = 0;
+    result.push("<div class=\"tab-content\">");
+    nodes.forEach(function (x) { return result.push("<div class=\"tab-pane fade " + (num++ == 0 ? "in active" : "") + "\" id=\"" + (escape(x.name()) + "Tab" + num) + "\">" + r.render(x) + "</div>"); });
+    result.push('</div>');
+    num++;
+    return result.join("");
+}
+exports.renderTabFolder = renderTabFolder;
+function escape(n) {
+    return n.replace("/", "_");
+}
+var MethodRenderer = (function () {
+    function MethodRenderer(meta, topLevel, isSingle, isAnnotationType, renderAttrs) {
+        if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
+        this.topLevel = topLevel;
+        this.isSingle = isSingle;
+        this.isAnnotationType = isAnnotationType;
+        this.renderAttrs = renderAttrs;
+    }
+    MethodRenderer.prototype.render = function (h) {
+        var result = [];
+        if (this.topLevel) {
+            var dn = h.attr("displayName");
+            if (dn) {
+                result.push("<h3>" + dn.value() + "</h3>");
+            }
+            result.push("<h5>Resource: " + hl.resourceUrl(h.parent()) + " Method: " + h.name() + "</h5>");
+        }
+        else if (this.isSingle) {
+            result.push("<h3>Method: " + h.name() + "</h3>");
+        }
+        if (this.renderAttrs) {
+            hl.prepareNodes(h.attrs()).forEach(function (x) {
+                if (x.name() == "displayName") {
+                    return;
+                }
+                result.push(nr.renderNode(x, false));
+            });
+        }
+        if (this.topLevel) {
+            tr.renderParameters("Uri Parameters", hl.uriParameters(h.parent()), result, this.meta);
+        }
+        tr.renderParameters("Query Parameters", h.elements().filter(function (x) { return x.property().nameId() == "queryParameters"; }), result, this.meta);
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
+        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
+        if (rs.length > 0) {
+            result.push(renderTabFolder("Body", rs, new tr.TypeRenderer(this.meta, "Body", rs.length == 1)));
+        }
+        var rs = h.elements().filter(function (x) { return x.property().nameId() == "responses"; });
+        if (rs.length > 0) {
+            result.push(renderTabFolder("Responses", rs, new ResponseRenderer(this.meta, rs.length == 1)));
+        }
+        return result.join("");
+    };
+    return MethodRenderer;
+}());
+exports.MethodRenderer = MethodRenderer;
+var ResponseRenderer = (function () {
+    function ResponseRenderer(meta, isSingle, isAnnotationType) {
+        if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
+        this.isSingle = isSingle;
+        this.isAnnotationType = isAnnotationType;
+    }
+    ResponseRenderer.prototype.render = function (h) {
+        var result = [];
+        var rs = h.elements().filter(function (x) { return x.property().nameId() == "body"; });
+        if (this.isSingle && rs.length < 1) {
+            result.push("<h3>Response: " + h.name() + "</h3>");
+        }
+        hl.prepareNodes(h.attrs()).forEach(function (x) {
+            result.push(nr.renderNode(x, false));
+        });
+        tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
+        return result.join("");
+    };
+    return ResponseRenderer;
+}());
+exports.ResponseRenderer = ResponseRenderer;
+
+},{"../core/hl":2,"./nodeRender":10,"./typeRender":13}],13:[function(require,module,exports){
+"use strict";
+var hl = require("../core/hl");
+var or = require("./objectRender");
+var nr = require("./nodeRender");
+var usages = require("../core/usagesRegistry");
+var ramlTreeView_1 = require("../ramlTreeView");
+var rtv = require("../ramlTreeView");
+function renderTypeList(t) {
+    var result = [];
+    t.forEach(function (x) {
+        result.push(renderTypeLink(x));
+    });
+    return result;
+}
+exports.renderTypeList = renderTypeList;
+function escapeBuiltIn(n) {
+    if (n === "StringType") {
+        n = "string";
+    }
+    if (n === "DateTimeType") {
+        n = "date-time";
+    }
+    if (n === "BooleanType") {
+        n = "boolean";
+    }
+    if (n === "NumberType") {
+        n = "number";
+    }
+    if (n === "IntegerType") {
+        n = "integer";
+    }
+    return n;
+}
+function renderTypeLink(x) {
+    var result = [];
+    if (x.isArray()) {
+        var cp = x.componentType();
+        var lnk = renderTypeLink(cp);
+        if (cp.isUnion()) {
+            lnk = "(" + lnk + ")";
+        }
+        return lnk + "[]";
+    }
+    if (x.isUnion()) {
+        return renderTypeLink(x.union().leftType()) + " | " + renderTypeLink(x.union().rightType());
+    }
+    if (x.isBuiltIn()) {
+    }
+    var d = hl.getDeclaration(x);
+    if (d) {
+        var name = x.nameId();
+        if (!name) {
+            if (x.superTypes().length == 1) {
+                name = x.superTypes()[0].nameId();
+            }
+        }
+        name = escapeBuiltIn(name);
+        result.push(new or.Link(d, name).render() + "");
+    }
+    else {
+        var name = x.nameId();
+        if (!name) {
+            if (x.superTypes().length == 1) {
+                name = x.superTypes()[0].nameId();
+            }
+        }
+        name = escapeBuiltIn(name);
+        result.push("<span>" + name + "</span> ");
+    }
+    return result.join("");
+}
+var NameColumn = (function () {
+    function NameColumn() {
+        this.nowrap = true;
+    }
+    NameColumn.prototype.id = function () { return "name"; };
+    NameColumn.prototype.caption = function () { return "Name"; };
+    NameColumn.prototype.width = function () { return "15em;"; };
+    NameColumn.prototype.render = function (p, rowId) {
+        var rs = p.nameId();
+        var s = p.range();
+        if (p.local || (!s.isBuiltIn() && !s.isArray() && !s.isUnion())) {
+            while (s.superTypes().length == 1 && !s.isBuiltIn()) {
+                s = s.superTypes()[0];
+            }
+        }
+        if (p.range().isObject()) {
+            rs = "<img src='./images/object.gif'/> " + rs;
+        }
+        if (p.range().isArray()) {
+            rs = "<img src='./images/arraytype_obj.gif'/> " + rs;
+        }
+        else if (s.nameId() == "StringType") {
+            rs = "<img src='./images/string.gif'/> " + rs;
+        }
+        else if (s.nameId() == "BooleanType") {
+            rs = "<img src='./images/boolean.gif'/> " + rs;
+        }
+        else if (s.nameId() == "NumberType") {
+            rs = "<img src='./images/number.png'/> " + rs;
+        }
+        else if (s.nameId() == "IntegerType") {
+            rs = "<img src='./images/number.png'/> " + rs;
+        }
+        else if (s.nameId().indexOf("Date") != -1) {
+            rs = "<img src='./images/date.gif'/> " + rs;
+        }
+        else if (s.nameId().indexOf("File") != -1) {
+            rs = "<img src='./images/file.gif'/> " + rs;
+        }
+        if (rs.length == 0) {
+            rs = "additionalProperties";
+        }
+        if (p instanceof WProperty) {
+            var wp = p;
+            if (wp._children.length > 0) {
+                rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span id=\"" + ("tricon" + rowId) + "\" class=\"glyphicon glyphicon-plus-sign\" ></span> ") + rs;
+            }
+            else {
+                var st = "glyphicon-record";
+                if (wp.recursive) {
+                    st = "glyphicon-repeat";
+                }
+                rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
+            }
+        }
+        if (p.isRequired()) {
+            rs += " <small style='color: red'>(required)</small>";
+        }
+        return rs;
+    };
+    return NameColumn;
+}());
+var skipProps = {
+    "description": true,
+    "example": true,
+    "examples": true,
+    "type": true,
+    "required": true,
+    "items": true
+};
+var Facets = (function () {
+    function Facets() {
+    }
+    Facets.prototype.id = function () { return "name"; };
+    Facets.prototype.caption = function () { return "Facets &amp; Annotations"; };
+    Facets.prototype.render = function (p) {
+        var decl = hl.getDeclaration(p.range(), false);
+        var rs = [];
+        if (decl) {
+            hl.prepareNodes(decl.attrs()).forEach(function (x) {
+                if (skipProps[x.name()]) {
+                    return;
+                }
+                if (x.property && x.property().nameId() == "enum") {
+                    var descs = hl.enumDescriptions(decl);
+                    if (descs) {
+                        var vl = x.value();
+                        rs.push("enum: ");
+                        for (var i = 0; i < vl.length; i++) {
+                            if (descs[i]) {
+                                rs.push(" <span style='color: darkred'>" + vl[i] + " </span>");
+                                rs.push("<span class='glyphicon glyphicon-question-sign' data-toggle='tooltip' title='" + descs[i] + "'></span>");
+                                if (i != vl.length - 1) {
+                                    rs.push(",");
+                                }
+                            }
+                            else {
+                                rs.push("<span style='color: darkred'>" + vl[i] + "</span>" + (i == vl.length - 1 ? "" : ", "));
+                            }
+                        }
+                        return;
+                    }
+                }
+                var nd = nr.renderNode(x, true);
+                if (nd) {
+                    rs.push(nd + "; ");
+                }
+            });
+        }
+        return rs.join("");
+    };
+    Facets.prototype.width = function () {
+        return "20em";
+    };
+    return Facets;
+}());
+var Description = (function () {
+    function Description() {
+    }
+    Description.prototype.id = function () { return "description"; };
+    Description.prototype.caption = function () { return "Description"; };
+    Description.prototype.render = function (p) {
+        var desc = hl.description(p.range());
+        var s = marked(desc, { gfm: true });
+        while (true) {
+            var q = s;
+            s = s.replace("<h1", "<h4");
+            s = s.replace("</h1", "</h4");
+            s = s.replace("<h2", "<h4");
+            s = s.replace("</h2", "</h4");
+            if (q == s) {
+                break;
+            }
+        }
+        return s;
+    };
+    return Description;
+}());
+marked.Lexer.rules.gfm.heading = marked.Lexer.rules.normal.heading;
+marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
+var Type = (function () {
+    function Type() {
+    }
+    Type.prototype.id = function () { return "type"; };
+    Type.prototype.caption = function () { return "Type"; };
+    Type.prototype.render = function (p) {
+        var s = p.range();
+        if (p.local || (!s.nameId() && !s.isArray() && !s.isUnion())) {
+            if (s.superTypes().length == 1) {
+                s = s.superTypes()[0];
+            }
+        }
+        return "<span style='white-space: nowrap;'>" + renderTypeLink(s) + "</span>";
+    };
+    Type.prototype.width = function () {
+        return "15em";
+    };
+    return Type;
+}());
+var Meta = (function () {
+    function Meta() {
+    }
+    Meta.prototype.id = function () { return "meta"; };
+    Meta.prototype.caption = function () { return "Type &amp; Meta"; };
+    Meta.prototype.render = function (p) {
+        var v = new Type().render(p);
+        var f = new Facets().render(p);
+        return v + (f ? '(' + f + ')' : "");
+    };
+    Meta.prototype.width = function () {
+        return "15em";
+    };
+    return Meta;
+}());
+var WProperty = (function () {
+    function WProperty(_orig, _o) {
+        this._orig = _orig;
+        this._o = _o;
+        this._children = [];
+        this.recursive = false;
+        if (_orig instanceof WProperty) {
+            _orig._children.push(_o);
+        }
+        if (_o.local) {
+            this.local = true;
+        }
+    }
+    WProperty.prototype.level = function () {
+        if (this._orig) {
+            if (this._orig instanceof WProperty) {
+                var wp = this._orig;
+                return wp.level() + 1;
+            }
+        }
+        return 0;
+    };
+    WProperty.prototype.nameId = function () {
+        return this._o.nameId();
+    };
+    WProperty.prototype.isKey = function () {
+        return this._o.isKey();
+    };
+    WProperty.prototype.range = function () {
+        return this._o.range();
+    };
+    WProperty.prototype.isRequired = function () {
+        return this._o.isRequired();
+    };
+    return WProperty;
+}());
+var expandProps = function (ts, ps, parent) {
+    var pm = [];
+    ps.forEach(function (x) {
+        x = new WProperty(parent, x);
+        pm.push(x);
+        var r = x.range();
+        if (ts.indexOf(r) == -1) {
+            ts.push(r);
+            if (r.isObject()) {
+                var ps = r.allProperties();
+                if (ps.length > 0) {
+                    expandProps(ts, ps, x).forEach(function (y) { return pm.push(y); });
+                }
+            }
+            else if (x.range().isArray() && !x.range().nameId()) {
+                if (x.range().isObject()) {
+                    var as = x.range().componentType().allProperties();
+                    if (as.length > 0) {
+                        expandProps(ts, as, x).forEach(function (y) { return pm.push(y); });
+                    }
+                }
+            }
+            ts.pop();
+        }
+        else {
+            x.recursive = true;
+        }
+    });
+    return pm;
+};
+var usageIndex = 0;
+var renderClicableLink = function (root, result, label) {
+    if (root.property() && root.property().nameId() == "methods") {
+        result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "types") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+    else if (root.property() && root.property().nameId() == "annotationTypes") {
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+    }
+};
+var TypeRenderer = (function () {
+    function TypeRenderer(meta, extraCaption, isSingle, isAnnotationType) {
+        if (isAnnotationType === void 0) { isAnnotationType = false; }
+        this.meta = meta;
+        this.extraCaption = extraCaption;
+        this.isSingle = isSingle;
+        this.isAnnotationType = isAnnotationType;
+    }
+    TypeRenderer.prototype.setGlobal = function (b) {
+        this.global = b;
+    };
+    TypeRenderer.prototype.setUsages = function (v) {
+        this.usages = v;
+    };
+    TypeRenderer.prototype.render = function (h) {
+        var _this = this;
+        var at = h.localType();
+        if (h.property().nameId() == "annotationTypes") {
+            at = at.superTypes()[0];
+        }
+        var result = [];
+        result.push("<h3>" + (this.extraCaption ? this.extraCaption + ": " : "") + at.nameId() + "</h3><hr>");
+        if (at.hasExternalInHierarchy()) {
+            var type = at;
+            var content = "";
+            while (type) {
+                if (type.schemaString) {
+                    content = type.schemaString.trim();
+                }
+                type = type.superTypes()[0];
+            }
+            if (at.superTypes().length == 1 && !at.superTypes()[0].isBuiltIn()) {
+                result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>");
+            }
+            if (content) {
+                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + or.encode(content) + "</code></pre>");
+            }
+            return result.join("");
+        }
+        if (at.superTypes().length == 1 && h.children().length == 2) {
+            result.push("<h5>Type: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
+        else {
+            result.push("<h5>Supertypes: " + renderTypeList(at.superTypes()) + "</h5>");
+        }
+        var desc = hl.description(at);
+        if (desc) {
+            result.push("<h5 style='display: inline'>Description: </h5><span style='color: darkred'>" + desc + "</span>");
+        }
+        hl.prepareNodes(h.attrs()).forEach(function (x) {
+            if (skipProps[x.name()]) {
+                return;
+            }
+            result.push(nr.renderNode(x, false));
+        });
+        if (!this.isAnnotationType) {
+            var st = hl.subTypes(at);
+            if (st.length > 0) {
+                result.push("<h5>Direct known subtypes: " + renderTypeList(st));
+            }
+        }
+        var ps = at.facets();
+        var nm = "Facet declarations";
+        if (ps.length > 0) {
+            renderPropertyTable(nm, ps, result, at, this.meta);
+        }
+        if (at.isObject()) {
+            ps = at.allProperties();
+            renderPropertyTable("Properties", ps, result, at, this.meta);
+        }
+        if (at.isArray()) {
+            var ct = at.componentType();
+            if (ct) {
+                result.push("<h5>Component type:");
+                result.push(renderTypeList([ct]).join(""));
+                result.push("</h5>");
+                ps = ct.allProperties();
+                if (ct.isObject()) {
+                    renderPropertyTable("Component type properties", ps, result, ct, this.meta);
+                }
+            }
+        }
+        if (at.isUnion()) {
+            result.push("Union options:");
+            result.push(renderTypeList([at]).join(""));
+        }
+        if (this.global) {
+            var usage = [];
+            hl.findUsages(h.root(), at, usage);
+            if (usage.length > 0) {
+                result.push("<h4>Usages:</h4>");
+                var roots = {};
+                usage.forEach(function (x) {
+                    var root = hl.findUsagesRoot(x);
+                    var label = hl.label(root);
+                    if (roots[label]) {
+                        return;
+                    }
+                    roots[label] = 1;
+                    renderClicableLink(root, result, label);
+                });
+            }
+        }
+        if (this.usages) {
+            result.push("<h4>External Usages:</h4>");
+            Object.keys(this.usages).forEach(function (x) {
+                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'><img src='expand.gif' id='Expand" + (usageIndex - 1) + "'/>" + usages.getTitle(x) + "</a>");
+                var v = _this.usages[x];
+                result.push("<span style='display: none' url='" + x + "'>");
+                if (v) {
+                    v.forEach(function (y) {
+                        result.push("<div>" + y + "</div>");
+                    });
+                }
+                result.push("</span>");
+                result.push("</div>");
+            });
+        }
+        return result.join("");
+    };
+    return TypeRenderer;
+}());
+exports.TypeRenderer = TypeRenderer;
+var w = window;
+w.expandUsage = function (index) {
+    var el = document.getElementById("usage" + index);
+    var iel = document.getElementById("Expand" + index);
+    var eel = document.getElementById("ExpandLink" + index);
+    iel.src = "collapse.gif";
+    var span = el.getElementsByTagName("span");
+    var url = span.item(0).getAttribute("url");
+    var sp = document.createElement("div");
+    sp.innerText = "...";
+    el.appendChild(sp);
+    var rop = function (operation, result, rp) {
+        var label = hl.label(operation);
+        result.push("<div style='padding-left: 20px;' key='" + operation.id() + "'>" + hl.methodKey(operation.name()) + "<a>" + label + "(" + rp + ")" + "</a></div>");
+        return label;
+    };
+    hl.loadApi(url, function (x, y) {
+        el.removeChild(sp);
+        var links = el.getElementsByTagName("div");
+        var allOps = hl.allOps(x);
+        var result = [];
+        var dups = {};
+        for (var i = 0; i < links.length; i++) {
+            var link = links.item(i).innerText;
+            if (dups[link]) {
+                continue;
+            }
+            else {
+                dups[link] = 1;
+            }
+            if (link.indexOf(";;R;") == 0) {
+                var mi = link.indexOf(";M;");
+                var rp = link.substring(";;R;".length, mi == -1 ? link.length : mi);
+                if (mi != -1) {
+                    var method = link.substr(mi + 3);
+                    var pn = method.indexOf(";");
+                    if (pn != -1) {
+                        method = method.substr(0, pn);
+                    }
+                    var operation = allOps[rp + "." + method];
+                    if (operation) {
+                        var label = rop(operation, result, rp);
+                    }
+                }
+                else {
+                    rp = link.substring(";;R;".length);
+                    var pn = rp.indexOf(";");
+                    if (pn != -1) {
+                        rp = rp.substr(0, pn);
+                    }
+                    Object.keys(allOps).forEach(function (x) {
+                        if (x.indexOf(rp) == 0) {
+                            var operation = allOps[x];
+                            var label = rop(operation, result, rp);
+                        }
+                    });
+                }
+            }
+            else if (link.indexOf(";;T;") == 0) {
+                var rp = link.substring(";;T;".length);
+                var lt = rp.indexOf(";");
+                if (lt != -1) {
+                    rp = rp.substr(0, lt);
+                }
+                var type = x.elements().filter(function (x) { return x.name() == rp; });
+                if (type.length == 1) {
+                    var label = hl.label(type[0]);
+                    if (dups[label]) {
+                        continue;
+                    }
+                    dups[label] = 1;
+                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                }
+            }
+            else {
+                result.push("<div style='padding-left: 20px;'>" + "<a>Root</a></div>");
+            }
+        }
+        sp = document.createElement("div");
+        sp.innerHTML = result.join("");
+        var children = sp.getElementsByTagName("div");
+        for (var i = 0; i < children.length; i++) {
+            var di = children.item(i);
+            var linkE = di.getElementsByTagName("a");
+            linkE.item(0).onclick = function (x) {
+                var rs = x.target.parentElement.getAttribute("key");
+                rtv.setBackUrl(ramlTreeView_1.ramlView.path);
+                var sel = ramlTreeView_1.ramlView.getSelection()[0];
+                rtv.states.push(sel.id());
+                rtv.showApi(url, function () {
+                    Workbench.open(rs);
+                });
+            };
+        }
+        el.appendChild(sp);
+    }, false);
+    eel.onclick = function () {
+        el.removeChild(sp);
+        iel.src = "expand.gif";
+        eel.onclick = function () {
+            w.expandUsage(index);
+        };
+    };
+};
+function renderPropertyTable(name, ps, result, at, isMeta) {
+    result.push("<div style='padding-top: 10px'>");
+    var pm = expandProps([at], ps);
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    result.push("</div>");
+}
+exports.renderPropertyTable = renderPropertyTable;
+function renderParameters(name, ps, result, isMeta) {
+    ps = ps.filter(function (x) { return !hl.isSyntetic(x); });
+    if (ps.length == 0) {
+        return;
+    }
+    result.push("<div style='padding-top: 10px'>");
+    var pr = [];
+    ps.forEach(function (x) {
+        pr.push({
+            nameId: function () {
+                if (x.name().charAt(x.name().length - 1) == "?") {
+                    var r = x.attr("required");
+                    if (!r) {
+                        return x.name().substr(0, x.name().length - 1);
+                    }
+                }
+                return x.name();
+            },
+            isKey: function () {
+                return false;
+            },
+            local: true,
+            range: function () {
+                return x.localType();
+            },
+            isRequired: function () {
+                var r = x.attr("required");
+                if (r && r.value() === "false") {
+                    return false;
+                }
+                if (r && r.value() == "true") {
+                    return true;
+                }
+                if (hl.isRAML08(x)) {
+                    if (!x.property() || x.property().nameId() == "uriParameters") {
+                        return true;
+                    }
+                    return false;
+                }
+                return !(x.name().charAt(x.name().length - 1) == "?");
+            }
+        });
+    });
+    var pm = expandProps([], pr);
+    if (isMeta) {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Meta(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    else {
+        result.push(new or.TableRenderer(name, [new NameColumn(), new Type(), new Facets(), new Description()], {
+            hidden: function (c) {
+                return c.level() > 0;
+            }
+        }).render(pm));
+    }
+    result.push("</div>");
+}
+exports.renderParameters = renderParameters;
+
+},{"../core/hl":2,"../core/usagesRegistry":4,"../ramlTreeView":7,"./nodeRender":10,"./objectRender":11}]},{},[1]);

@@ -1,7 +1,6 @@
 import keywords=require("./keywords")
 import {trimDesc} from "./keywords";
 
-
 export interface IProperty{
     nameId():string
     isKey(): boolean
@@ -267,6 +266,7 @@ export interface IHighLevelNode{
     findById(id: string): IHighLevelNode;
     localType(): IType
     parent():IHighLevelNode
+    label?:string
 }
 
 declare var RAML:any;
@@ -741,9 +741,12 @@ export class TreeLike{
                 })
             }
         })
+
         if (this.values.length>12){
+
            this.values=collapseValues(this.values);
         }
+        optimizeLabels(this.values);
     }
 }
 declare class Map{
@@ -889,12 +892,42 @@ export function groupTypes(types:IHighLevelNode[]):TreeLike{
 }
 export function groupMethods(methods:IHighLevelNode[]):TreeLike{
     var root=new TreeLike("");
+
     methods.forEach(x=>{
         var structure=logicalStructure(x);
         root.addItem(structure,0,x);
     })
     root.optimizeStructure()
     return root;
+}
+
+export function optimizeLabels(methods:IHighLevelNode[]){
+    var mtl:{ [label:string]:IHighLevelNode[]}={};
+    methods.forEach(x=>{
+        if (x instanceof TreeLike){
+            return;
+        }
+        var lab=label(x);
+        var rs=mtl[lab];
+        if (!rs){
+            rs=[];
+            mtl[lab]=rs;
+        }
+        rs.push(x);
+    });
+    Object.keys(mtl).forEach(k=>{
+        var s=mtl[k];
+        if (s.length>1){
+            s.forEach(v=>addUrlToLabel(v))
+        }
+    });
+}
+
+function addUrlToLabel(h:IHighLevelNode){
+    var url=resourceUrl(h.parent());
+    if (h.label.indexOf(url)==-1) {
+        h.label = h.label + " " + url;
+    }
 }
 
 export function prepareNodes(nodes:IHighLevelNode[]):IHighLevelNode[]{

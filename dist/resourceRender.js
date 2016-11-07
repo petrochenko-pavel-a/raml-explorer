@@ -1,7 +1,7 @@
 "use strict";
-var hl = require("./hl");
+var hl = require("./core/hl");
 var tr = require("./typeRender");
-var nr = require("./nodeRender");
+var nr = require("./rendering/nodeRender");
 var ResourceRenderer = (function () {
     function ResourceRenderer(meta, isAnnotationType) {
         if (isAnnotationType === void 0) { isAnnotationType = false; }

@@ -4,14 +4,14 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var workbench = require("./workbench");
-var controls_1 = require("./controls");
-var hl = require("./hl");
-var tr = require("./typeRender");
-var rr = require("./resourceRender");
-var nr = require("./nodeRender");
-var rrend = require("./registryRender");
-var usages = require("./usagesRegistry");
+var workbench = require("./framework/workbench");
+var controls_1 = require("./framework/controls");
+var hl = require("./core/hl");
+var tr = require("./rendering/typeRender");
+var rr = require("./rendering/resourceRender");
+var nr = require("./rendering/nodeRender");
+var rrend = require("./registryView");
+var usages = require("./core/usagesRegistry");
 exports.states = [];
 function back() {
     if (exports.states.length > 0) {
@@ -175,15 +175,15 @@ var RAMLTreeView = (function (_super) {
                     if (t.id.indexOf("!!") == 0) {
                         var ss = t.id.substr(2);
                         if (ss == "object") {
-                            return "<img src='object.gif'/> " + ss;
+                            return "<img src='./images/object.gif'/> " + ss;
                         }
                         if (ss == "array") {
-                            return "<img src='arraytype_obj.gif'/> " + ss;
+                            return "<img src='./images/arraytype_obj.gif'/> " + ss;
                         }
                         if (ss == "scalar") {
-                            return "<img src='string.gif'/> " + ss;
+                            return "<img src='./images/string.gif'/> " + ss;
                         }
-                        return "<img src='object.gif'/> " + ss;
+                        return "<img src='./images/object.gif'/> " + ss;
                     }
                     return t.id;
                 }
@@ -197,10 +197,10 @@ var RAMLTreeView = (function (_super) {
                     result = methodKey(x.name()) + result;
                 }
                 if (isType) {
-                    result = "<img src='typedef_obj.gif'/> " + result;
+                    result = "<img src='./images/typedef_obj.gif'/> " + result;
                 }
                 if (isAType) {
-                    result = "<img src='annotation_obj.gif'/>" + result;
+                    result = "<img src='./images/annotation_obj.gif'/>" + result;
                 }
                 return result;
             },

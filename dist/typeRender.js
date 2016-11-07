@@ -1,8 +1,8 @@
 "use strict";
-var hl = require("./hl");
-var or = require("./objectRender");
-var nr = require("./nodeRender");
-var usages = require("./usagesRegistry");
+var hl = require("./core/hl");
+var or = require("./rendering/objectRender");
+var nr = require("./rendering/nodeRender");
+var usages = require("./core/usagesRegistry");
 var ramlTreeView_1 = require("./ramlTreeView");
 var rtv = require("./ramlTreeView");
 function renderTypeList(t) {
@@ -356,7 +356,7 @@ var TypeRenderer = (function () {
                 result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>");
             }
             if (content) {
-                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + content + "</code></pre>");
+                result.push("<pre><code class=\"" + (content.charAt(0) == "<" ? '' : 'json') + "\">" + or.encode(content) + "</code></pre>");
             }
             return result.join("");
         }

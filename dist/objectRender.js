@@ -1,4 +1,8 @@
 "use strict";
+function encode(r) {
+    return r.replace(/[\x26\x0A\<>'"]/g, function (r) { return "&#" + r.charCodeAt(0) + ";"; });
+}
+exports.encode = encode;
 var RenderMode;
 (function (RenderMode) {
     RenderMode[RenderMode["FULL_VIEW"] = 0] = "FULL_VIEW";
@@ -104,6 +108,7 @@ w.toggleRow = function (id) {
     }
 };
 function highlight(v) {
+    v = encode(v);
     if (v.indexOf("http://") == 0 || v.indexOf("https://") == 0) {
         return "<a href=\"" + v + "\">" + v + "</a>";
     }

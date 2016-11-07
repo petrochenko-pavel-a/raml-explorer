@@ -1,14 +1,15 @@
-import workbench=require("./workbench")
-import controls=require("./controls")
-import {Accordition, Label, Loading} from "./controls";
-import hl=require("./hl")
-import {IHighLevelNode} from "./hl";
-import  tr=require("./typeRender")
-import  rr=require("./resourceRender")
-import nr=require("./nodeRender")
-import rrend=require("./registryRender")
-import usages=require("./usagesRegistry")
+import workbench=require("./framework/workbench")
+import controls=require("./framework/controls")
+import {Accordition, Label, Loading} from "./framework/controls";
+import hl=require("./core/hl")
+import {IHighLevelNode} from "./core/hl";
+import  tr=require("./rendering/typeRender")
+import  rr=require("./rendering/resourceRender")
+import nr=require("./rendering/nodeRender")
+import rrend=require("./registryView")
+import usages=require("./core/usagesRegistry")
 export var states: string[] = [];
+
 
 export function back(){
     if (states.length > 0) {
@@ -26,7 +27,9 @@ export function back(){
         init();
     }
 }
+
 var bu:string="";
+
 export function setBackUrl(u:string){
     bu=u;
 }
@@ -116,6 +119,7 @@ export class RAMLDetailsView extends workbench.ViewPart{
     }
 }
 
+
 export class RAMLTreeProvider implements workbench.ITreeContentProvider{
 
     children(x:hl.IHighLevelNode){
@@ -192,15 +196,15 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
                     if (t.id.indexOf("!!")==0){
                         var ss=t.id.substr(2);
                         if (ss=="object"){
-                            return "<img src='object.gif'/> "+ss;
+                            return "<img src='./images/object.gif'/> "+ss;
                         }
                         if (ss=="array"){
-                            return "<img src='arraytype_obj.gif'/> "+ss;
+                            return "<img src='./images/arraytype_obj.gif'/> "+ss;
                         }
                         if (ss=="scalar"){
-                            return "<img src='string.gif'/> "+ss;
+                            return "<img src='./images/string.gif'/> "+ss;
                         }
-                        return "<img src='object.gif'/> "+ss;
+                        return "<img src='./images/object.gif'/> "+ss;
                     }
                     return t.id;
                 }
@@ -215,10 +219,10 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
                     result=methodKey(x.name())+result;
                 }
                 if (isType){
-                    result="<img src='typedef_obj.gif'/> "+result;
+                    result="<img src='./images/typedef_obj.gif'/> "+result;
                 }
                 if (isAType){
-                    result="<img src='annotation_obj.gif'/>"+result;
+                    result="<img src='./images/annotation_obj.gif'/>"+result;
                 }
                 return result;
             },
@@ -370,8 +374,6 @@ export class RAMLTreeView extends workbench.AccorditionTreeView{
         )
         return super.init(holder);
     }
-
-
 }
 
 function showTitle(api:hl.IHighLevelNode){

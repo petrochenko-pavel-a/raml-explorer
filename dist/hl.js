@@ -1,6 +1,6 @@
 "use strict";
-var keywords = require("./keywords");
-var keywords_1 = require("./keywords");
+var keywords = require("./core/keywords");
+var keywords_1 = require("./core/keywords");
 var root;
 var libs;
 function findById(id) {
@@ -666,6 +666,7 @@ var TreeLike = (function () {
         if (this.values.length > 12) {
             this.values = collapseValues(this.values);
         }
+        optimizeLabels(this.values);
     };
     return TreeLike;
 }());
@@ -812,6 +813,34 @@ function groupMethods(methods) {
     return root;
 }
 exports.groupMethods = groupMethods;
+function optimizeLabels(methods) {
+    var mtl = {};
+    methods.forEach(function (x) {
+        if (x instanceof TreeLike) {
+            return;
+        }
+        var lab = label(x);
+        var rs = mtl[lab];
+        if (!rs) {
+            rs = [];
+            mtl[lab] = rs;
+        }
+        rs.push(x);
+    });
+    Object.keys(mtl).forEach(function (k) {
+        var s = mtl[k];
+        if (s.length > 1) {
+            s.forEach(function (v) { return addUrlToLabel(v); });
+        }
+    });
+}
+exports.optimizeLabels = optimizeLabels;
+function addUrlToLabel(h) {
+    var url = resourceUrl(h.parent());
+    if (h.label.indexOf(url) == -1) {
+        h.label = h.label + " " + url;
+    }
+}
 function prepareNodes(nodes) {
     var nodesToRender = [];
     nodes.forEach(function (v) {

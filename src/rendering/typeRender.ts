@@ -1,13 +1,11 @@
-
-
-import hl=require("./hl")
-import {IHighLevelNode, IType, IProperty} from "./hl";
+import hl=require("../core/hl")
+import {IHighLevelNode, IType, IProperty} from "../core/hl";
 import or=require("./objectRender")
 import nr=require("./nodeRender")
-import usages=require("./usagesRegistry")
-import workbench=require("./workbench")
-import {ramlView} from "./ramlTreeView";
-import rtv=require("./ramlTreeView");
+import usages=require("../core/usagesRegistry")
+import workbench=require("../framework/workbench")
+import {ramlView} from "../ramlTreeView";
+import rtv=require("../ramlTreeView");
 export function renderTypeList(t:hl.IType[]){
     var result:string[]=[];
     t.forEach(x=>{
@@ -31,7 +29,6 @@ function escapeBuiltIn(n:string):string{
     if (n==="IntegerType"){
         n="integer"
     }
-
     return n;
 }
 function renderTypeLink(x:hl.IType):string{
@@ -90,28 +87,28 @@ class NameColumn implements or.IColumn<hl.IProperty>{
             }
         }
         if (p.range().isObject()){
-            rs="<img src='object.gif'/> "+rs;
+            rs="<img src='./images/object.gif'/> "+rs;
         }
         if (p.range().isArray()){
-            rs="<img src='arraytype_obj.gif'/> "+rs;
+            rs="<img src='./images/arraytype_obj.gif'/> "+rs;
         }
         else if (s.nameId()=="StringType"){
-            rs="<img src='string.gif'/> "+rs;
+            rs="<img src='./images/string.gif'/> "+rs;
         }
         else if (s.nameId()=="BooleanType"){
-            rs="<img src='boolean.gif'/> "+rs;
+            rs="<img src='./images/boolean.gif'/> "+rs;
         }
         else if (s.nameId()=="NumberType"){
-            rs="<img src='number.png'/> "+rs;
+            rs="<img src='./images/number.png'/> "+rs;
         }
         else if (s.nameId()=="IntegerType"){
-            rs="<img src='number.png'/> "+rs;
+            rs="<img src='./images/number.png'/> "+rs;
         }
         else if (s.nameId().indexOf("Date")!=-1){
-            rs="<img src='date.gif'/> "+rs;
+            rs="<img src='./images/date.gif'/> "+rs;
         }
         else if (s.nameId().indexOf("File")!=-1){
-            rs="<img src='file.gif'/> "+rs;
+            rs="<img src='./images/file.gif'/> "+rs;
         }
         if (rs.length==0){
             rs="additionalProperties";
@@ -372,8 +369,7 @@ export class TypeRenderer{
                 result.push("<h5>Schema: " + renderTypeList(at.superTypes()) + "</h5>")
             }
             if (content){
-
-                result.push(`<pre><code class="${content.charAt(0)=="<"?'':'json'}">${content}</code></pre>`);
+                result.push(`<pre><code class="${content.charAt(0)=="<"?'':'json'}">${or.encode(content)}</code></pre>`);
             }
             return result.join("");
         }
@@ -661,4 +657,3 @@ export function renderParameters(name:string,ps:IHighLevelNode[],result:string[]
     }
     result.push("</div>")
 }
-

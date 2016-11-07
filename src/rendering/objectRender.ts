@@ -2,11 +2,13 @@
  * Created by kor on 28/09/16.
  */
 
-import {IHighLevelNode} from "./hl";
+import {IHighLevelNode} from "../core/hl";
 /**
  * library to render objects with aribtrary projects to html
  */
-
+export function encode(r){
+    return r.replace(/[\x26\x0A\<>'"]/g,function(r){return"&#"+r.charCodeAt(0)+";"})
+}
 export interface IWorkbench{
     url(v: any):string;
     open(url:string):any
@@ -143,6 +145,7 @@ w.toggleRow=function (id) {
 }
 
 export function highlight(v:string):string{
+    v=encode(v);
     if (v.indexOf("http://")==0||v.indexOf("https://")==0){
         return `<a href="${v}">${v}</a>`
     }
@@ -157,10 +160,6 @@ export function highlight(v:string):string{
     }
     return "<span style='color: darkred'>"+v+"</span>"
 }
-
-
-
-
 declare var marked:any
 
 export function renderKeyValue(k:string,vl:any,small:boolean=false):string{

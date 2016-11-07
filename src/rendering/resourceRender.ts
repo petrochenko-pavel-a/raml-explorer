@@ -1,5 +1,5 @@
-import hl=require("./hl")
-import {IHighLevelNode} from "./hl";
+import hl=require("../core/hl")
+import {IHighLevelNode} from "../core/hl";
 import or=require("./objectRender")
 import tr=require("./typeRender")
 
@@ -77,7 +77,6 @@ export class MethodRenderer{
     constructor(private meta: boolean,private topLevel:boolean,private isSingle:boolean,private isAnnotationType:boolean=false,private renderAttrs:boolean){
 
     }
-
 
     render(h:IHighLevelNode):string{
         var result:string[]=[];

@@ -1,19 +1,14 @@
-import workbench=require("./workbench")
-import controls=require("./controls")
-import {Accordition, Label, Loading} from "./controls";
-import hl=require("./hl")
-import rr=require("./registryRender")
+import workbench=require("./framework/workbench")
+import controls=require("./framework/controls")
+import {Accordition, Label, Loading} from "./framework/controls";
+import hl=require("./core/hl")
+import rr=require("./registryView")
 import rv=require("./ramlTreeView")
-
-
-
 if (history && history.pushState) {
     window.onpopstate = function (event) {
         rv.back();
-        //alert("location: " + document.location + ", state: " + JSON.stringify(event.state));
     };
 }
-
 workbench.registerHandler((x: string)=> {
     if (history.pushState) {
         var node = rv.ramlView.getSelection();

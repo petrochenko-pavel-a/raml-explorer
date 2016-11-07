@@ -1,11 +1,11 @@
 "use strict";
-var workbench = require("./workbench");
+var workbench = require("./framework/workbench");
 var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
-var reg = require("./registryApp");
+var y = require("./registryApp");
 var url = "";
 var h = document.location.hash;
-reg.init();
+y.init();
 if (h && h.length > 1) {
     url = h.substr(1);
     rv.showApi(url);
