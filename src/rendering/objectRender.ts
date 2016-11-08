@@ -183,6 +183,7 @@ export function renderKeyValue(k:string,vl:any,small:boolean=false):string{
     }
     return `<h5>${k}: ${vl}</h5>`
 }
+
 export function renderObj(v:any):string{
     if (Array.isArray(v)){
         var r:any[]=v;

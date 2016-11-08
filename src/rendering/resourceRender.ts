@@ -86,9 +86,6 @@ export class MethodRenderer{
                 result.push("<h3>" + dn.value() + "</h3>");
             }
             result.push("<h5>Resource: " + hl.resourceUrl(h.parent()) + " Method: " + h.name() + "</h5>");
-
-
-
         }
         else if (this.isSingle) {
             result.push(`<h3>Method: ${h.name()}</h3>`)

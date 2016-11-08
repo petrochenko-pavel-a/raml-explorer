@@ -2,10 +2,10 @@ import hl=require("../core/hl")
 import {IHighLevelNode, IType, IProperty} from "../core/hl";
 import or=require("./objectRender")
 import nr=require("./nodeRender")
-import usages=require("../core/usagesRegistry")
+import usages=require("../core/registryCore")
 import workbench=require("../framework/workbench")
-import {ramlView} from "../ramlTreeView";
-import rtv=require("../ramlTreeView");
+import rtv=require("../app")
+import images=require("./styles")
 export function renderTypeList(t:hl.IType[]){
     var result:string[]=[];
     t.forEach(x=>{
@@ -87,28 +87,28 @@ class NameColumn implements or.IColumn<hl.IProperty>{
             }
         }
         if (p.range().isObject()){
-            rs="<img src='./images/object.gif'/> "+rs;
+            rs=images.OBJECT_IMAGE+rs;
         }
         if (p.range().isArray()){
-            rs="<img src='./images/arraytype_obj.gif'/> "+rs;
+            rs=images.ARRAY_IMAGE+rs;
         }
         else if (s.nameId()=="StringType"){
-            rs="<img src='./images/string.gif'/> "+rs;
+            rs=images.STRING_IMAGE+rs;
         }
         else if (s.nameId()=="BooleanType"){
-            rs="<img src='./images/boolean.gif'/> "+rs;
+            rs=images.BOOLEAN_TYPE+rs;
         }
         else if (s.nameId()=="NumberType"){
-            rs="<img src='./images/number.png'/> "+rs;
+            rs=images.NUMBER_TYPE+rs;
         }
         else if (s.nameId()=="IntegerType"){
-            rs="<img src='./images/number.png'/> "+rs;
+            rs=images.NUMBER_TYPE+rs;
         }
         else if (s.nameId().indexOf("Date")!=-1){
-            rs="<img src='./images/date.gif'/> "+rs;
+            rs=images.DATE_TYPE+rs;
         }
         else if (s.nameId().indexOf("File")!=-1){
-            rs="<img src='./images/file.gif'/> "+rs;
+            rs=images.FILE_TYPE+rs;
         }
         if (rs.length==0){
             rs="additionalProperties";
@@ -119,10 +119,6 @@ class NameColumn implements or.IColumn<hl.IProperty>{
                 rs=`<span style="padding-left: ${wp.level()*20}px"></span><span id="${"tricon"+rowId}" class="glyphicon glyphicon-plus-sign" ></span> `+rs
             }
             else{
-                var st="glyphicon-record"
-                if (wp.recursive){
-                    st="glyphicon-repeat"
-                }
                 rs=`<span style="padding-left: ${wp.level()*20+15}px"></span> `+rs
             }
         }
@@ -324,10 +320,10 @@ var renderClicableLink = function (root: IHighLevelNode, result: string[], label
         result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>")
     }
     else if (root.property() && root.property().nameId() == "types") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'>"+images.GENERIC_TYPE + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
     }
     else if (root.property() && root.property().nameId() == "annotationTypes") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'>"+images.ANNOTATION_TYPE + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
     }
 };
 export class TypeRenderer{
@@ -440,7 +436,7 @@ export class TypeRenderer{
         if (this.usages){
             result.push("<h4>External Usages:</h4>");
             Object.keys(this.usages).forEach(x=>{
-                result.push("<div id='usage"+(usageIndex++)+"' style='margin-right: 15px'><a id='ExpandLink"+(usageIndex-1)+"' style='cursor: hand' onclick='expandUsage("+(usageIndex-1)+")'><img src='expand.gif' id='Expand"+(usageIndex-1)+"'/>"+usages.getTitle(x)+"</a>")
+                result.push("<div id='usage"+(usageIndex++)+"' style='margin-right: 15px'><a id='ExpandLink"+(usageIndex-1)+"' style='cursor: hand' onclick='expandUsage("+(usageIndex-1)+")'>"+images.EXPAND_IMG(""+(usageIndex-1))+usages.getTitle(x)+"</a>")
                 var v=this.usages[x];
                 result.push("<span style='display: none' url='"+x+"'>")
                 if (v) {
@@ -464,7 +460,7 @@ w.expandUsage=function (index) {
     var el=document.getElementById("usage"+index);
     var iel=<HTMLImageElement>document.getElementById("Expand"+index);
     var eel=<HTMLImageElement>document.getElementById("ExpandLink"+index);
-    iel.src="collapse.gif";
+    iel.src=images.COLLAPSE_LINK;
     var span=el.getElementsByTagName("span");
     var url=span.item(0).getAttribute("url");
     var sp=document.createElement("div");
@@ -534,7 +530,7 @@ w.expandUsage=function (index) {
                             continue;
                         }
                         dups[label]=1;
-                        result.push("<div style='padding-left: 20px;' key='"+type[0].id()+"'><img src='typedef_obj.gif'/><a>" +  label+"</a></div>")
+                        result.push("<div style='padding-left: 20px;' key='"+type[0].id()+"'>"+images.GENERIC_TYPE+"<a>" +  label+"</a></div>")
                     }
 
             }
@@ -552,10 +548,9 @@ w.expandUsage=function (index) {
 
             linkE.item(0).onclick=function(x){
                 var rs=(<any>x).target.parentElement.getAttribute("key");
-                rtv.setBackUrl(ramlView.path)
-                var sel=ramlView.getSelection()[0];
+                rtv.setBackUrl(rtv.ramlView.path)
+                var sel=rtv.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
-
                 rtv.showApi(url,()=>{
 
                     Workbench.open(rs);
@@ -566,7 +561,7 @@ w.expandUsage=function (index) {
     },false);
     eel.onclick=function () {
         el.removeChild(sp);
-        iel.src="expand.gif";
+        iel.src="./images/expand.gif";
         eel.onclick=function (){
             w.expandUsage(index);
         }

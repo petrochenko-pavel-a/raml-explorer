@@ -1,6 +1,6 @@
 import  or=require("./objectRender")
 import hl=require("../core/hl")
-import reg=require("../registryView")
+import reg=require("../core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
 
 export function renderNodes(nodes:IHighLevelNode[]):string{
@@ -163,8 +163,6 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
                         }
                     }
                 }
-
-
             }
             if (typeof vl==="object"){
                 if (!Array.isArray(vl)) {

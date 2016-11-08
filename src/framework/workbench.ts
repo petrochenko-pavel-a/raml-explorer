@@ -268,13 +268,65 @@ class Pane implements IPartHolder{
         handleResize();
     }
 }
+export class ContributionManager{
+
+    menu:IMenu={ items:[]}
+
+    constructor(private onChange:(m:IMenu)=>void){
+
+    }
+
+    add(item:IContributionItem){
+        this.menu.items.push(item);
+        this.onChange(this.menu);
+    }
+    remove(item:IContributionItem){
+        this.menu.items=this.menu.items.filter(x=>x!=item);
+        this.onChange(this.menu);
+    }
+
+
+}
+var nh={
+    setViewMenu(m:IMenu){},
+    setToolbar(m:IMenu){},
+    setContextMenu(m:IMenu){}
+};
 export abstract class ViewPart implements IWorkbenchPart , ISelectionProvider{
 
 
+    addSelectionConsumer(t:{setInput(c:any)}){
+    this.addSelectionListener({
+        selectionChanged(v: any[]){
+            if (v.length > 0) {
+                t.setInput(v[0]);
+            }
+            else {
+                t.setInput(null);
+            }
+        }
+    })
+}
+
     protected contentElement:Element
-    protected holder:IPartHolder
+    protected holder:IPartHolder=nh;
     protected selection:any[]=[]
     protected selectionListeners:ISelectionListener[]=[]
+
+    protected contextMenu:ContributionManager=new ContributionManager(m=>this.holder.setContextMenu(m));
+    protected toolbar:ContributionManager=new ContributionManager(m=>this.holder.setToolbar(m));
+    protected viewMenu:ContributionManager=new ContributionManager(m=>this.holder.setViewMenu(m));
+
+
+    public getContextMenu(){
+        return this.contextMenu;
+    }
+    public getToolbar(){
+        return this.toolbar;
+    }
+    public getViewMenu(){
+        return this.viewMenu;
+    }
 
     getHolder(){
         return this.holder;
@@ -307,6 +359,9 @@ export abstract class ViewPart implements IWorkbenchPart , ISelectionProvider{
 
     init(holder:IPartHolder){
         this.holder=holder;
+        this.holder.setViewMenu(this.viewMenu.menu);
+        this.holder.setToolbar(this.toolbar.menu);
+        this.holder.setContextMenu(this.contextMenu.menu);
     }
     render(e:Element){
         this.contentElement=e;
@@ -324,6 +379,9 @@ export abstract class ViewPart implements IWorkbenchPart , ISelectionProvider{
     }
 }
 declare var $:any;
+
+
+
 
 export interface ILabelProvider{
     label(e:any):string
