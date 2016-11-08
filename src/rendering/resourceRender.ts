@@ -134,7 +134,6 @@ export class ResponseRenderer{
             result.push(nr.renderNode(x,false));
         });
         tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result,this.meta)
-
         result.push(renderTabFolder(null,rs,new tr.TypeRenderer(this.meta,rs.length==1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1)))
         return result.join("");
     }

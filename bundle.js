@@ -3,15 +3,16 @@
 var workbench = require("./framework/workbench");
 var rv = require("./ramlTreeView");
 var page = new workbench.Page("rest");
+var y = require("./registryApp");
 var url = "";
 var h = document.location.hash;
-reg.init();
+y.init();
 if (h && h.length > 1) {
     url = h.substr(1);
     rv.showApi(url);
 }
 
-},{"./framework/workbench":6,"./ramlTreeView":7}],2:[function(require,module,exports){
+},{"./framework/workbench":6,"./ramlTreeView":7,"./registryApp":8}],2:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -2753,6 +2754,10 @@ function renderNodes(nodes) {
     return result.join("");
 }
 exports.renderNodes = renderNodes;
+function renderVersionsSwitch(h) {
+    return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("") + "\n                  </ul>\n    </div></h5>";
+}
+;
 var HeaderRenderer = (function () {
     function HeaderRenderer(versions) {
         this.versions = versions;
@@ -2792,10 +2797,8 @@ var HeaderRenderer = (function () {
             result.push("<h4 style='display: inline'> " + this.title + "</h4>");
         }
         if (this.version != null) {
-            var mens = "";
             if (this.versions && this.versions.versions.length > 1) {
-                mens = this.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("");
-                result.push("<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + this.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + mens + "\n                  </ul>\n                </div></h5>");
+                result.push(renderVersionsSwitch(this));
             }
             else {
                 result.push(or.renderKeyValue("Version", this.version, false));
@@ -3601,10 +3604,10 @@ var renderClicableLink = function (root, result, label) {
         result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
     }
     else if (root.property() && root.property().nameId() == "types") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
     }
     else if (root.property() && root.property().nameId() == "annotationTypes") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
     }
 };
 var TypeRenderer = (function () {

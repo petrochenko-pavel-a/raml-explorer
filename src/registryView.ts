@@ -9,7 +9,6 @@ import nr=require("./rendering/nodeRender")
 import ra=require("./registryApp")
 import usages=require("./core/usagesRegistry")
 
-
 function loadData(url:string, c:(t:any,e?:number)=>void){
     var xhr = new XMLHttpRequest();
 

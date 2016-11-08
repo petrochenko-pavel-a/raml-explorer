@@ -324,10 +324,10 @@ var renderClicableLink = function (root: IHighLevelNode, result: string[], label
         result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>")
     }
     else if (root.property() && root.property().nameId() == "types") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
     }
     else if (root.property() && root.property().nameId() == "annotationTypes") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>")
     }
 };
 export class TypeRenderer{

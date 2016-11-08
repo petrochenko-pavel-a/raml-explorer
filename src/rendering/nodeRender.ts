@@ -2,6 +2,7 @@ import  or=require("./objectRender")
 import hl=require("../core/hl")
 import reg=require("../registryView")
 import IHighLevelNode=hl.IHighLevelNode;
+
 export function renderNodes(nodes:IHighLevelNode[]):string{
     var result:string[]=[];
     var obj:any={};
@@ -10,6 +11,17 @@ export function renderNodes(nodes:IHighLevelNode[]):string{
     return result.join("");
 }
 
+function renderVersionsSwitch(h:HeaderRenderer) {
+    return `<h5>Version: <div class="btn-group">
+                  <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    ${h.version} <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    ${h.versions.versions.map(x=>`<li><a onclick="openVersion('${x.version}')">${x.version}</a></li>`).join("")}
+                  </ul>
+    </div></h5>`;
+};
+
 export class HeaderRenderer{
 
     title: string
@@ -17,7 +29,7 @@ export class HeaderRenderer{
     version: string
     baseUrl: string
 
-    constructor(private versions?:reg.ApiWithVersions){
+    constructor(public versions?:reg.ApiWithVersions){
     }
 
     consume(nodes:hl.IHighLevelNode[]):hl.IHighLevelNode[]{
@@ -56,17 +68,8 @@ export class HeaderRenderer{
             result.push("<h4 style='display: inline'> "+this.title+"</h4>")
         }
         if (this.version!=null){
-            var mens=""
             if (this.versions&&this.versions.versions.length>1){
-                mens=this.versions.versions.map(x=>`<li><a onclick="openVersion('${x.version}')">${x.version}</a></li>`).join("")
-                result.push(`<h5>Version: <div class="btn-group">
-                  <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    ${this.version} <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu">
-                    ${mens}
-                  </ul>
-                </div></h5>`)
+                result.push(renderVersionsSwitch(this))
             }
             else {
                 result.push(or.renderKeyValue("Version", this.version, false))
