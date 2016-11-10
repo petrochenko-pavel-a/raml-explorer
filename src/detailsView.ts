@@ -1,6 +1,6 @@
 import workbench=require("./framework/workbench")
 import hl=require("./core/hl")
-import { Label} from "./framework/controls";
+import {Label, Accordition} from "./framework/controls";
 import  tr=require("./rendering/typeRender")
 import  rr=require("./rendering/resourceRender")
 import  rc=require("./core/registryCore")

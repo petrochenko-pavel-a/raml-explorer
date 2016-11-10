@@ -16,7 +16,11 @@ var globalId=0;
 function nextId(){
     return "split"+(globalId++);
 }
-
+export import IMenu=controls.IMenu;
+export import IContributionItem=controls.IContributionItem;
+export import ToolbarRenderer=controls.ToolbarRenderer;
+export import Context=controls.Context;
+export import DrowpdownMenu=controls.DrowpdownMenu;
 declare function Split(a,b):void;
 
 export class LayoutPart implements ILayoutPart{
@@ -62,96 +66,10 @@ export class LayoutPart implements ILayoutPart{
     }
 }
 
-export interface IContributionItem{
-    title?: string
-    image?: string
-    disabled?: boolean
-    checked?:boolean
-    run?():void
-    items?:IContributionItem[]
-}
 
-export interface IMenu extends IContributionItem{
-    items:IContributionItem[]
-}
 
-export class DrowpdownMenu{
 
-    constructor(private menu:IMenu){}
 
-    render(host:Element){
-        this.menu.items.forEach(x=>{
-            var li=document.createElement("li");
-            li.setAttribute("role","presentation");
-            if (x.disabled){
-                li.classList.add("disabled");
-            }
-            var a=document.createElement("a");
-
-            a.setAttribute("role","menuitem")
-            if ((x).run){
-                a.onclick=(x).run;
-            }
-            if (x.checked){
-                a.innerHTML=x.title+"<span class='glyphicon glyphicon-ok' style='float: right'></span>"
-            }
-            else{
-                a.innerHTML=x.title;
-            }
-            li.appendChild(a);
-            host.appendChild(li);
-        })
-    }
-}
-export class Context{
-
-    constructor(private menu:IMenu){}
-
-    render(host:Element){
-        this.menu.items.forEach(x=>{
-            var li=document.createElement("li");
-            //li.setAttribute("role","presentation");
-            if (x.disabled){
-                li.classList.add("disabled");
-            }
-            var a=document.createElement("a");
-            //a.setAttribute("role","menuitem")
-            if ((x).run){
-                a.onclick=(x).run;
-            }
-            a.innerHTML=x.title;
-            li.appendChild(a);
-            host.appendChild(li);
-
-        })
-    }
-}
-export class ToolbarRenderer{
-
-    constructor(private menu:IMenu){}
-
-    render(host:Element){
-        this.menu.items.forEach(x=>{
-            var button=document.createElement("button");
-            button.classList.add("btn")
-            button.classList.add("btn-xs")
-            if (x.checked){
-                button.classList.add("btn-success");
-            }
-            else {
-                button.classList.add("btn-primary")
-            }
-            button.textContent=x.title
-            if (x.image){
-                    button.innerHTML=`<span class="${x.image}">${x.title}</span>`
-            }
-            if (x.run){
-                button.onclick=x.run
-            }
-            host.appendChild(button);
-        })
-    }
-}
 export interface IPartHolder{
     setViewMenu(m:IMenu);
     setToolbar(m:IMenu);
@@ -841,7 +759,7 @@ export abstract class AccorditionTreeView extends ViewPart{
         else{
             var title=null;
             if (this.control){
-                title=this.control.getSelectedTitle();
+                title=this.control.getSelectedTitleId();
 
             }
             var a = new controls.Accordition();
@@ -851,7 +769,7 @@ export abstract class AccorditionTreeView extends ViewPart{
             a.render(e);
             if (title){
                 for (var i=0;i<this.control.children.length;i++){
-                    if (this.control.children[i].title()==title){
+                    if (this.control.children[i].title()==title||this.control.children[i].controlId==title){
                         this.control.expandIndex(i);
                     }
                 }

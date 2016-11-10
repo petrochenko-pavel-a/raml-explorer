@@ -94,6 +94,13 @@ var usageProps={
     "headers":1,
     "body":1,
 }
+
+var rootProps={
+    "queryParameters":1,
+    "uriParameters":1,
+    "headers":1,
+    "body":1,
+}
 const rootable={
     "resources":1,
     "methods":1,
@@ -128,6 +135,49 @@ export function findUsages(h:IHighLevelNode,n:IType,results:IHighLevelNode[]){
         }
     }
 }
+
+
+export function allUsedTypes(h:IHighLevelNode):{ [name:string]:number}{
+    var res:{ [name:string]:number}={};
+    allUsages(h,res);
+    return res;
+}
+
+function allUsages(h:IHighLevelNode,nm:{ [name:string]:number}){
+    h.elements().forEach(x=>{
+        allUsages(x,nm);
+    })
+    if (h.property()) {
+        if (rootProps[h.property().nameId()]) {
+            var lt = h.localType();
+            usedTypes(lt,nm);
+        }
+    }
+}
+
+export function usedTypes(lt:IType,nm:{ [name:string]:number}):boolean{
+    var rs=false;
+    lt.superTypes().forEach(t=>{
+        nm[t.nameId()]=1;
+    });
+    if (rs){
+        return true;
+    }
+    if(lt.isArray()){
+        var ct=lt.componentType();
+        nm[ct.nameId()]=1;
+        ct.superTypes().forEach(t=>{
+            nm[t.nameId()]=1;
+
+        });
+        return false;
+    }
+    if(lt.isUnion()){
+        return usedTypes(lt.union().leftType(),nm)||usedTypes(lt.union().rightType(),nm);
+    }
+    return false;
+}
+
 export function trackType(lt:IType,n:IType):boolean{
     var rs=false;
     lt.superTypes().forEach(t=>{

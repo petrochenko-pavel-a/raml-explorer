@@ -1,7 +1,8 @@
 import workbench=require("./framework/workbench")
 import hl=require("./core/hl")
 import nr=require("./rendering/nodeRender")
-import {Accordition, Label} from "./framework/controls";
+
+import {IControl,Accordition, Label} from "./framework/controls";
 import rrend=require("./core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
 import methodKey=hl.methodKey;
@@ -87,6 +88,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         rrend.setUrl(url);
     }
     searchable=true;
+    operations=true;
 
     protected customize(tree: workbench.TreeView) {
         tree.setContentProvider(new RAMLTreeProvider());
@@ -163,6 +165,8 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         }
     }
 
+    showInternal:boolean=true;
+
     protected renderArraySection(id:string,label:string,groups:any,libs:IHighLevelNode[]){
         var toRender=[];
         libs.forEach(x=>{
@@ -174,9 +178,54 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         if (groups[id]){
             toRender=toRender.concat(groups[id]);
         }
+        var v=this;
         if (toRender.length>0){
             var at=toRender
             var types=this.createTree(label);
+            if (id=="types") {
+
+                    (<IControl>types).contextActions = [{
+
+                        title: "Show Internal Types",
+
+                        checked: v.showInternal,
+
+                        run(){
+                            v.showInternal=!v.showInternal;
+                            v.refresh();
+                        }
+
+                    }];
+
+
+
+            }
+            if (id=="methods") {
+                (<IControl>types).contextActions = [{
+
+                    title: "Show Resources",
+
+                    run(){
+                        v.operations=false;
+                        v.refresh();
+                    }
+
+                }];
+                (<IControl>types).controlId="ops";
+            }
+            if (id=="resources") {
+                (<IControl>types).contextActions = [{
+
+                    title: "Show Operations",
+
+                    run(){
+                        v.operations=true;
+                        v.refresh();
+                    }
+
+                }];
+                (<IControl>types).controlId="ops";
+            }
             types.setInput(at);
             this.control.add(types)
             this.trees.push(types)
@@ -211,7 +260,12 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             groups["methods"] = groupedMethods;
         }
         if (groups["types"]) {
-            var types = hl.groupTypes(<any>groups["types"]);
+            var tps=<any>groups["types"];
+            if (!this.showInternal){
+                var used=hl.allUsedTypes(this.api);
+                tps=tps.filter(x=>used[x.name()]);
+            }
+            var types = hl.groupTypes(tps);
             if (types) {
                 groups["types"]=types.allChildren();
             }
@@ -219,11 +273,14 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         if (this.devMode||this.api.definition().nameId()=="Library") {
             this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
         }
-        this.renderArraySection("methods","Operations",groups,libs);
-        this.renderArraySection("types","Data Types",groups,libs);
-        if (this.devMode) {
-            this.renderArraySection("resources", "API Paths", groups, libs);
+        if (this.operations) {
+            this.renderArraySection("methods", "Operations", groups, libs);
         }
+        else{
+            this.renderArraySection("resources", "Resources", groups, libs);
+        }
+        this.renderArraySection("types","Data Types",groups,libs);
+
         var lt=null;
     }
     protected  load(){

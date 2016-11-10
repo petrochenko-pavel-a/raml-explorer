@@ -2,8 +2,101 @@ export interface IControl{
     render(e:Element);
     dispose?();
     title():string;
+
+    controlId?:string
+    contextActions?:IContributionItem[]
 }
 
+export interface IContributionItem{
+    title?: string
+    image?: string
+    disabled?: boolean
+    checked?:boolean
+    run?():void
+    items?:IContributionItem[]
+}
+
+export interface IMenu extends IContributionItem{
+    items:IContributionItem[]
+}
+
+export class ToolbarRenderer{
+
+    constructor(private menu:IMenu){}
+
+    render(host:Element){
+        this.menu.items.forEach(x=>{
+            var button=document.createElement("button");
+            button.classList.add("btn")
+            button.classList.add("btn-xs")
+            if (x.checked){
+                button.classList.add("btn-success");
+            }
+            else {
+                button.classList.add("btn-primary")
+            }
+            button.textContent=x.title
+            if (x.image){
+                button.innerHTML=`<span class="${x.image}">${x.title}</span>`
+            }
+            if (x.run){
+                button.onclick=x.run
+            }
+            host.appendChild(button);
+        })
+    }
+}
+export class DrowpdownMenu{
+
+    constructor(private menu:IMenu){}
+
+    render(host:Element){
+        this.menu.items.forEach(x=>{
+            var li=document.createElement("li");
+            li.setAttribute("role","presentation");
+            if (x.disabled){
+                li.classList.add("disabled");
+            }
+            var a=document.createElement("a");
+
+            a.setAttribute("role","menuitem")
+            if ((x).run){
+                a.onclick=(x).run;
+            }
+            if (x.checked){
+                a.innerHTML=x.title+"<span class='glyphicon glyphicon-ok' style='float: right'></span>"
+            }
+            else{
+                a.innerHTML=x.title;
+            }
+            li.appendChild(a);
+            host.appendChild(li);
+        })
+    }
+}
+export class Context{
+
+    constructor(private menu:IMenu){}
+
+    render(host:Element){
+        this.menu.items.forEach(x=>{
+            var li=document.createElement("li");
+            //li.setAttribute("role","presentation");
+            if (x.disabled){
+                li.classList.add("disabled");
+            }
+            var a=document.createElement("a");
+            //a.setAttribute("role","menuitem")
+            if ((x).run){
+                a.onclick=(x).run;
+            }
+            a.innerHTML=x.title;
+            li.appendChild(a);
+            host.appendChild(li);
+
+        })
+    }
+}
 export abstract class Composite implements IControl{
 
     private _title: string;
@@ -91,6 +184,12 @@ export class Accordition extends Composite{
             return this.children[this.selectedIndex].title();
         }
     }
+    getSelectedTitleId(){
+        if (this.selectedIndex!=undefined){
+            var c=this.children[this.selectedIndex];
+            return c.controlId?c.controlId:c.title();
+        }
+    }
 
     public expandIndex(index: number){
         var bids=this.bids;
@@ -162,7 +261,8 @@ export class Accordition extends Composite{
             var expanded=i==0;
             var s=`<div id="${gid}" class="panel panel-default" style="margin: 0px;${styleExpanded}; display: flex;flex-direction: column">
                <div class="panel-heading" id="${hId}">
-                <h4 class="panel-title"><a>${this.children[i].title()}</a></h4>
+                <h4 class="panel-title" style="display: inline"><a>${this.children[i].title()}</a></h4>
+                <div style="float: right" id="${"T"+hId}"></div>
             </div>
             <div id="${elId}"  style="flex: 1 1 auto;display: flex;flex-direction: column;${styleExpanded}">
             <div class="panel-body" style="background: red;flex: 1 1"><div id="${bid}" style="background: green;"></div></div>
@@ -187,6 +287,10 @@ export class Accordition extends Composite{
             var panelId=bids[i];
             var containerId=gids[i]
             var k=i;
+            if (this.children[i].contextActions){
+                var tH=document.getElementById("T"+x);
+                new ToolbarRenderer({items: this.children[i].contextActions}).render(tH)
+            }
             document.getElementById(x).onclick=()=> {
                 if (!this.disabled[x]) {
                     this.expandIndex(k);

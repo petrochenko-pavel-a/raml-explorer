@@ -15,11 +15,6 @@ export interface IWorkbench{
 }
 declare var Workbench:IWorkbench;
 
-enum RenderMode{
-    FULL_VIEW,
-    ROW_VIEW,
-    COMPACT_VIEW
-}
 
 export interface IObject{
 

@@ -1,18 +1,98 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 var workbench = require("./framework/workbench");
-var rv = require("./ramlTreeView");
-var page = new workbench.Page("rest");
-var y = require("./registryApp");
+var RAMLTreeView = require("./treeView");
+var RAMLDetailsView = require("./detailsView");
+var RegistryView = require("./registryView");
 var url = "";
+var bu = "";
+function setBackUrl(u) {
+    bu = u;
+}
+exports.setBackUrl = setBackUrl;
+exports.states = [];
+function back() {
+    if (exports.states.length > 0) {
+        if (bu) {
+            showApi(bu, function () {
+                exports.ramlView.openNodeById(exports.states.pop());
+            });
+            bu = null;
+        }
+        else {
+            exports.ramlView.openNodeById(exports.states.pop());
+        }
+    }
+    else {
+        init();
+    }
+}
+exports.back = back;
+var backAction = {
+    title: "Back",
+    run: function () {
+        back();
+    }
+};
+exports.ramlView = new RAMLTreeView("");
+var details = new RAMLDetailsView("Details", "Details");
+var regView = new RegistryView("API Registry");
+details.getContextMenu().add(backAction);
+exports.ramlView.getContextMenu().add(backAction);
+exports.ramlView.addSelectionConsumer(details);
+regView.addSelectionConsumer(exports.ramlView);
+if (history && history.pushState) {
+    window.onpopstate = function (event) {
+        back();
+    };
+}
+workbench.registerHandler(function (x) {
+    if (history.pushState) {
+        var node = exports.ramlView.getSelection();
+        if (node && node.length > 0) {
+            exports.states.push(node[0].id());
+        }
+        history.pushState({ page: x }, document.title, document.location.toString());
+    }
+    exports.ramlView.openNodeById(x);
+    return true;
+});
+function init() {
+    var page = new workbench.Page("rest");
+    page.addView(details, "*", 100, workbench.Relation.LEFT);
+    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
+    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
+    function initSizes() {
+        var h = document.getElementById("header").clientHeight + 40;
+        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
+    }
+    initSizes();
+    window.onresize = initSizes;
+    var w = window;
+    w.openVersion = function (x) {
+        exports.ramlView.setVersion(x);
+    };
+}
+function showApi(url, cb) {
+    var b = regView.setSelectedUrl(url);
+    if (b) {
+        exports.ramlView.cb = cb;
+    }
+    else {
+        exports.ramlView.setUrl(url, cb);
+    }
+}
+exports.showApi = showApi;
 var h = document.location.hash;
-y.init();
 if (h && h.length > 1) {
     url = h.substr(1);
-    rv.showApi(url);
+    showApi(url);
+}
+else {
+    init();
 }
 
-},{"./framework/workbench":6,"./ramlTreeView":7,"./registryApp":8}],2:[function(require,module,exports){
+},{"./detailsView":5,"./framework/workbench":7,"./registryView":8,"./treeView":14}],2:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -80,6 +160,12 @@ var usageProps = {
     "headers": 1,
     "body": 1,
 };
+var rootProps = {
+    "queryParameters": 1,
+    "uriParameters": 1,
+    "headers": 1,
+    "body": 1,
+};
 var rootable = {
     "resources": 1,
     "methods": 1,
@@ -117,6 +203,45 @@ function findUsages(h, n, results) {
     }
 }
 exports.findUsages = findUsages;
+function allUsedTypes(h) {
+    var res = {};
+    allUsages(h, res);
+    return res;
+}
+exports.allUsedTypes = allUsedTypes;
+function allUsages(h, nm) {
+    h.elements().forEach(function (x) {
+        allUsages(x, nm);
+    });
+    if (h.property()) {
+        if (rootProps[h.property().nameId()]) {
+            var lt = h.localType();
+            usedTypes(lt, nm);
+        }
+    }
+}
+function usedTypes(lt, nm) {
+    var rs = false;
+    lt.superTypes().forEach(function (t) {
+        nm[t.nameId()] = 1;
+    });
+    if (rs) {
+        return true;
+    }
+    if (lt.isArray()) {
+        var ct = lt.componentType();
+        nm[ct.nameId()] = 1;
+        ct.superTypes().forEach(function (t) {
+            nm[t.nameId()] = 1;
+        });
+        return false;
+    }
+    if (lt.isUnion()) {
+        return usedTypes(lt.union().leftType(), nm) || usedTypes(lt.union().rightType(), nm);
+    }
+    return false;
+}
+exports.usedTypes = usedTypes;
 function trackType(lt, n) {
     var rs = false;
     lt.superTypes().forEach(function (t) {
@@ -1231,7 +1356,6 @@ function reportData(n) {
         locationToItem[x.location] = x;
     });
 }
-exports.reportData = reportData;
 var numToFile = {};
 function loadedUsageData(d) {
     exports.usages.usageRegistry = d;
@@ -1239,7 +1363,6 @@ function loadedUsageData(d) {
         numToFile[exports.usages.usageRegistry.fileToNum[x]] = x;
     });
 }
-exports.loadedUsageData = loadedUsageData;
 var gurl = null;
 function setUrl(url) {
     console.log(url);
@@ -1273,6 +1396,158 @@ function getTitle(url) {
     return url;
 }
 exports.getTitle = getTitle;
+function loadData(url, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.send();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        var data = JSON.parse(xhr.responseText);
+        c(data, xhr.status);
+    };
+}
+var GroupNode = (function () {
+    function GroupNode() {
+    }
+    return GroupNode;
+}());
+exports.GroupNode = GroupNode;
+var ApiWithVersions = (function () {
+    function ApiWithVersions() {
+    }
+    return ApiWithVersions;
+}());
+exports.ApiWithVersions = ApiWithVersions;
+function groupBy(els, f) {
+    var result = {};
+    els.forEach(function (x) {
+        var group = f(x);
+        if (result[group]) {
+            result[group].push(x);
+        }
+        else {
+            result[group] = [];
+            result[group].push(x);
+        }
+    });
+    return result;
+}
+var LoadedRegistry = (function () {
+    function LoadedRegistry(registry) {
+        this.registry = registry;
+    }
+    LoadedRegistry.prototype.findNodeWithUrl = function (url) {
+        if (!this._apis) {
+            this.apis();
+        }
+        var apis = this._apis;
+        if (!apis) {
+            this.apis();
+        }
+        var f = this.find(apis, url);
+        if (f) {
+            return f;
+        }
+        var f = this.find(this.libraries(), url);
+        return f;
+    };
+    LoadedRegistry.prototype.find = function (apis, url) {
+        for (var i = 0; i < apis.length; i++) {
+            if (apis[i] instanceof ApiWithVersions) {
+                var w = apis[i];
+                for (var j = 0; j < w.versions.length; j++) {
+                    if (w.versions[j].location == url) {
+                        return w;
+                    }
+                }
+            }
+            else {
+                var gn = apis[i];
+                var res = this.find(gn.children, url);
+                if (res) {
+                    return res;
+                }
+            }
+        }
+    };
+    LoadedRegistry.prototype.mergeVersions = function (els, merge) {
+        var _this = this;
+        var groups = groupBy(els, function (x) { return x.name; });
+        var groupNodes = [];
+        Object.keys(groups).forEach(function (gr) {
+            var g = new ApiWithVersions();
+            if (merge) {
+                _this._apiCount++;
+            }
+            g.name = gr;
+            g.versions = groups[gr];
+            g.icon = g.versions[0].icon;
+            groupNodes.push(g);
+        });
+        return groupNodes;
+    };
+    LoadedRegistry.prototype.libraries = function () {
+        if (this._libs) {
+            return this._libs;
+        }
+        var els = this.registry.libraries;
+        this._libs = this.group(els, false);
+        return this._libs;
+    };
+    LoadedRegistry.prototype.apis = function () {
+        if (this._apis) {
+            return this._apis;
+        }
+        this._apiCount = 0;
+        var els = this.registry.apis;
+        this._apis = this.group(els, true);
+        return this._apis;
+    };
+    LoadedRegistry.prototype.group = function (els, merge) {
+        var _this = this;
+        var groups = groupBy(els, function (x) { return x.org ? x.org : x.name; });
+        var groupNodes = [];
+        Object.keys(groups).forEach(function (gr) {
+            var g = new GroupNode();
+            g.name = gr;
+            g.children = _this.mergeVersions(groups[gr], merge);
+            groupNodes.push(g);
+        });
+        var result = [];
+        groupNodes.forEach(function (x) {
+            if (x.children.length == 1) {
+                result.push(x.children[0]);
+            }
+            else {
+                result.push(x);
+                var v = x.children[0];
+                x.icon = v.icon;
+            }
+        });
+        return result;
+    };
+    LoadedRegistry.prototype.apiCount = function () {
+        return this._apiCount;
+    };
+    LoadedRegistry.prototype.specCount = function () {
+        return this.registry.apis.length + this.registry.libraries.length;
+    };
+    return LoadedRegistry;
+}());
+exports.LoadedRegistry = LoadedRegistry;
+function getInstance(url, f) {
+    var usageUrl = url.substr(0, url.lastIndexOf('/')) + "/registry-usages.json";
+    loadData(url, function (d, s) {
+        reportData(d);
+        var lr = new LoadedRegistry(d);
+        f(lr, s);
+    });
+    loadData(usageUrl, function (data, s) {
+        loadedUsageData(data);
+    });
+}
+exports.getInstance = getInstance;
 
 },{}],5:[function(require,module,exports){
 "use strict";
@@ -1281,6 +1556,149 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var workbench = require("./framework/workbench");
+var controls_1 = require("./framework/controls");
+var tr = require("./rendering/typeRender");
+var rr = require("./rendering/resourceRender");
+var rc = require("./core/registryCore");
+var RAMLDetailsView = (function (_super) {
+    __extends(RAMLDetailsView, _super);
+    function RAMLDetailsView(id, title) {
+        _super.call(this, id, title);
+        this.compact = true;
+        var v = this;
+        this.toolbar.add({
+            title: "",
+            image: "glyphicon glyphicon-asterisk",
+            checked: this.compact,
+            run: function () {
+                v.compact = !v.compact;
+                v.refresh();
+                v.init(v.holder);
+            }
+        });
+    }
+    RAMLDetailsView.prototype.setInput = function (v) {
+        this._element = v;
+        this.refresh();
+    };
+    RAMLDetailsView.prototype.innerRender = function (e) {
+        e.style.overflow = "auto";
+        if (this._element && this._element.property) {
+            if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
+                var rnd = new tr.TypeRenderer(this.compact, null, false);
+                rnd.setGlobal(true);
+                rnd.setUsages(rc.getUsages(this._element.property().nameId() == "types", this._element.name()));
+                var cnt = rnd.render(this._element);
+            }
+            else {
+                if (this._element.property().nameId() == "resources") {
+                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
+                }
+                if (this._element.property().nameId() == "methods") {
+                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
+                }
+            }
+            new controls_1.Label(this._element.name(), cnt).render(e);
+        }
+        else {
+            e.innerHTML = "";
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+        $('pre code').each(function (i, block) {
+            hljs.highlightBlock(block);
+        });
+    };
+    return RAMLDetailsView;
+}(workbench.ViewPart));
+module.exports = RAMLDetailsView;
+
+},{"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/resourceRender":11,"./rendering/typeRender":13}],6:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var ToolbarRenderer = (function () {
+    function ToolbarRenderer(menu) {
+        this.menu = menu;
+    }
+    ToolbarRenderer.prototype.render = function (host) {
+        this.menu.items.forEach(function (x) {
+            var button = document.createElement("button");
+            button.classList.add("btn");
+            button.classList.add("btn-xs");
+            if (x.checked) {
+                button.classList.add("btn-success");
+            }
+            else {
+                button.classList.add("btn-primary");
+            }
+            button.textContent = x.title;
+            if (x.image) {
+                button.innerHTML = "<span class=\"" + x.image + "\">" + x.title + "</span>";
+            }
+            if (x.run) {
+                button.onclick = x.run;
+            }
+            host.appendChild(button);
+        });
+    };
+    return ToolbarRenderer;
+}());
+exports.ToolbarRenderer = ToolbarRenderer;
+var DrowpdownMenu = (function () {
+    function DrowpdownMenu(menu) {
+        this.menu = menu;
+    }
+    DrowpdownMenu.prototype.render = function (host) {
+        this.menu.items.forEach(function (x) {
+            var li = document.createElement("li");
+            li.setAttribute("role", "presentation");
+            if (x.disabled) {
+                li.classList.add("disabled");
+            }
+            var a = document.createElement("a");
+            a.setAttribute("role", "menuitem");
+            if ((x).run) {
+                a.onclick = (x).run;
+            }
+            if (x.checked) {
+                a.innerHTML = x.title + "<span class='glyphicon glyphicon-ok' style='float: right'></span>";
+            }
+            else {
+                a.innerHTML = x.title;
+            }
+            li.appendChild(a);
+            host.appendChild(li);
+        });
+    };
+    return DrowpdownMenu;
+}());
+exports.DrowpdownMenu = DrowpdownMenu;
+var Context = (function () {
+    function Context(menu) {
+        this.menu = menu;
+    }
+    Context.prototype.render = function (host) {
+        this.menu.items.forEach(function (x) {
+            var li = document.createElement("li");
+            if (x.disabled) {
+                li.classList.add("disabled");
+            }
+            var a = document.createElement("a");
+            if ((x).run) {
+                a.onclick = (x).run;
+            }
+            a.innerHTML = x.title;
+            li.appendChild(a);
+            host.appendChild(li);
+        });
+    };
+    return Context;
+}());
+exports.Context = Context;
 var Composite = (function () {
     function Composite() {
         this.children = [];
@@ -1370,6 +1788,12 @@ var Accordition = (function (_super) {
             return this.children[this.selectedIndex].title();
         }
     };
+    Accordition.prototype.getSelectedTitleId = function () {
+        if (this.selectedIndex != undefined) {
+            var c = this.children[this.selectedIndex];
+            return c.controlId ? c.controlId : c.title();
+        }
+    };
     Accordition.prototype.expandIndex = function (index) {
         var bids = this.bids;
         var gids = this.gids;
@@ -1427,7 +1851,7 @@ var Accordition = (function (_super) {
             gids.push(gid);
             var styleExpanded = i == 0 ? "flex: 1 1 0" : "display: none";
             var expanded = i == 0;
-            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\"><a>" + this.children[i].title() + "</a></h4>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
+            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\" style=\"display: inline\"><a>" + this.children[i].title() + "</a></h4>\n                <div style=\"float: right\" id=\"" + ("T" + hId) + "\"></div>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
             templates.push(s);
         }
         var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%\">\n             " + templates.join('') + "       \n        </div>";
@@ -1443,6 +1867,10 @@ var Accordition = (function (_super) {
             var panelId = bids[i];
             var containerId = gids[i];
             var k = i;
+            if (_this.children[i].contextActions) {
+                var tH = document.getElementById("T" + x);
+                new ToolbarRenderer({ items: _this.children[i].contextActions }).render(tH);
+            }
             document.getElementById(x).onclick = function () {
                 if (!_this.disabled[x]) {
                     _this.expandIndex(k);
@@ -1455,7 +1883,7 @@ var Accordition = (function (_super) {
 }(Composite));
 exports.Accordition = Accordition;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1467,6 +1895,9 @@ var globalId = 0;
 function nextId() {
     return "split" + (globalId++);
 }
+exports.ToolbarRenderer = controls.ToolbarRenderer;
+exports.Context = controls.Context;
+exports.DrowpdownMenu = controls.DrowpdownMenu;
 var LayoutPart = (function () {
     function LayoutPart(_el) {
         this._el = _el;
@@ -1506,92 +1937,13 @@ var LayoutPart = (function () {
     return LayoutPart;
 }());
 exports.LayoutPart = LayoutPart;
-var DrowpdownMenu = (function () {
-    function DrowpdownMenu(menu) {
-        this.menu = menu;
-    }
-    DrowpdownMenu.prototype.render = function (host) {
-        this.menu.items.forEach(function (x) {
-            var li = document.createElement("li");
-            li.setAttribute("role", "presentation");
-            if (x.disabled) {
-                li.classList.add("disabled");
-            }
-            var a = document.createElement("a");
-            a.setAttribute("role", "menuitem");
-            if ((x).run) {
-                a.onclick = (x).run;
-            }
-            if (x.checked) {
-                a.innerHTML = x.title + "<span class='glyphicon glyphicon-ok' style='float: right'></span>";
-            }
-            else {
-                a.innerHTML = x.title;
-            }
-            li.appendChild(a);
-            host.appendChild(li);
-        });
-    };
-    return DrowpdownMenu;
-}());
-exports.DrowpdownMenu = DrowpdownMenu;
-var Context = (function () {
-    function Context(menu) {
-        this.menu = menu;
-    }
-    Context.prototype.render = function (host) {
-        this.menu.items.forEach(function (x) {
-            var li = document.createElement("li");
-            if (x.disabled) {
-                li.classList.add("disabled");
-            }
-            var a = document.createElement("a");
-            if ((x).run) {
-                a.onclick = (x).run;
-            }
-            a.innerHTML = x.title;
-            li.appendChild(a);
-            host.appendChild(li);
-        });
-    };
-    return Context;
-}());
-exports.Context = Context;
-var ToolbarRenderer = (function () {
-    function ToolbarRenderer(menu) {
-        this.menu = menu;
-    }
-    ToolbarRenderer.prototype.render = function (host) {
-        this.menu.items.forEach(function (x) {
-            var button = document.createElement("button");
-            button.classList.add("btn");
-            button.classList.add("btn-xs");
-            if (x.checked) {
-                button.classList.add("btn-success");
-            }
-            else {
-                button.classList.add("btn-primary");
-            }
-            button.textContent = x.title;
-            if (x.image) {
-                button.innerHTML = "<span class=\"" + x.image + "\">" + x.title + "</span>";
-            }
-            if (x.run) {
-                button.onclick = x.run;
-            }
-            host.appendChild(button);
-        });
-    };
-    return ToolbarRenderer;
-}());
-exports.ToolbarRenderer = ToolbarRenderer;
 var Pane = (function () {
     function Pane(_part) {
         this._part = _part;
     }
     Pane.prototype.setContextMenu = function (m) {
         this.contextMenuElement.innerHTML = "";
-        new DrowpdownMenu(m).render(this.contextMenuElement);
+        new exports.DrowpdownMenu(m).render(this.contextMenuElement);
     };
     Pane.prototype.setViewMenu = function (m) {
         this.menuContentElement.innerHTML = "";
@@ -1601,11 +1953,11 @@ var Pane = (function () {
         else {
             this.viewMenuButton.setAttribute("style", "display:inherit");
         }
-        new DrowpdownMenu(m).render(this.menuContentElement);
+        new exports.DrowpdownMenu(m).render(this.menuContentElement);
     };
     Pane.prototype.setToolbar = function (m) {
         this.toolbarContentElement.innerHTML = "";
-        new ToolbarRenderer(m).render(this.toolbarContentElement);
+        new exports.ToolbarRenderer(m).render(this.toolbarContentElement);
     };
     Pane.prototype.addPart = function (v) {
         this._v = v;
@@ -1665,13 +2017,60 @@ var Pane = (function () {
     };
     return Pane;
 }());
+var ContributionManager = (function () {
+    function ContributionManager(onChange) {
+        this.onChange = onChange;
+        this.menu = { items: [] };
+    }
+    ContributionManager.prototype.add = function (item) {
+        this.menu.items.push(item);
+        this.onChange(this.menu);
+    };
+    ContributionManager.prototype.remove = function (item) {
+        this.menu.items = this.menu.items.filter(function (x) { return x != item; });
+        this.onChange(this.menu);
+    };
+    return ContributionManager;
+}());
+exports.ContributionManager = ContributionManager;
+var nh = {
+    setViewMenu: function (m) { },
+    setToolbar: function (m) { },
+    setContextMenu: function (m) { }
+};
 var ViewPart = (function () {
     function ViewPart(_id, _title) {
+        var _this = this;
         this._id = _id;
         this._title = _title;
+        this.holder = nh;
         this.selection = [];
         this.selectionListeners = [];
+        this.contextMenu = new ContributionManager(function (m) { return _this.holder.setContextMenu(m); });
+        this.toolbar = new ContributionManager(function (m) { return _this.holder.setToolbar(m); });
+        this.viewMenu = new ContributionManager(function (m) { return _this.holder.setViewMenu(m); });
     }
+    ViewPart.prototype.addSelectionConsumer = function (t) {
+        this.addSelectionListener({
+            selectionChanged: function (v) {
+                if (v.length > 0) {
+                    t.setInput(v[0]);
+                }
+                else {
+                    t.setInput(null);
+                }
+            }
+        });
+    };
+    ViewPart.prototype.getContextMenu = function () {
+        return this.contextMenu;
+    };
+    ViewPart.prototype.getToolbar = function () {
+        return this.toolbar;
+    };
+    ViewPart.prototype.getViewMenu = function () {
+        return this.viewMenu;
+    };
     ViewPart.prototype.getHolder = function () {
         return this.holder;
     };
@@ -1696,6 +2095,9 @@ var ViewPart = (function () {
     };
     ViewPart.prototype.init = function (holder) {
         this.holder = holder;
+        this.holder.setViewMenu(this.viewMenu.menu);
+        this.holder.setToolbar(this.toolbar.menu);
+        this.holder.setContextMenu(this.contextMenu.menu);
     };
     ViewPart.prototype.render = function (e) {
         this.contentElement = e;
@@ -2094,7 +2496,7 @@ var AccorditionTreeView = (function (_super) {
         else {
             var title = null;
             if (this.control) {
-                title = this.control.getSelectedTitle();
+                title = this.control.getSelectedTitleId();
             }
             var a = new controls.Accordition();
             this.control = a;
@@ -2103,7 +2505,7 @@ var AccorditionTreeView = (function (_super) {
             a.render(e);
             if (title) {
                 for (var i = 0; i < this.control.children.length; i++) {
-                    if (this.control.children[i].title() == title) {
+                    if (this.control.children[i].title() == title || this.control.children[i].controlId == title) {
                         this.control.expandIndex(i);
                     }
                 }
@@ -2114,7 +2516,7 @@ var AccorditionTreeView = (function (_super) {
 }(ViewPart));
 exports.AccorditionTreeView = AccorditionTreeView;
 
-},{"./controls":5}],7:[function(require,module,exports){
+},{"./controls":6}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2122,466 +2524,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var workbench = require("./framework/workbench");
-var controls_1 = require("./framework/controls");
-var hl = require("./core/hl");
-var tr = require("./rendering/typeRender");
-var rr = require("./rendering/resourceRender");
-var nr = require("./rendering/nodeRender");
-var rrend = require("./registryView");
-var usages = require("./core/usagesRegistry");
-exports.states = [];
-function back() {
-    if (exports.states.length > 0) {
-        if (bu) {
-            showApi(bu, function () {
-                exports.ramlView.openNodeById(exports.states.pop());
-            });
-            bu = null;
-        }
-        else {
-            exports.ramlView.openNodeById(exports.states.pop());
-        }
-    }
-    else {
-        init();
-    }
-}
-exports.back = back;
-var bu = "";
-function setBackUrl(u) {
-    bu = u;
-}
-exports.setBackUrl = setBackUrl;
-var RAMLDetailsView = (function (_super) {
-    __extends(RAMLDetailsView, _super);
-    function RAMLDetailsView() {
-        _super.apply(this, arguments);
-        this.compact = true;
-    }
-    RAMLDetailsView.prototype.setSelection = function (v) {
-        this._element = v;
-        this.refresh();
-    };
-    RAMLDetailsView.prototype.init = function (holder) {
-        holder.setContextMenu({
-            items: [
-                {
-                    title: "Back",
-                    run: function () {
-                        back();
-                    }
-                }
-            ]
-        });
-        var v = this;
-        holder.setToolbar({
-            items: [
-                {
-                    title: "",
-                    image: "glyphicon glyphicon-asterisk",
-                    checked: this.compact,
-                    run: function () {
-                        v.compact = !v.compact;
-                        v.refresh();
-                        v.init(v.holder);
-                    }
-                }
-            ]
-        });
-        return _super.prototype.init.call(this, holder);
-    };
-    RAMLDetailsView.prototype.innerRender = function (e) {
-        e.style.overflow = "auto";
-        if (this._element && this._element.property) {
-            if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var rnd = new tr.TypeRenderer(this.compact, null, false);
-                rnd.setGlobal(true);
-                rnd.setUsages(usages.getUsages(this._element.property().nameId() == "types", this._element.name()));
-                var cnt = rnd.render(this._element);
-            }
-            else {
-                if (this._element.property().nameId() == "resources") {
-                    var cnt = new rr.ResourceRenderer(this.compact).render(this._element);
-                }
-                if (this._element.property().nameId() == "methods") {
-                    var cnt = new rr.MethodRenderer(this.compact, true, true, false, true).render(this._element);
-                }
-            }
-            new controls_1.Label(this._element.name(), cnt).render(e);
-        }
-        else {
-            e.innerHTML = "";
-        }
-        $('[data-toggle="tooltip"]').tooltip();
-        $('pre code').each(function (i, block) {
-            hljs.highlightBlock(block);
-        });
-    };
-    return RAMLDetailsView;
-}(workbench.ViewPart));
-exports.RAMLDetailsView = RAMLDetailsView;
-var RAMLTreeProvider = (function () {
-    function RAMLTreeProvider() {
-    }
-    RAMLTreeProvider.prototype.children = function (x) {
-        if (x instanceof hl.TreeLike) {
-            var c = x;
-            return c.allChildren();
-        }
-        if (x instanceof hl.ProxyNode) {
-            var pn = x;
-            return pn.children();
-        }
-        if (x.property().nameId() == "resources") {
-            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
-        }
-        return [];
-    };
-    RAMLTreeProvider.prototype.elements = function (x) {
-        return x;
-    };
-    return RAMLTreeProvider;
-}());
-exports.RAMLTreeProvider = RAMLTreeProvider;
-var colors = {
-    get: "#0f6ab4",
-    post: "#10a54a",
-    put: "#c5862b",
-    patch: "#c5862b",
-    delete: "#a41e22"
-};
-function methodKey(name) {
-    var color = "#10a54a";
-    color = colors[name];
-    return "<span style=\"border: solid;border-radius: 1px; width:16px;height: 16px; border-width: 1px;margin-right: 5px;background-color: " + color + ";font-size: small;padding: 3px\"> </span>";
-}
-var RAMLTreeView = (function (_super) {
-    __extends(RAMLTreeView, _super);
-    function RAMLTreeView(path, title) {
-        if (title === void 0) { title = "Overview"; }
-        _super.call(this, title);
-        this.path = path;
-        this.searchable = true;
-        this.trees = [];
-    }
-    RAMLTreeView.prototype.setKnownVersions = function (r) {
-        this.versions = r;
-    };
-    RAMLTreeView.prototype.setVersion = function (ver) {
-        var _this = this;
-        this.versions.versions.forEach(function (x) {
-            if (x.version == ver) {
-                _this.setUrl(x.location);
-            }
-        });
-    };
-    RAMLTreeView.prototype.setUrl = function (url, cb) {
-        this.path = url;
-        this.node = null;
-        this.api = null;
-        this.refresh();
-        this.cb = cb;
-        usages.setUrl(url);
-    };
-    RAMLTreeView.prototype.customize = function (tree) {
-        tree.setContentProvider(new RAMLTreeProvider());
-        tree.setLabelProvider({
-            label: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        var ss = t.id.substr(2);
-                        if (ss == "object") {
-                            return "<img src='./images/object.gif'/> " + ss;
-                        }
-                        if (ss == "array") {
-                            return "<img src='./images/arraytype_obj.gif'/> " + ss;
-                        }
-                        if (ss == "scalar") {
-                            return "<img src='./images/string.gif'/> " + ss;
-                        }
-                        return "<img src='./images/object.gif'/> " + ss;
-                    }
-                    return t.id;
-                }
-                var result = "";
-                var pr = x.property ? x.property() : null;
-                var isMethod = pr && pr.nameId() == "methods";
-                var isType = pr && pr.nameId() == "types";
-                var isAType = pr && pr.nameId() == "annotationTypes";
-                result = hl.label(x);
-                if (isMethod) {
-                    result = methodKey(x.name()) + result;
-                }
-                if (isType) {
-                    result = "<img src='./images/typedef_obj.gif'/> " + result;
-                }
-                if (isAType) {
-                    result = "<img src='./images/annotation_obj.gif'/>" + result;
-                }
-                return result;
-            },
-            icon: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        return "";
-                    }
-                    return "glyphicon glyphicon-cloud";
-                }
-                if (x instanceof hl.ProxyNode) {
-                    return "glyphicon glyphicon-tasks";
-                }
-                if (x.property().nameId() == "resources") {
-                    return "glyphicon glyphicon-link";
-                }
-                return "";
-            }
-        });
-    };
-    RAMLTreeView.prototype.innerRender = function (e) {
-        if (this.path == "") {
-            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
-        }
-        else {
-            _super.prototype.innerRender.call(this, e);
-            if (this.cb) {
-                var q = this.cb;
-                setTimeout(q, 100);
-                this.cb = null;
-            }
-        }
-    };
-    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
-        var toRender = [];
-        libs.forEach(function (x) {
-            var childrenOfKind = x.children().filter(function (y) { return y.property().nameId() == id; });
-            if (childrenOfKind.length > 0) {
-                toRender.push(new hl.ProxyNode(x.name(), x, childrenOfKind));
-            }
-        });
-        if (groups[id]) {
-            toRender = toRender.concat(groups[id]);
-        }
-        if (toRender.length > 0) {
-            var at = toRender;
-            var types = this.createTree(label);
-            types.setInput(at);
-            this.control.add(types);
-            this.trees.push(types);
-        }
-        ;
-    };
-    RAMLTreeView.prototype.openNodeById = function (id) {
-        var node = hl.findById(id);
-        if (node) {
-            this.setSelection(node);
-        }
-    };
-    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
-        var x = this.api.elements();
-        var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
-        if (overview.length > 0) {
-            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
-        }
-        if (!this.devMode) {
-            libs = [];
-        }
-        var groups = hl.elementGroups(this.api);
-        var methods = [];
-        var ts = hl.gatherMethods(this.api, methods);
-        var mgroups = hl.groupMethods(methods);
-        var groupedMethods = mgroups.allChildren();
-        if (methods != null) {
-            groups["methods"] = groupedMethods;
-        }
-        if (groups["types"]) {
-            var types = hl.groupTypes(groups["types"]);
-            if (types) {
-                groups["types"] = types.allChildren();
-            }
-        }
-        if (this.devMode || this.api.definition().nameId() == "Library") {
-            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
-        }
-        this.renderArraySection("methods", "Operations", groups, libs);
-        this.renderArraySection("types", "Data Types", groups, libs);
-        if (this.devMode) {
-            this.renderArraySection("resources", "API Paths", groups, libs);
-        }
-        var lt = null;
-    };
-    RAMLTreeView.prototype.load = function () {
-        var _this = this;
-        hl.loadApi(this.path, function (api) {
-            _this.api = api;
-            _this.node = api;
-            _this.refresh();
-            showTitle(_this.api);
-        });
-    };
-    RAMLTreeView.prototype.init = function (holder) {
-        holder.setContextMenu({
-            items: [
-                {
-                    title: "Back",
-                    run: function () {
-                        back();
-                    }
-                }
-            ]
-        });
-        var v = this;
-        holder.setToolbar({
-            items: [
-                {
-                    title: "",
-                    image: "glyphicon glyphicon-asterisk",
-                    checked: this.devMode,
-                    run: function () {
-                        v.devMode = !v.devMode;
-                        v.refresh();
-                        v.init(v.holder);
-                    }
-                }
-            ]
-        });
-        return _super.prototype.init.call(this, holder);
-    };
-    return RAMLTreeView;
-}(workbench.AccorditionTreeView));
-exports.RAMLTreeView = RAMLTreeView;
-function showTitle(api) {
-    hl.prepareNodes(api.attrs()).forEach(function (x) {
-        if (x.name() == "(Title)" || x.name() == "title") {
-            document.getElementById("title").innerHTML = x.value();
-        }
-    });
-}
-exports.ramlView = new RAMLTreeView("");
-var w = window;
-w.ramlView = exports.ramlView;
-var details = new RAMLDetailsView("Details", "Details");
-var regView = new rrend.RegistryView("API Registry");
-function init() {
-    var page = new workbench.Page("rest");
-    page.addView(details, "*", 100, workbench.Relation.LEFT);
-    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
-    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
-    regView.addSelectionListener({
-        selectionChanged: function (v) {
-            if (v.length > 0) {
-                if (v[0] instanceof rrend.ApiWithVersions) {
-                    var aw = v[0];
-                    var sel = aw.versions[aw.versions.length - 1];
-                    exports.ramlView.setKnownVersions(aw);
-                    exports.ramlView.setUrl(sel.location);
-                }
-                else {
-                    if (v[0].location) {
-                        exports.ramlView.setUrl(v[0].location);
-                    }
-                }
-            }
-            else {
-                details.setSelection(null);
-            }
-        }
-    });
-    function initSizes() {
-        var h = document.getElementById("header").clientHeight + 40;
-        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
-    }
-    initSizes();
-    window.onresize = initSizes;
-    var w = window;
-    w.openVersion = function (x) {
-        exports.ramlView.setVersion(x);
-    };
-}
-exports.init = init;
-exports.ramlView.addSelectionListener({
-    selectionChanged: function (v) {
-        if (v.length > 0) {
-            details.setSelection(v[0]);
-        }
-        else {
-            details.setSelection(null);
-        }
-    }
-});
-function showApi(url, cb) {
-    var b = regView.setSelectedUrl(url);
-    if (b) {
-        exports.ramlView.cb = cb;
-    }
-    else {
-        exports.ramlView.setUrl(url, cb);
-    }
-}
-exports.showApi = showApi;
-
-},{"./core/hl":2,"./core/usagesRegistry":4,"./framework/controls":5,"./framework/workbench":6,"./registryView":9,"./rendering/nodeRender":10,"./rendering/resourceRender":12,"./rendering/typeRender":13}],8:[function(require,module,exports){
-"use strict";
-var workbench = require("./framework/workbench");
-var rv = require("./ramlTreeView");
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        rv.back();
-    };
-}
-workbench.registerHandler(function (x) {
-    if (history.pushState) {
-        var node = rv.ramlView.getSelection();
-        if (node && node.length > 0) {
-            rv.states.push(node[0].id());
-        }
-        history.pushState({ page: x }, document.title, document.location.toString());
-    }
-    rv.ramlView.openNodeById(x);
-    return true;
-});
-function init() {
-    rv.init();
-}
-exports.init = init;
-function showApi(s) {
-    rv.showApi(s);
-}
-exports.showApi = showApi;
-
-},{"./framework/workbench":6,"./ramlTreeView":7}],9:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var workbench = require("./framework/workbench");
-var ra = require("./registryApp");
-var usages = require("./core/usagesRegistry");
-function loadData(url, c) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.send();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState != 4)
-            return;
-        c(JSON.parse(xhr.responseText), xhr.status);
-    };
-}
-var GroupNode = (function () {
-    function GroupNode() {
-    }
-    return GroupNode;
-}());
-var ApiWithVersions = (function () {
-    function ApiWithVersions() {
-    }
-    return ApiWithVersions;
-}());
-exports.ApiWithVersions = ApiWithVersions;
+var rc = require("./core/registryCore");
+var GroupNode = rc.GroupNode;
 var RegistryContentProvider = (function () {
     function RegistryContentProvider() {
     }
@@ -2596,81 +2540,6 @@ var RegistryContentProvider = (function () {
     };
     return RegistryContentProvider;
 }());
-function groupBy(els, f) {
-    var result = {};
-    els.forEach(function (x) {
-        var group = f(x);
-        if (result[group]) {
-            result[group].push(x);
-        }
-        else {
-            result[group] = [];
-            result[group].push(x);
-        }
-    });
-    return result;
-}
-var apiCount = 0;
-function buildRegistryGroups(els) {
-    apiCount = 0;
-    var groups = groupBy(els, function (x) { return x.org; });
-    var groupNodes = [];
-    Object.keys(groups).forEach(function (gr) {
-        var g = new GroupNode();
-        g.name = gr;
-        g.children = mergeVersions(groups[gr]);
-        groupNodes.push(g);
-    });
-    var result = [];
-    groupNodes.forEach(function (x) {
-        if (x.children.length == 1) {
-            result.push(x.children[0]);
-        }
-        else {
-            result.push(x);
-            var v = x.children[0];
-            x.icon = v.icon;
-        }
-    });
-    return result;
-}
-function mergeVersions(els) {
-    var groups = groupBy(els, function (x) { return x.name; });
-    var groupNodes = [];
-    Object.keys(groups).forEach(function (gr) {
-        var g = new ApiWithVersions();
-        apiCount++;
-        g.name = gr;
-        g.versions = groups[gr];
-        g.icon = g.versions[0].icon;
-        groupNodes.push(g);
-    });
-    return groupNodes;
-}
-loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-usages.json", function (data, s) {
-    usages.loadedUsageData(data);
-});
-function findNodeWithUrl(d, url) {
-    for (var i = 0; i < d.length; i++) {
-        if (d[i] instanceof ApiWithVersions) {
-            var w = d[i];
-            for (var j = 0; j < w.versions.length; j++) {
-                if (w.versions[j].location == url) {
-                    return w;
-                }
-            }
-        }
-        else {
-            var gn = d[i];
-            var res = findNodeWithUrl(gn.children, url);
-            if (res) {
-                return res;
-            }
-        }
-    }
-    return null;
-}
-exports.findNodeWithUrl = findNodeWithUrl;
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
@@ -2679,47 +2548,26 @@ var RegistryView = (function (_super) {
     }
     RegistryView.prototype.load = function () {
         var _this = this;
-        loadData("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
+        rc.getInstance("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
             _this.node = data;
+            _this.registry = data;
             _this.refresh();
-            usages.reportData(data);
         });
     };
     RegistryView.prototype.setSelectedUrl = function (url) {
-        var _this = this;
         this.url = url;
-        if (this.groups) {
-            var n = findNodeWithUrl(this.groups, url);
-            if (n) {
-                this.setSelection(n);
-                return true;
-            }
-            else {
-                this.node.libraries.forEach(function (x) {
-                    if (x.location == url) {
-                        _this.setSelection(x);
-                        return true;
-                    }
-                });
-            }
+        var n = this.registry.findNodeWithUrl(url);
+        if (n) {
+            this.setSelection(n);
+            return true;
         }
         return false;
     };
     RegistryView.prototype.customizeAccordition = function (root, node) {
-        var groups = buildRegistryGroups(node.apis);
-        this.groups = groups;
-        this.addTree("Apis", groups);
-        this.addTree("Libraries", node.libraries);
+        this.addTree("Apis", node.apis());
+        this.addTree("Libraries", node.libraries());
         var v = this;
-        this.getHolder().setContextMenu({
-            items: [
-                { title: "Open", run: function () {
-                        var api = v.getSelection()[0];
-                        ra.showApi(api.location);
-                    } }
-            ]
-        });
-        document.getElementById("stat").innerHTML = apiCount + " apis, " + node.apis.length + " unique api versions, and counting.";
+        document.getElementById("stat").innerHTML = node.apiCount() + " apis, " + node.specCount() + " unique specifications, and counting.";
     };
     RegistryView.prototype.customize = function (tree) {
         tree.setContentProvider(new RegistryContentProvider());
@@ -2731,18 +2579,14 @@ var RegistryView = (function (_super) {
                     }
                     return "" + e.name + "";
                 }
-                else {
-                    var c = Object.keys(e)[0];
-                    return c;
-                }
             }
         });
     };
     return RegistryView;
 }(workbench.AccorditionTreeView));
-exports.RegistryView = RegistryView;
+module.exports = RegistryView;
 
-},{"./core/usagesRegistry":4,"./framework/workbench":6,"./registryApp":8}],10:[function(require,module,exports){
+},{"./core/registryCore":4,"./framework/workbench":7}],9:[function(require,module,exports){
 "use strict";
 var or = require("./objectRender");
 var hl = require("../core/hl");
@@ -2974,18 +2818,12 @@ var AttrProperty = (function () {
 }());
 exports.AttrProperty = AttrProperty;
 
-},{"../core/hl":2,"./objectRender":11}],11:[function(require,module,exports){
+},{"../core/hl":2,"./objectRender":10}],10:[function(require,module,exports){
 "use strict";
 function encode(r) {
     return r.replace(/[\x26\x0A\<>'"]/g, function (r) { return "&#" + r.charCodeAt(0) + ";"; });
 }
 exports.encode = encode;
-var RenderMode;
-(function (RenderMode) {
-    RenderMode[RenderMode["FULL_VIEW"] = 0] = "FULL_VIEW";
-    RenderMode[RenderMode["ROW_VIEW"] = 1] = "ROW_VIEW";
-    RenderMode[RenderMode["COMPACT_VIEW"] = 2] = "COMPACT_VIEW";
-})(RenderMode || (RenderMode = {}));
 var Link = (function () {
     function Link(target, _name) {
         this.target = target;
@@ -3141,7 +2979,7 @@ function renderObj(v) {
 }
 exports.renderObj = renderObj;
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var tr = require("./typeRender");
@@ -3286,14 +3124,34 @@ var ResponseRenderer = (function () {
 }());
 exports.ResponseRenderer = ResponseRenderer;
 
-},{"../core/hl":2,"./nodeRender":10,"./typeRender":13}],13:[function(require,module,exports){
+},{"../core/hl":2,"./nodeRender":9,"./typeRender":13}],12:[function(require,module,exports){
+"use strict";
+exports.OBJECT_IMAGE = "<img src='./images/object.gif'/> ";
+exports.ARRAY_IMAGE = "<img src='./images/arraytype_obj.gif'/> ";
+exports.STRING_IMAGE = "<img src='./images/string.gif'/> ";
+exports.GENERIC_TYPE = "<img src='./images/typedef_obj.gif'/> ";
+exports.ANNOTATION_TYPE = "<img src='./images/annotation_obj.gif'/>";
+exports.BOOLEAN_TYPE = "<img src='./images/boolean.gif'/> ";
+exports.NUMBER_TYPE = "<img src='./images/number.png'/> ";
+exports.DATE_TYPE = "<img src='./images/date.gif'/> ";
+exports.FILE_TYPE = "<img src='./images/file.gif'/> ";
+exports.FOLDER_SPAN = "glyphicon glyphicon-cloud";
+exports.LIBRARY_SPAN = "glyphicon glyphicon-tasks";
+exports.RESOURCE_SPAN = "glyphicon glyphicon-link";
+exports.COLLAPSE_LINK = "images/collapse.gif";
+function EXPAND_IMG(id) {
+    return "<img src='images/expand.gif' id='Expand" + id + "'/>";
+}
+exports.EXPAND_IMG = EXPAND_IMG;
+
+},{}],13:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var or = require("./objectRender");
 var nr = require("./nodeRender");
-var usages = require("../core/usagesRegistry");
-var ramlTreeView_1 = require("../ramlTreeView");
-var rtv = require("../ramlTreeView");
+var usages = require("../core/registryCore");
+var rtv = require("../app");
+var images = require("./styles");
 function renderTypeList(t) {
     var result = [];
     t.forEach(function (x) {
@@ -3374,28 +3232,28 @@ var NameColumn = (function () {
             }
         }
         if (p.range().isObject()) {
-            rs = "<img src='./images/object.gif'/> " + rs;
+            rs = images.OBJECT_IMAGE + rs;
         }
         if (p.range().isArray()) {
-            rs = "<img src='./images/arraytype_obj.gif'/> " + rs;
+            rs = images.ARRAY_IMAGE + rs;
         }
         else if (s.nameId() == "StringType") {
-            rs = "<img src='./images/string.gif'/> " + rs;
+            rs = images.STRING_IMAGE + rs;
         }
         else if (s.nameId() == "BooleanType") {
-            rs = "<img src='./images/boolean.gif'/> " + rs;
+            rs = images.BOOLEAN_TYPE + rs;
         }
         else if (s.nameId() == "NumberType") {
-            rs = "<img src='./images/number.png'/> " + rs;
+            rs = images.NUMBER_TYPE + rs;
         }
         else if (s.nameId() == "IntegerType") {
-            rs = "<img src='./images/number.png'/> " + rs;
+            rs = images.NUMBER_TYPE + rs;
         }
         else if (s.nameId().indexOf("Date") != -1) {
-            rs = "<img src='./images/date.gif'/> " + rs;
+            rs = images.DATE_TYPE + rs;
         }
         else if (s.nameId().indexOf("File") != -1) {
-            rs = "<img src='./images/file.gif'/> " + rs;
+            rs = images.FILE_TYPE + rs;
         }
         if (rs.length == 0) {
             rs = "additionalProperties";
@@ -3406,10 +3264,6 @@ var NameColumn = (function () {
                 rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span id=\"" + ("tricon" + rowId) + "\" class=\"glyphicon glyphicon-plus-sign\" ></span> ") + rs;
             }
             else {
-                var st = "glyphicon-record";
-                if (wp.recursive) {
-                    st = "glyphicon-repeat";
-                }
                 rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
             }
         }
@@ -3604,10 +3458,10 @@ var renderClicableLink = function (root, result, label) {
         result.push("<div style='padding-left: 23px;padding-top: 2px' key='" + root.id() + "'>" + hl.methodKey(root.name()) + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "(" + hl.resourceUrl(root.parent()) + ")" + "</a></div>");
     }
     else if (root.property() && root.property().nameId() == "types") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/typedef_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'>" + images.GENERIC_TYPE + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
     }
     else if (root.property() && root.property().nameId() == "annotationTypes") {
-        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'><img src='./images/annotation_obj.gif'/>" + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
+        result.push("<div style='padding-left: 20px;padding-top: 2px' key='" + root.id() + "'>" + images.ANNOTATION_TYPE + "<a onclick='Workbench.open(\"" + root.id() + "\")'>" + label + "</a></div>");
     }
 };
 var TypeRenderer = (function () {
@@ -3716,7 +3570,7 @@ var TypeRenderer = (function () {
         if (this.usages) {
             result.push("<h4>External Usages:</h4>");
             Object.keys(this.usages).forEach(function (x) {
-                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'><img src='expand.gif' id='Expand" + (usageIndex - 1) + "'/>" + usages.getTitle(x) + "</a>");
+                result.push("<div id='usage" + (usageIndex++) + "' style='margin-right: 15px'><a id='ExpandLink" + (usageIndex - 1) + "' style='cursor: hand' onclick='expandUsage(" + (usageIndex - 1) + ")'>" + images.EXPAND_IMG("" + (usageIndex - 1)) + usages.getTitle(x) + "</a>");
                 var v = _this.usages[x];
                 result.push("<span style='display: none' url='" + x + "'>");
                 if (v) {
@@ -3738,7 +3592,7 @@ w.expandUsage = function (index) {
     var el = document.getElementById("usage" + index);
     var iel = document.getElementById("Expand" + index);
     var eel = document.getElementById("ExpandLink" + index);
-    iel.src = "collapse.gif";
+    iel.src = images.COLLAPSE_LINK;
     var span = el.getElementsByTagName("span");
     var url = span.item(0).getAttribute("url");
     var sp = document.createElement("div");
@@ -3804,7 +3658,7 @@ w.expandUsage = function (index) {
                         continue;
                     }
                     dups[label] = 1;
-                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'><img src='typedef_obj.gif'/><a>" + label + "</a></div>");
+                    result.push("<div style='padding-left: 20px;' key='" + type[0].id() + "'>" + images.GENERIC_TYPE + "<a>" + label + "</a></div>");
                 }
             }
             else {
@@ -3819,8 +3673,8 @@ w.expandUsage = function (index) {
             var linkE = di.getElementsByTagName("a");
             linkE.item(0).onclick = function (x) {
                 var rs = x.target.parentElement.getAttribute("key");
-                rtv.setBackUrl(ramlTreeView_1.ramlView.path);
-                var sel = ramlTreeView_1.ramlView.getSelection()[0];
+                rtv.setBackUrl(rtv.ramlView.path);
+                var sel = rtv.ramlView.getSelection()[0];
                 rtv.states.push(sel.id());
                 rtv.showApi(url, function () {
                     Workbench.open(rs);
@@ -3831,7 +3685,7 @@ w.expandUsage = function (index) {
     }, false);
     eel.onclick = function () {
         el.removeChild(sp);
-        iel.src = "expand.gif";
+        iel.src = "./images/expand.gif";
         eel.onclick = function () {
             w.expandUsage(index);
         };
@@ -3919,4 +3773,274 @@ function renderParameters(name, ps, result, isMeta) {
 }
 exports.renderParameters = renderParameters;
 
-},{"../core/hl":2,"../core/usagesRegistry":4,"../ramlTreeView":7,"./nodeRender":10,"./objectRender":11}]},{},[1]);
+},{"../app":1,"../core/hl":2,"../core/registryCore":4,"./nodeRender":9,"./objectRender":10,"./styles":12}],14:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var workbench = require("./framework/workbench");
+var hl = require("./core/hl");
+var nr = require("./rendering/nodeRender");
+var controls_1 = require("./framework/controls");
+var rrend = require("./core/registryCore");
+var methodKey = hl.methodKey;
+var images = require("./rendering/styles");
+var RAMLTreeProvider = (function () {
+    function RAMLTreeProvider() {
+    }
+    RAMLTreeProvider.prototype.children = function (x) {
+        if (x instanceof hl.TreeLike) {
+            var c = x;
+            return c.allChildren();
+        }
+        if (x instanceof hl.ProxyNode) {
+            var pn = x;
+            return pn.children();
+        }
+        if (x.property().nameId() == "resources") {
+            return x.elements().filter(function (x) { return x.property().nameId() == "resources"; });
+        }
+        return [];
+    };
+    RAMLTreeProvider.prototype.elements = function (x) {
+        return x;
+    };
+    return RAMLTreeProvider;
+}());
+var RAMLTreeView = (function (_super) {
+    __extends(RAMLTreeView, _super);
+    function RAMLTreeView(path, title) {
+        if (title === void 0) { title = "Overview"; }
+        _super.call(this, title);
+        this.path = path;
+        this.searchable = true;
+        this.operations = true;
+        this.trees = [];
+        this.showInternal = true;
+        var v = this;
+        this.getToolbar().add({
+            title: "",
+            image: "glyphicon glyphicon-asterisk",
+            checked: this.devMode,
+            run: function () {
+                v.devMode = !v.devMode;
+                v.refresh();
+                v.init(v.holder);
+            }
+        });
+    }
+    RAMLTreeView.prototype.setKnownVersions = function (r) {
+        this.versions = r;
+    };
+    RAMLTreeView.prototype.setInput = function (v) {
+        if (v instanceof rrend.ApiWithVersions) {
+            var aw = v;
+            var sel = aw.versions[aw.versions.length - 1];
+            this.setKnownVersions(aw);
+            this.setUrl(sel.location);
+        }
+        else {
+            if (v) {
+                if (v.location) {
+                    this.setUrl(v[0].location);
+                }
+            }
+        }
+    };
+    RAMLTreeView.prototype.setVersion = function (ver) {
+        var _this = this;
+        this.versions.versions.forEach(function (x) {
+            if (x.version == ver) {
+                _this.setUrl(x.location);
+            }
+        });
+    };
+    RAMLTreeView.prototype.setUrl = function (url, cb) {
+        this.path = url;
+        this.node = null;
+        this.api = null;
+        this.refresh();
+        this.cb = cb;
+        rrend.setUrl(url);
+    };
+    RAMLTreeView.prototype.customize = function (tree) {
+        tree.setContentProvider(new RAMLTreeProvider());
+        tree.setLabelProvider({
+            label: function (x) {
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        var ss = t.id.substr(2);
+                        if (ss == "object") {
+                            return images.OBJECT_IMAGE + ss;
+                        }
+                        if (ss == "array") {
+                            return images.ARRAY_IMAGE + ss;
+                        }
+                        if (ss == "scalar") {
+                            return images.STRING_IMAGE + ss;
+                        }
+                        return images.OBJECT_IMAGE + ss;
+                    }
+                    return t.id;
+                }
+                var result = "";
+                var pr = x.property ? x.property() : null;
+                var isMethod = pr && pr.nameId() == "methods";
+                var isType = pr && pr.nameId() == "types";
+                var isAType = pr && pr.nameId() == "annotationTypes";
+                result = hl.label(x);
+                if (isMethod) {
+                    result = methodKey(x.name()) + result;
+                }
+                if (isType) {
+                    result = images.GENERIC_TYPE + result;
+                }
+                if (isAType) {
+                    result = images.ANNOTATION_TYPE + result;
+                }
+                return result;
+            },
+            icon: function (x) {
+                if (x instanceof hl.TreeLike) {
+                    var t = x;
+                    if (t.id.indexOf("!!") == 0) {
+                        return "";
+                    }
+                    return images.FOLDER_SPAN;
+                }
+                if (x instanceof hl.ProxyNode) {
+                    return images.LIBRARY_SPAN;
+                }
+                if (x.property().nameId() == "resources") {
+                    return images.RESOURCE_SPAN;
+                }
+                return "";
+            }
+        });
+    };
+    RAMLTreeView.prototype.innerRender = function (e) {
+        if (this.path == "") {
+            e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
+        }
+        else {
+            _super.prototype.innerRender.call(this, e);
+            if (this.cb) {
+                var q = this.cb;
+                setTimeout(q, 100);
+                this.cb = null;
+            }
+        }
+    };
+    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
+        var toRender = [];
+        libs.forEach(function (x) {
+            var childrenOfKind = x.children().filter(function (y) { return y.property().nameId() == id; });
+            if (childrenOfKind.length > 0) {
+                toRender.push(new hl.ProxyNode(x.name(), x, childrenOfKind));
+            }
+        });
+        if (groups[id]) {
+            toRender = toRender.concat(groups[id]);
+        }
+        var v = this;
+        if (toRender.length > 0) {
+            var at = toRender;
+            var types = this.createTree(label);
+            if (id == "types") {
+                types.contextActions = [{
+                        title: "Show Internal Types",
+                        checked: v.showInternal,
+                        run: function () {
+                            v.showInternal = !v.showInternal;
+                            v.refresh();
+                        }
+                    }];
+            }
+            if (id == "methods") {
+                types.contextActions = [{
+                        title: "Show Resources",
+                        run: function () {
+                            v.operations = false;
+                            v.refresh();
+                        }
+                    }];
+                types.controlId = "ops";
+            }
+            if (id == "resources") {
+                types.contextActions = [{
+                        title: "Show Operations",
+                        run: function () {
+                            v.operations = true;
+                            v.refresh();
+                        }
+                    }];
+                types.controlId = "ops";
+            }
+            types.setInput(at);
+            this.control.add(types);
+            this.trees.push(types);
+        }
+        ;
+    };
+    RAMLTreeView.prototype.openNodeById = function (id) {
+        var node = hl.findById(id);
+        if (node) {
+            this.setSelection(node);
+        }
+    };
+    RAMLTreeView.prototype.customizeAccordition = function (a, node) {
+        var x = this.api.elements();
+        var libs = hl.getUsedLibraries(this.api);
+        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
+        if (overview.length > 0) {
+            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
+        }
+        if (!this.devMode) {
+            libs = [];
+        }
+        var groups = hl.elementGroups(this.api);
+        var methods = [];
+        var ts = hl.gatherMethods(this.api, methods);
+        var groupedMethods = hl.groupMethods(methods).allChildren();
+        if (methods != null) {
+            groups["methods"] = groupedMethods;
+        }
+        if (groups["types"]) {
+            var tps = groups["types"];
+            if (!this.showInternal) {
+                var used = hl.allUsedTypes(this.api);
+                tps = tps.filter(function (x) { return used[x.name()]; });
+            }
+            var types = hl.groupTypes(tps);
+            if (types) {
+                groups["types"] = types.allChildren();
+            }
+        }
+        if (this.devMode || this.api.definition().nameId() == "Library") {
+            this.renderArraySection("annotationTypes", "Annotation Types", groups, libs);
+        }
+        if (this.operations) {
+            this.renderArraySection("methods", "Operations", groups, libs);
+        }
+        else {
+            this.renderArraySection("resources", "Resources", groups, libs);
+        }
+        this.renderArraySection("types", "Data Types", groups, libs);
+        var lt = null;
+    };
+    RAMLTreeView.prototype.load = function () {
+        var _this = this;
+        hl.loadApi(this.path, function (api) {
+            _this.api = api;
+            _this.node = api;
+            _this.refresh();
+        });
+    };
+    return RAMLTreeView;
+}(workbench.AccorditionTreeView));
+module.exports = RAMLTreeView;
+
+},{"./core/hl":2,"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/nodeRender":9,"./rendering/styles":12}]},{},[1]);
