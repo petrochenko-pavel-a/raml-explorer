@@ -42,7 +42,6 @@
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
             box-sizing: border-box;
-
             overflow-y: auto;
             overflow-x: hidden;
         }
@@ -75,42 +74,22 @@
         }
     </style>
 </head>
-<body style="display: flex;flex-direction: column">
+<body style="display: flex;flex-direction: column;margin: 0px;padding: 3px;margin-bottom: 0px;padding-bottom: 0px">
 <div style="height: 100%">
-    <nav class="navbar navbar-default" id="header" style="margin-bottom: 5px;background-image: url('https://www.tutorialspoint.com/images/pattern.png');background-color: #3a3131">
-        <div class="container-fluid">
+    <nav class="navbar navbar-inverse" id="header" style="margin-bottom: 5px;background-image: url(https://github.com/themes/midnight/images/nav-bg.gif)">
+        <div class="container-fluid" style="padding-left: 0px">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="#" style="margin: 0px;padding: 0px">
+                    <img src="http://marketplace.eclipse.org/sites/default/files/styles/ds_medium/public/Logo110_80_1.png" height="46px" style="margin-left: 2px;margin-top:2px;margin-right: 10px"/>
                     <a class = "navbar-brand" href = "#">API REGISTRY</a>
                 </a>
 
             </div>
-            <p class="navbar-text" id="stat">...</p>
-            <p class="navbar-text" id="title">RAML specifications for everything</p>
-            <ul class="nav navbar-nav">
-                <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
-                <li><a href="#">Link</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#">Action</a></li>
-                        <li><a href="#">Another action</a></li>
-                        <li><a href="#">Something else here</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="#">Separated link</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="#">One more separated link</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <form class="navbar-form navbar-left">
-                <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Search">
-                </div>
-                <button type="submit" class="btn btn-default">Submit</button>
-            </form>
-            <ul class="nav navbar-nav navbar-right">
-                <li><a href="#">Link</a></li>
+
+            <div class="navbar-right">
+            <ul class="nav navbar-nav" >
+                <li><a href="#">About</a></li>
+                <li><a href="#">Add an API</a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
                     <ul class="dropdown-menu">
@@ -122,10 +101,15 @@
                     </ul>
                 </li>
             </ul>
+            <a class="header-logo-invertocat" href="https://github.com/apiregistry/registry" data-hotkey="g d" aria-label="Homepage" data-ga-click="Header, go to dashboard, icon:logo">
+                <img src="./images/GitHub-Mark-Light-32px.png" height="32"style="margin: 8px"/>
+            </a>
+            </div>
         </div>
     </nav>
     <div id="rest" style="height: 90%">
     </div>
+    <p class="navbar-text" id="stat" style="margin: 0px;padding: 0px;float: right;">...</p>
 </div>
 </body>
 <script src="bundle.js">
