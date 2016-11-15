@@ -120,7 +120,6 @@ export class MethodRenderer{
 export class ResponseRenderer{
     constructor(protected meta:boolean,protected isSingle: boolean,private isAnnotationType:boolean=false){
     }
-
     render(h:IHighLevelNode):string{
         var result:string[]=[];
         var rs=h.elements().filter(x=>x.property().nameId()=="body")

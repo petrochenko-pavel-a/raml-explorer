@@ -7,6 +7,7 @@ import rrend=require("./core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
 import methodKey=hl.methodKey;
 import images=require("./rendering/styles")
+
 class RAMLTreeProvider implements workbench.ITreeContentProvider{
 
     children(x:hl.IHighLevelNode){
@@ -167,7 +168,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
 
     showInternal:boolean=true;
 
-    protected renderArraySection(id:string,label:string,groups:any,libs:IHighLevelNode[]){
+    protected renderArraySection(id:string,label:string,groups:any,libs:IHighLevelNode[],always:boolean=false){
         var toRender=[];
         libs.forEach(x=>{
             var childrenOfKind=x.children().filter(y=>y.property().nameId()==id);
@@ -179,10 +180,10 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             toRender=toRender.concat(groups[id]);
         }
         var v=this;
-        if (toRender.length>0){
+        if (toRender.length>0||always){
             var at=toRender
             var types=this.createTree(label);
-            if (id=="types") {
+            if (id=="types"&&this.api.definition().nameId()=="Api") {
 
                     (<IControl>types).contextActions = [{
 
@@ -259,8 +260,10 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         if (methods!=null) {
             groups["methods"] = groupedMethods;
         }
+        var original=null;
         if (groups["types"]) {
             var tps=<any>groups["types"];
+            original=tps;
             if (!this.showInternal){
                 var used=hl.allUsedTypes(this.api);
                 tps=tps.filter(x=>used[x.name()]);
@@ -279,8 +282,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         else{
             this.renderArraySection("resources", "Resources", groups, libs);
         }
-        this.renderArraySection("types","Data Types",groups,libs);
-
+        this.renderArraySection("types","Data Types",groups,libs,original&&original.length>0);
         var lt=null;
     }
     protected  load(){
