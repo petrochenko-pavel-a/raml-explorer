@@ -1,5 +1,3 @@
-
-
 export const OBJECT_IMAGE="<img src='./images/object.gif'/> ";
 export const ARRAY_IMAGE="<img src='./images/arraytype_obj.gif'/> ";
 export const STRING_IMAGE="<img src='./images/string.gif'/> ";

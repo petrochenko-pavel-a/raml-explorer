@@ -88,18 +88,18 @@
 
             <div class="navbar-right">
             <ul class="nav navbar-nav" >
-                <li><a href="#">About</a></li>
+                <li><a href="#" data-toggle="modal" data-target="#myModal">About</a></li>
                 <li><a href="#">Add an API</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#">Action</a></li>
-                        <li><a href="#">Another action</a></li>
-                        <li><a href="#">Something else here</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="#">Separated link</a></li>
-                    </ul>
-                </li>
+                <!--<li class="dropdown">-->
+                    <!--<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>-->
+                    <!--<ul class="dropdown-menu">-->
+                        <!--<li><a href="#">Action</a></li>-->
+                        <!--<li><a href="#">Another action</a></li>-->
+                        <!--<li><a href="#">Something else here</a></li>-->
+                        <!--<li role="separator" class="divider"></li>-->
+                        <!--<li><a href="#">Separated link</a></li>-->
+                    <!--</ul>-->
+                <!--</li>-->
             </ul>
             <a class="header-logo-invertocat" href="https://github.com/apiregistry/registry" data-hotkey="g d" aria-label="Homepage" data-ga-click="Header, go to dashboard, icon:logo">
                 <img src="./images/GitHub-Mark-Light-32px.png" height="32"style="margin: 8px"/>
@@ -110,6 +110,34 @@
     <div id="rest" style="height: 90%">
     </div>
     <p class="navbar-text" id="stat" style="margin: 0px;padding: 0px;float: right;">...</p>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">API Registry</h4>
+                </div>
+                <div class="modal-body">
+                    This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.
+                    <hr>
+                    All API specs contributed to project by authors are covered by the CC01.0 license.
+                    All API specs acquired from public sources under the Fair use principal.
+
+                    <h4>Spec sources</h4>
+
+                    Some specs are taken from Open Source projects:
+
+                    darklynx/swagger-api-collection - OpenAPI(aka Swagger) spec for Instagram API
+                    Mermade/bbcparse - OpenAPI(aka Swagger) spec for BBC Nitro API
+                    amardeshbd/medium-api-specification - OpenAPI (aka Swagger 2.0) spec for Medium API
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 <script src="bundle.js">

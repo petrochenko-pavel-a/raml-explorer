@@ -29,7 +29,6 @@ class RAMLTreeProvider implements workbench.ITreeContentProvider{
     }
 }
 
-
 class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:hl.IHighLevelNode;
@@ -55,6 +54,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
     setKnownVersions(r:rrend.ApiWithVersions){
         this.versions=r;
     }
+
     setInput(v:any){
         if (v instanceof rrend.ApiWithVersions){
             var aw:rrend.ApiWithVersions=v;
@@ -80,6 +80,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         })
     }
     cb:()=>void;
+
     setUrl(url:string,cb?:()=>void){
         this.path=url;
         this.node=null;
@@ -197,9 +198,6 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                         }
 
                     }];
-
-
-
             }
             if (id=="methods") {
                 (<IControl>types).contextActions = [{

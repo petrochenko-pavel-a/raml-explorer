@@ -594,7 +594,6 @@ export function renderParameters(name:string,ps:IHighLevelNode[],result:string[]
     if (ps.length==0){
         return;
     }
-
     result.push("<div style='padding-top: 10px'>")
     var pr:IProperty[]=[];
     ps.forEach(x=>{

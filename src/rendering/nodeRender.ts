@@ -82,6 +82,7 @@ export class HeaderRenderer{
     }
 }
 declare var marked:any;
+
 export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,path?:string):string{
     var result:string[]=[];
     var nodes:IHighLevelNode[]=api.attrs();
@@ -225,25 +226,3 @@ export function renderNode(h:IHighLevelNode,small:boolean=false):string{
     }
     return res;
 }
-
-
-export class AttrProperty implements or.IColumn<IHighLevelNode>{
-
-    constructor(private _id:string,private _caption:string){}
-
-    id(){
-        return this._id;
-    }
-    caption(){
-        return this._caption;
-    }
-
-    render(o:IHighLevelNode){
-        var atr=o.attr(this._id);
-        if (atr){
-            return or.renderObj(atr.value());
-        }
-        return "";
-    }
-}
-

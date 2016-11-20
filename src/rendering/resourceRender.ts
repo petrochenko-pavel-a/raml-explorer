@@ -72,6 +72,7 @@ function escape(n:string){
     return n.replace("/","_");
 }
 
+
 export class MethodRenderer{
 
     constructor(private meta: boolean,private topLevel:boolean,private isSingle:boolean,private isAnnotationType:boolean=false,private renderAttrs:boolean){
@@ -117,9 +118,9 @@ export class MethodRenderer{
         return result.join("");
     }
 }
+
 export class ResponseRenderer{
-    constructor(protected meta:boolean,protected isSingle: boolean,private isAnnotationType:boolean=false){
-    }
+    constructor(protected meta:boolean,protected isSingle: boolean,private isAnnotationType:boolean=false){}
     render(h:IHighLevelNode):string{
         var result:string[]=[];
         var rs=h.elements().filter(x=>x.property().nameId()=="body")

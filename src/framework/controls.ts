@@ -269,7 +269,6 @@ export class Accordition extends Composite{
             </div>
            </div>`;
            templates.push(s);
-
         }
         var content=`<div class="panel-group" id="${topId}" style="margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%">
              ${templates.join('')}       
