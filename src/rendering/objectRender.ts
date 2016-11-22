@@ -184,6 +184,14 @@ export function renderObj(v:any):string{
         var r:any[]=v;
         return r.map(x=>renderObj(x)).join("");
     }
+    if (v["title"]&&v['url']){
+        var role=v["role"];
+        var img="";
+        if (role=="Tool Location"){
+            img="<image src='images/ApplicationElement.gif'/> "
+        }
+        return `<div><a href="${v['url']}">${img}${v["title"]}</a></div>`
+    }
     if (typeof v==="string"){
         return v;
     }
