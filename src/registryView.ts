@@ -27,11 +27,21 @@ class RegistryView extends workbench.AccorditionTreeView{
             this.node=data;
             this.registry=data;
             this.refresh();
+            if (this.url){
+                var n=this.registry.findNodeWithUrl(this.url);
+                if (n) {
+                    this.setSelection(n);
+                }
+            }
         })
     }
     protected url: string;
     setSelectedUrl(url:string){
+
         this.url=url;
+        if (!this.node){
+            return;
+        }
         var n=this.registry.findNodeWithUrl(url);
         if (n) {
                 this.setSelection(n);

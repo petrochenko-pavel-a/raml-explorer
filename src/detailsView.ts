@@ -39,7 +39,7 @@ class RAMLDetailsView extends workbench.ViewPart{
         {
 
             if (this._element.property().nameId()=="types"||this._element.property().nameId()=="annotationTypes"){
-                var rnd=new tr.TypeRenderer(this.compact,null,false);
+                var rnd=new tr.TypeRenderer(this.compact,null,false,this._element.property().nameId()=="annotationTypes");
                 rnd.setGlobal(true)
                 rnd.setUsages(rc.getUsages(this._element.property().nameId()=="types",this._element.name()))
                 var cnt=rnd.render(this._element);

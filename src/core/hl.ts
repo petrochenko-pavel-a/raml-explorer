@@ -8,6 +8,9 @@ export interface IProperty{
     isRequired():boolean
     local?:boolean
 }
+export interface Example{
+
+}
 export interface IType{
     nameId():any
     properties():IProperty[]
@@ -20,6 +23,7 @@ export interface IType{
     isArray(): boolean
     isBuiltIn(): boolean
     isUnion(): boolean
+    examples(): Example[]
     componentType(): IType
     union():IType
     isRequired();
@@ -693,6 +697,7 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
                     nameId(){
                         return "string"
                     },
+                    examples(){return []},
                     properties(){return []},
                     facets(){return []},
                     allProperties(){return []},

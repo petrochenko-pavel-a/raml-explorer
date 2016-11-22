@@ -398,6 +398,14 @@ export class TypeRenderer{
         }
         if (at.isObject()){
             ps=at.allProperties();
+            if (ps.length==0){
+                if (this.isAnnotationType){
+                    var ts=at.superTypes();
+                    if (ts.length==1){
+                        ps=ts[0].allProperties();
+                    }
+                }
+            }
             renderPropertyTable("Properties",ps,result,at,this.meta)
         }
         if (at.isArray()){
@@ -416,6 +424,7 @@ export class TypeRenderer{
             result.push("Union options:")
             result.push(renderTypeList([at]).join(""));
         }
+        at.examples();
         if (this.global){
             var usage:hl.IHighLevelNode[]=[];
             hl.findUsages(h.root(),at,usage);

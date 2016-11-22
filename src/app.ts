@@ -92,6 +92,7 @@ export function showApi(url,cb?:()=>any){
 var h=document.location.hash
 if (h&&h.length>1){
     url=h.substr(1);
+    init();
     showApi(url)
 }
 else{

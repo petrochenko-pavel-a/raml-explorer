@@ -86,6 +86,7 @@ exports.showApi = showApi;
 var h = document.location.hash;
 if (h && h.length > 1) {
     url = h.substr(1);
+    init();
     showApi(url);
 }
 else {
@@ -712,6 +713,7 @@ function uriParameters(h) {
                     nameId: function () {
                         return "string";
                     },
+                    examples: function () { return []; },
                     properties: function () { return []; },
                     facets: function () { return []; },
                     allProperties: function () { return []; },
@@ -1586,7 +1588,7 @@ var RAMLDetailsView = (function (_super) {
         e.style.overflow = "auto";
         if (this._element && this._element.property) {
             if (this._element.property().nameId() == "types" || this._element.property().nameId() == "annotationTypes") {
-                var rnd = new tr.TypeRenderer(this.compact, null, false);
+                var rnd = new tr.TypeRenderer(this.compact, null, false, this._element.property().nameId() == "annotationTypes");
                 rnd.setGlobal(true);
                 rnd.setUsages(rc.getUsages(this._element.property().nameId() == "types", this._element.name()));
                 var cnt = rnd.render(this._element);
@@ -2552,10 +2554,19 @@ var RegistryView = (function (_super) {
             _this.node = data;
             _this.registry = data;
             _this.refresh();
+            if (_this.url) {
+                var n = _this.registry.findNodeWithUrl(_this.url);
+                if (n) {
+                    _this.setSelection(n);
+                }
+            }
         });
     };
     RegistryView.prototype.setSelectedUrl = function (url) {
         this.url = url;
+        if (!this.node) {
+            return;
+        }
         var n = this.registry.findNodeWithUrl(url);
         if (n) {
             this.setSelection(n);
@@ -2796,27 +2807,6 @@ function renderNode(h, small) {
     return res;
 }
 exports.renderNode = renderNode;
-var AttrProperty = (function () {
-    function AttrProperty(_id, _caption) {
-        this._id = _id;
-        this._caption = _caption;
-    }
-    AttrProperty.prototype.id = function () {
-        return this._id;
-    };
-    AttrProperty.prototype.caption = function () {
-        return this._caption;
-    };
-    AttrProperty.prototype.render = function (o) {
-        var atr = o.attr(this._id);
-        if (atr) {
-            return or.renderObj(atr.value());
-        }
-        return "";
-    };
-    return AttrProperty;
-}());
-exports.AttrProperty = AttrProperty;
 
 },{"../core/hl":2,"./objectRender":10}],10:[function(require,module,exports){
 "use strict";
@@ -3532,6 +3522,14 @@ var TypeRenderer = (function () {
         }
         if (at.isObject()) {
             ps = at.allProperties();
+            if (ps.length == 0) {
+                if (this.isAnnotationType) {
+                    var ts = at.superTypes();
+                    if (ts.length == 1) {
+                        ps = ts[0].allProperties();
+                    }
+                }
+            }
             renderPropertyTable("Properties", ps, result, at, this.meta);
         }
         if (at.isArray()) {
@@ -3550,6 +3548,7 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
+        at.examples();
         if (this.global) {
             var usage = [];
             hl.findUsages(h.root(), at, usage);
@@ -3934,7 +3933,8 @@ var RAMLTreeView = (function (_super) {
             }
         }
     };
-    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs) {
+    RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs, always) {
+        if (always === void 0) { always = false; }
         var toRender = [];
         libs.forEach(function (x) {
             var childrenOfKind = x.children().filter(function (y) { return y.property().nameId() == id; });
@@ -3946,10 +3946,10 @@ var RAMLTreeView = (function (_super) {
             toRender = toRender.concat(groups[id]);
         }
         var v = this;
-        if (toRender.length > 0) {
+        if (toRender.length > 0 || always) {
             var at = toRender;
             var types = this.createTree(label);
-            if (id == "types") {
+            if (id == "types" && this.api.definition().nameId() == "Api") {
                 types.contextActions = [{
                         title: "Show Internal Types",
                         checked: v.showInternal,
@@ -4008,8 +4008,10 @@ var RAMLTreeView = (function (_super) {
         if (methods != null) {
             groups["methods"] = groupedMethods;
         }
+        var original = null;
         if (groups["types"]) {
             var tps = groups["types"];
+            original = tps;
             if (!this.showInternal) {
                 var used = hl.allUsedTypes(this.api);
                 tps = tps.filter(function (x) { return used[x.name()]; });
@@ -4028,7 +4030,7 @@ var RAMLTreeView = (function (_super) {
         else {
             this.renderArraySection("resources", "Resources", groups, libs);
         }
-        this.renderArraySection("types", "Data Types", groups, libs);
+        this.renderArraySection("types", "Data Types", groups, libs, original && original.length > 0);
         var lt = null;
     };
     RAMLTreeView.prototype.load = function () {
