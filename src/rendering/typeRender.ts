@@ -557,13 +557,9 @@ w.expandUsage=function (index) {
 
             linkE.item(0).onclick=function(x){
                 var rs=(<any>x).target.parentElement.getAttribute("key");
-                rtv.setBackUrl(rtv.ramlView.path)
                 var sel=rtv.ramlView.getSelection()[0];
-                rtv.states.push(sel.id());
-                rtv.showApi(url,()=>{
-
-                    Workbench.open(rs);
-                });
+                var inner=sel.id();
+                workbench.processUrl("#"+url+'#'+rs);
             };
         }
         el.appendChild(sp);

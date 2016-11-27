@@ -17,7 +17,7 @@ function renderVersionsSwitch(h:HeaderRenderer) {
                     ${h.version} <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu">
-                    ${h.versions.versions.map(x=>`<li><a onclick="openVersion('${x.version}')">${x.version}</a></li>`).join("")}
+                    ${h.versions.versions.map(x=>`<li><a onclick="WorkbenchUtils.getView(event.target).openVersion('${x.version}')">${x.version}</a></li>`).join("")}
                   </ul>
     </div></h5>`;
 };

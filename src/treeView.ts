@@ -7,7 +7,7 @@ import rrend=require("./core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
 import methodKey=hl.methodKey;
 import images=require("./rendering/styles")
-
+import state=require("./state")
 class RAMLTreeProvider implements workbench.ITreeContentProvider{
 
     children(x:hl.IHighLevelNode){
@@ -28,17 +28,17 @@ class RAMLTreeProvider implements workbench.ITreeContentProvider{
         return x;
     }
 }
-
 class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:hl.IHighLevelNode;
     protected versions:rrend.ApiWithVersions;
     protected devMode: boolean
 
-    constructor(public path:string,title:string="Overview")
+    constructor(title:string="Overview")
     {
         super(title)
         var v=this;
+
         this.getToolbar().add({
             title:"",
             image:"glyphicon glyphicon-asterisk",
@@ -51,45 +51,16 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         });
     }
 
+    openVersion(version:string){
+        state.updateVersion(version);
+    }
+
     setKnownVersions(r:rrend.ApiWithVersions){
         this.versions=r;
     }
 
-    setInput(v:any){
-        if (v instanceof rrend.ApiWithVersions){
-            var aw:rrend.ApiWithVersions=v;
-            var sel:rrend.IRegistryObj=aw.versions[aw.versions.length-1];
-            this.setKnownVersions(aw);
-            this.setUrl(sel.location)
-
-        }
-        else {
-            if (v) {
-                if (v.location) {
-                    this.setUrl(v[0].location)
-                }
-            }
-        }
-    }
-
-    setVersion(ver:string){
-        this.versions.versions.forEach(x=>{
-            if (x.version==ver){
-                this.setUrl(x.location);
-            }
-        })
-    }
-    cb:()=>void;
-
-    setUrl(url:string,cb?:()=>void){
-        this.path=url;
-        this.node=null;
-        this.api=null;
-        this.refresh();
-        this.cb=cb;
-        rrend.setUrl(url);
-    }
     searchable=true;
+    hasSelection: boolean=true;
     operations=true;
 
     protected customize(tree: workbench.TreeView) {
@@ -148,23 +119,91 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             }
         })
     }
+    private updatingFromState=false;
+
+    public updateFromState() {
+        try {
+            if (this.updatingFromState){
+                return;
+            }
+            this.updatingFromState=true;
+            state.getApiInstance(this.path,(input,path)=>{
+                if (input instanceof rrend.ApiWithVersions){
+                    var aw=<rrend.ApiWithVersions>input;
+                    this.setKnownVersions(aw);
+                }
+                if (!path||this.path!=path){
+                    this.path=path;
+                    this.hasSelection=this.path!=null;
+                    this.node=null;
+                    this.api=null;
+                    this.refresh();
+                }
+                else{
+                    this.selectNodeFromState();
+                }
+            },n=>{
+                if (!n){
+                    this.hasSelection=false;
+                }
+                else{
+                    this.hasSelection=true;
+                }
+                rrend.setUrl(this.path)
+                this.node=n;
+                this.api=n;
+                this.refresh();
+                this.selectNodeFromState();
+            })
+        }finally {
+            this.updatingFromState=false;
+        }
+    }
+
+    private selectNodeFromState() {
+        var q=this.updatingFromState;
+        this.updatingFromState=true;
+        try {
+            if (this.api) {
+                if (state.specElementId()) {
+                    var mm = hl.findById(state.specElementId());
+                    if (mm) {
+                        this.setSelection(mm);
+                    }
+                }
+            }
+        }finally {
+            this.updatingFromState=q;
+        }
+    }
 
     protected control:Accordition;
     protected trees:workbench.TreeView[]=[];
+    protected path:string
 
     innerRender(e:Element) {
-        if (this.path==""){
+        if (!this.hasSelection){
             e.innerHTML=`<div style="display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;"><div style="display: flex;flex-direction: row;justify-content: center"><div><div>Please select API or Library</div></div></div></div>`
         }
         else{
             super.innerRender(e);
-            if (this.cb){
-                var q=this.cb;
-                setTimeout(q,100);
-                //this.cb();
-                this.cb=null;
+        }
+    }
+
+    protected onSelection(v: any[]): any {
+        if (!this.updatingFromState&&v[0]){
+            this.updatingFromState=true;
+            try {
+
+                var node: hl.IHighLevelNode = v[0];
+                if (node.id) {
+                    state.propogateNode(node.id());
+                }
+            }finally {
+                this.updatingFromState = false;
             }
         }
+        return super.onSelection(v);
     }
 
     showInternal:boolean=true;
@@ -239,11 +278,11 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         }
     }
 
-
-
     protected customizeAccordition(a: Accordition, node: any) {
+
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
+
         var overview:string=nr.renderNodesOverview(this.api,this.versions,this.path);
         if (overview.length>0) {
             a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
@@ -284,11 +323,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         var lt=null;
     }
     protected  load(){
-        hl.loadApi(this.path,api=>{
-            this.api=api;
-            this.node=api;
-            this.refresh();
-        })
+        this.updateFromState();
     }
 }
 export = RAMLTreeView;

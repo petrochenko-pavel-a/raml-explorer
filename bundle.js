@@ -4,96 +4,49 @@ var workbench = require("./framework/workbench");
 var RAMLTreeView = require("./treeView");
 var RAMLDetailsView = require("./detailsView");
 var RegistryView = require("./registryView");
-var url = "";
-var bu = "";
-function setBackUrl(u) {
-    bu = u;
-}
-exports.setBackUrl = setBackUrl;
-exports.states = [];
-function back() {
-    if (exports.states.length > 0) {
-        if (bu) {
-            showApi(bu, function () {
-                exports.ramlView.openNodeById(exports.states.pop());
-            });
-            bu = null;
-        }
-        else {
-            exports.ramlView.openNodeById(exports.states.pop());
-        }
+var workbench_1 = require("./framework/workbench");
+var state = require("./state");
+var AboutDialog = (function () {
+    function AboutDialog() {
     }
-    else {
-        init();
-    }
-}
-exports.back = back;
-var backAction = {
-    title: "Back",
-    run: function () {
-        back();
-    }
-};
+    AboutDialog.prototype.title = function () {
+        return "About";
+    };
+    AboutDialog.prototype.render = function (e) {
+        e.innerHTML =
+            "This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.\n        <p>\n        <hr>\n        All API specs contributed to project by authors are covered by the CC01.0 license.\n        All API specs acquired from public sources under the Fair use principal.\n        </p>\n        <hr>\n        Some specs are taken from Open Source projects:\n        <ul>\n        <li>darklynx/swagger-api-collection - OpenAPI(aka Swagger) spec for Instagram API</li>\n        <li>Mermade/bbcparse - OpenAPI(aka Swagger) spec for BBC Nitro API</li>\n        <li>amardeshbd/medium-api-specification - OpenAPI (aka Swagger 2.0) spec for Medium API</li>\n        </ul>";
+    };
+    return AboutDialog;
+}());
 exports.ramlView = new RAMLTreeView("");
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new RegistryView("API Registry");
-details.getContextMenu().add(backAction);
-exports.ramlView.getContextMenu().add(backAction);
+details.getContextMenu().add(new workbench.BackAction());
+exports.ramlView.getContextMenu().add(new workbench.BackAction());
 exports.ramlView.addSelectionConsumer(details);
-regView.addSelectionConsumer(exports.ramlView);
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        back();
-    };
-}
 workbench.registerHandler(function (x) {
-    if (history.pushState) {
-        var node = exports.ramlView.getSelection();
-        if (node && node.length > 0) {
-            exports.states.push(node[0].id());
-        }
-        history.pushState({ page: x }, document.title, document.location.toString());
-    }
-    exports.ramlView.openNodeById(x);
+    state.onState(x);
     return true;
 });
-function init() {
-    var page = new workbench.Page("rest");
-    page.addView(details, "*", 100, workbench.Relation.LEFT);
-    page.addView(regView, "Details", 15, workbench.Relation.LEFT);
-    page.addView(exports.ramlView, "Details", 20, workbench.Relation.LEFT);
-    function initSizes() {
-        var h = document.getElementById("header").clientHeight + 40;
-        document.getElementById("rest").setAttribute("style", "height:" + (window.innerHeight - h) + "px");
-    }
-    initSizes();
-    window.onresize = initSizes;
-    var w = window;
-    w.openVersion = function (x) {
-        exports.ramlView.setVersion(x);
-    };
-}
-function showApi(url, cb) {
-    var b = regView.setSelectedUrl(url);
-    if (b) {
-        exports.ramlView.cb = cb;
-    }
-    else {
-        exports.ramlView.setUrl(url, cb);
-    }
-}
-exports.showApi = showApi;
-var h = document.location.hash;
-if (h && h.length > 1) {
-    url = h.substr(1);
-    init();
-    showApi(url);
-}
-else {
-    init();
-}
+state.addListener(function () {
+    regView.updateFromState();
+    exports.ramlView.updateFromState();
+});
+var perspective = {
+    title: "API Registry",
+    actions: [
+        new workbench.ShowDialogAction("About", new AboutDialog()),
+        { title: "Add an API", link: "https://goo.gl/forms/SAr1zd6AuKi2EWbD2" }
+    ],
+    views: [
+        { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
+        { view: regView, ref: "Details", ratio: 15, relation: workbench.Relation.LEFT },
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT }
+    ]
+};
+var app = new workbench_1.Application("API REGISTRY", perspective, "app");
 
-},{"./detailsView":5,"./framework/workbench":7,"./registryView":8,"./treeView":14}],2:[function(require,module,exports){
+},{"./detailsView":5,"./framework/workbench":7,"./registryView":8,"./state":14,"./treeView":15}],2:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -1435,6 +1388,9 @@ function groupBy(els, f) {
     });
     return result;
 }
+function replaceAll(target, search, replacement) {
+    return target.split(search).join(replacement);
+}
 var LoadedRegistry = (function () {
     function LoadedRegistry(registry) {
         this.registry = registry;
@@ -1454,7 +1410,17 @@ var LoadedRegistry = (function () {
         var f = this.find(this.libraries(), url);
         return f;
     };
+    LoadedRegistry.prototype.itemId = function (apis) {
+        if (apis.versions) {
+            var av = apis;
+            return replaceAll(av.name, ' ', "_");
+        }
+        else {
+            return apis.name;
+        }
+    };
     LoadedRegistry.prototype.find = function (apis, url) {
+        var rs = replaceAll(url, '_', " ");
         for (var i = 0; i < apis.length; i++) {
             if (apis[i] instanceof ApiWithVersions) {
                 var w = apis[i];
@@ -1462,6 +1428,9 @@ var LoadedRegistry = (function () {
                     if (w.versions[j].location == url) {
                         return w;
                     }
+                }
+                if (w.name == url || w.name == rs) {
+                    return w;
                 }
             }
             else {
@@ -1622,6 +1591,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+require("../../lib/bootstrap-contextmenu");
+require("../../lib/bootstrap-treeview");
 var ToolbarRenderer = (function () {
     function ToolbarRenderer(menu) {
         this.menu = menu;
@@ -1651,20 +1622,31 @@ var ToolbarRenderer = (function () {
 }());
 exports.ToolbarRenderer = ToolbarRenderer;
 var DrowpdownMenu = (function () {
-    function DrowpdownMenu(menu) {
+    function DrowpdownMenu(menu, setRoles) {
+        if (setRoles === void 0) { setRoles = true; }
         this.menu = menu;
+        this.setRoles = setRoles;
     }
     DrowpdownMenu.prototype.render = function (host) {
+        var _this = this;
         this.menu.items.forEach(function (x) {
             var li = document.createElement("li");
-            li.setAttribute("role", "presentation");
+            if (_this.setRoles) {
+                li.setAttribute("role", "presentation");
+            }
             if (x.disabled) {
                 li.classList.add("disabled");
             }
             var a = document.createElement("a");
-            a.setAttribute("role", "menuitem");
+            a.setAttribute("href", x.link ? x.link : "#");
+            if (_this.setRoles) {
+                a.setAttribute("role", "menuitem");
+            }
+            a.style.cursor = "hand";
             if ((x).run) {
-                a.onclick = (x).run;
+                a.onclick = function (e) {
+                    x.run();
+                };
             }
             if (x.checked) {
                 a.innerHTML = x.title + "<span class='glyphicon glyphicon-ok' style='float: right'></span>";
@@ -1885,7 +1867,7 @@ var Accordition = (function (_super) {
 }(Composite));
 exports.Accordition = Accordition;
 
-},{}],7:[function(require,module,exports){
+},{"../../lib/bootstrap-contextmenu":17,"../../lib/bootstrap-treeview":18}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1900,6 +1882,7 @@ function nextId() {
 exports.ToolbarRenderer = controls.ToolbarRenderer;
 exports.Context = controls.Context;
 exports.DrowpdownMenu = controls.DrowpdownMenu;
+var Split = require("../../lib/Split").Split;
 var LayoutPart = (function () {
     function LayoutPart(_el) {
         this._el = _el;
@@ -1943,6 +1926,9 @@ var Pane = (function () {
     function Pane(_part) {
         this._part = _part;
     }
+    Pane.prototype.setStatusMessage = function (m) {
+        this._application.setStatusMessage(m);
+    };
     Pane.prototype.setContextMenu = function (m) {
         this.contextMenuElement.innerHTML = "";
         new exports.DrowpdownMenu(m).render(this.contextMenuElement);
@@ -1975,7 +1961,7 @@ var Pane = (function () {
         var tid = nextId();
         var searchId = nextId();
         var cmenu = "<div id='" + cmenuId + "'><ul class=\"dropdown-menu\"  id=\"" + cmenuInnerId + "\"role=\"menu\"  aria-labelledby=\"" + mid + "\"></ul></div>";
-        var cnt = "<div style='display: flex;flex-direction: column;height: 100%;width: 99.9%;margin-bottom:0px;overflow: hidden' class=\"panel panel-primary\"><div id=\"" + hid + "\" class=\"panel-heading\" style=\"flex: 0 0 auto;display: flex\"></div>\n        <div class=\"panel-body\"  data-toggle=\"context\" data-target=\"#" + cmenuId + "\" style=\"flex: 1 1 auto;display: flex;overflow: hidden;margin: 0;padding: 0\" ><div style=\"width: 100%\" id=\"" + bid + "\"></div>" + cmenu + "</div></div>";
+        var cnt = "<div style='display: flex;flex-direction: column;height: 100%;width: 99.9%;margin-bottom:0px;overflow: hidden' class=\"panel panel-primary\"><div id=\"" + hid + "\" class=\"panel-heading\" style=\"flex: 0 0 auto;display: flex\"></div>\n        <div class=\"panel-body\"  data-toggle=\"context\" data-target=\"#" + cmenuId + "\" style=\"flex: 1 1 0;display: flex;overflow: hidden;margin: 0;padding: 0\" ><div style=\"width: 100%\" id=\"" + bid + "\"></div>" + cmenu + "</div></div>";
         this._part.element().innerHTML = cnt;
         var hel = document.getElementById(hid);
         var headerHtml = "<div style=\"display: flex;flex-direction: row;width: 100%\"><div style=\"flex:1 1 auto\">" + this._v.title() + "</div>";
@@ -2036,9 +2022,14 @@ var ContributionManager = (function () {
 }());
 exports.ContributionManager = ContributionManager;
 var nh = {
-    setViewMenu: function (m) { },
-    setToolbar: function (m) { },
-    setContextMenu: function (m) { }
+    setViewMenu: function (m) {
+    },
+    setToolbar: function (m) {
+    },
+    setContextMenu: function (m) {
+    },
+    setStatusMessage: function (m) {
+    }
 };
 var ViewPart = (function () {
     function ViewPart(_id, _title) {
@@ -2063,6 +2054,9 @@ var ViewPart = (function () {
                 }
             }
         });
+    };
+    ViewPart.prototype.setStatusMessage = function (m) {
+        this.holder.setStatusMessage(m);
     };
     ViewPart.prototype.getContextMenu = function () {
         return this.contextMenu;
@@ -2104,6 +2098,7 @@ var ViewPart = (function () {
     ViewPart.prototype.render = function (e) {
         this.contentElement = e;
         this.innerRender(e);
+        e.view = this;
     };
     ViewPart.prototype.refresh = function () {
         if (this.contentElement) {
@@ -2116,6 +2111,17 @@ var ViewPart = (function () {
     return ViewPart;
 }());
 exports.ViewPart = ViewPart;
+function getView(e) {
+    while (e) {
+        var vl = e;
+        if (vl.view) {
+            return vl.view;
+        }
+        e = e.parentElement;
+    }
+    return null;
+}
+exports.getView = getView;
 function buildTreeNode(x, t, l, selection) {
     var nodes = t.children(x).map(function (n) { return buildTreeNode(n, t, l, selection); });
     if (nodes.length == 0) {
@@ -2314,7 +2320,8 @@ var TreeView = (function (_super) {
         this.treeId = treeId;
         var view = this;
         e.innerHTML = "<div id='" + treeId + "' style='width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block'></div>";
-        $('#' + treeId).treeview({ data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
+        $('#' + treeId).treeview({
+            data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
             onNodeSelected: function (x) {
                 var sel = $('#' + treeId).treeview("getSelected");
                 view.onSelection(sel.map(function (x) { return x.original; }));
@@ -2325,7 +2332,8 @@ var TreeView = (function (_super) {
                     view.afterSearch(view.pattern);
                 }
             },
-            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0 });
+            collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0
+        });
         var sel = $('#' + treeId).treeview("getSelected");
         view.onSelection(sel.map(function (x) { return x.original; }));
     };
@@ -2357,6 +2365,7 @@ var Page = (function () {
     }
     Page.prototype.addView = function (v, relatedTo, ratio, r) {
         var p = this.createPane(relatedTo, ratio, r);
+        p._application = this.app;
         p.addPart(v);
     };
     Page.prototype.createPane = function (relatedTo, ratio, r) {
@@ -2407,25 +2416,6 @@ var Page = (function () {
     return Page;
 }());
 exports.Page = Page;
-var w = window;
-var handlers = [];
-function registerHandler(f) {
-    handlers.push(f);
-}
-exports.registerHandler = registerHandler;
-function unregisterHandler(f) {
-    handlers = handlers.filter(function (x) { return x !== f; });
-}
-exports.unregisterHandler = unregisterHandler;
-w.Workbench = {
-    open: function (url) {
-        for (var i = 0; i < handlers.length; i++) {
-            if (handlers[i](url)) {
-                return;
-            }
-        }
-    }
-};
 var AccorditionTreeView = (function (_super) {
     __extends(AccorditionTreeView, _super);
     function AccorditionTreeView(title) {
@@ -2483,10 +2473,23 @@ var AccorditionTreeView = (function (_super) {
         }
     };
     AccorditionTreeView.prototype.setSelection = function (o) {
+        var sel = this.getSelection();
+        if (sel) {
+            if (sel[0] == o) {
+                return;
+            }
+        }
         for (var i = 0; i < this.trees.length; i++) {
             if (this.trees[i].hasModel(o)) {
                 this.control.expand(this.trees[i]);
                 this.trees[i].select(o);
+            }
+        }
+    };
+    AccorditionTreeView.prototype.showTab = function (title) {
+        for (var i = 0; i < this.control.children.length; i++) {
+            if (this.control.children[i].title().toLowerCase() == title.toLowerCase() || this.control.children[i].controlId == title) {
+                this.control.expandIndex(i);
             }
         }
     };
@@ -2506,19 +2509,215 @@ var AccorditionTreeView = (function (_super) {
             this.customizeAccordition(a, this.node);
             a.render(e);
             if (title) {
-                for (var i = 0; i < this.control.children.length; i++) {
-                    if (this.control.children[i].title() == title || this.control.children[i].controlId == title) {
-                        this.control.expandIndex(i);
-                    }
-                }
+                this.showTab(title);
             }
         }
     };
     return AccorditionTreeView;
 }(ViewPart));
 exports.AccorditionTreeView = AccorditionTreeView;
+var NavBar = (function () {
+    function NavBar() {
+        var _this = this;
+        this._title = "";
+        this._theme = {
+            style: ' margin-bottom: 5px;background-image: url(https://github.com/themes/midnight/images/nav-bg.gif)',
+            brandImage: 'http://marketplace.eclipse.org/sites/default/files/styles/ds_medium/public/Logo110_80_1.png',
+            brandImageHeight: '46px',
+            brandImageStyle: 'margin-left: 2px;margin-top:2px;margin-right: 10px'
+        };
+        this.globalMenu = new ContributionManager(function (x) {
+            _this.renderMenu();
+        });
+    }
+    NavBar.prototype.title = function () {
+        return this._title;
+    };
+    NavBar.prototype.getMenuBar = function () {
+        return this.globalMenu;
+    };
+    NavBar.prototype.setTitle = function (t) {
+        this._title = t;
+        if (this.element) {
+            this.element.innerHTML = "";
+            this.render(this.element);
+        }
+    };
+    NavBar.prototype.render = function (e) {
+        this.element = e;
+        var id = nextId();
+        var tmplt = "<nav class=\"navbar navbar-inverse\" id=\"header\"\n         style=\"" + this._theme.style + "\">\n         <div class=\"container-fluid\" style=\"padding-left: 0px\">\n            <div class=\"navbar-header\">\n                <a class=\"navbar-brand\" href=\"#\" style=\"margin: 0px;padding: 0px\">\n                    <img src=\"" + this._theme.brandImage + "\"\n                         height=\"" + this._theme.brandImageHeight + "\" style=\"" + this._theme.brandImageStyle + "\"/>\n                    <a class=\"navbar-brand\" href=\"#\">" + this._title + "</a>\n                </a>\n            </div>\n            <div class=\"navbar-right\">\n                <ul class=\"nav navbar-nav\" id=\"" + id + "\"></ul>\n                <a class=\"header-logo-invertocat\" href=\"https://github.com/apiregistry/registry\" \n                   aria-label=\"Homepage\" >\n                   <img src=\"./images/GitHub-Mark-Light-32px.png\" height=\"32\" style=\"margin: 8px\"/>\n                </a>\n            </div>\n        </div>        \n    </nav>";
+        e.innerHTML = tmplt;
+        this.globalMenuElement = document.getElementById(id);
+        this.renderMenu();
+    };
+    NavBar.prototype.renderMenu = function () {
+        if (this.globalMenuElement) {
+            this.globalMenuElement.innerHTML = "";
+            new controls.DrowpdownMenu(this.globalMenu.menu, false).render(this.globalMenuElement);
+        }
+    };
+    return NavBar;
+}());
+exports.NavBar = NavBar;
+var Application = (function () {
+    function Application(_title, initialPerspective, element) {
+        var _this = this;
+        this._title = _title;
+        this.nb = new NavBar();
+        this.perspective = initialPerspective;
+        this.perspective.actions.forEach(function (a) { return _this.nb.getMenuBar().add(a); });
+        if (element) {
+            if (typeof element == "string") {
+                this.render(document.getElementById(element));
+            }
+            else {
+                this.render(element);
+            }
+        }
+    }
+    Application.prototype.title = function () {
+        return this._title;
+    };
+    Application.prototype.setStatusMessage = function (m) {
+        if (this.status) {
+            this.status.innerHTML = m;
+        }
+    };
+    Application.prototype.getMenuBar = function () {
+        return this.nb.getMenuBar();
+    };
+    Application.prototype.openPerspective = function (perspective) {
+        var _this = this;
+        this.nb.getMenuBar().menu.items = [];
+        this.perspective.actions.forEach(function (a) { return _this.nb.getMenuBar().add(a); });
+        this.perspective = perspective;
+        this.render(this.element);
+    };
+    Application.prototype.render = function (e) {
+        this.element = e;
+        var nb = nextId();
+        var main = nextId();
+        var status = nextId();
+        this.nb.setTitle(this.title());
+        var tmplt = "<div style=\"height: 100%;display: flex;flex-direction: column\">\n        <div id=\"" + nb + "\"></div>    \n        <div id=\"" + main + "\" style=\"flex: 1 0 0\"></div>\n        <div>\n            <p class=\"navbar-text\" id=\"" + status + "\" style=\"margin: 0px;padding: 0px;float: right;\">...</p>\n        </div>\n        </div>";
+        e.innerHTML = tmplt;
+        this.nb.render(document.getElementById(nb));
+        this.page = new Page(main);
+        this.page.app = this;
+        this.status = document.getElementById(status);
+        this.openViews();
+    };
+    Application.prototype.openViews = function () {
+        var _this = this;
+        this.perspective.views.forEach(function (v) {
+            _this.page.addView(v.view, v.ref, v.ratio, v.relation);
+        });
+    };
+    return Application;
+}());
+exports.Application = Application;
+var ShowDialogAction = (function () {
+    function ShowDialogAction(title, control, close) {
+        if (close === void 0) { close = false; }
+        this.title = title;
+        this.control = control;
+    }
+    ShowDialogAction.prototype.run = function () {
+        var title = this.title;
+        var dlg = BootstrapDialog.show({
+            title: title, buttons: [
+                {
+                    label: "Close",
+                    action: function (dlg) {
+                        dlg.close();
+                    }
+                }
+            ]
+        });
+        if (typeof this.control == "string") {
+            dlg.$modalBody.html(this.control);
+        }
+        else {
+            this.control.render(dlg.$modalBody[0]);
+        }
+    };
+    return ShowDialogAction;
+}());
+exports.ShowDialogAction = ShowDialogAction;
+var w = window;
+var handlers = [];
+function registerHandler(f) {
+    handlers.push(f);
+}
+exports.registerHandler = registerHandler;
+function unregisterHandler(f) {
+    handlers = handlers.filter(function (x) { return x !== f; });
+}
+exports.unregisterHandler = unregisterHandler;
+w.Workbench = {
+    open: function (url) {
+        processUrl(url);
+    }
+};
+function back() {
+    history.back();
+}
+exports.back = back;
+function processUrl(url) {
+    setState({ hash: url });
+}
+exports.processUrl = processUrl;
+function processState(s) {
+    for (var i = 0; i < handlers.length; i++) {
+        if (handlers[i](s.hash)) {
+            return;
+        }
+    }
+}
+exports.processState = processState;
+var currentHash = null;
+exports.notifyState = function (s) {
+    if (history && history.pushState && s.hash.indexOf('#') == 0) {
+        if (currentHash && s.hash.indexOf(currentHash) == 0) {
+            history.replaceState(s, "", s.hash);
+        }
+        else {
+            history.pushState(s, "", s.hash);
+        }
+        currentHash = s.hash;
+    }
+};
+function setState(s) {
+    exports.notifyState(s);
+    processState(s);
+}
+exports.setState = setState;
+if (history && history.pushState) {
+    window.onpopstate = function (event) {
+        processState(event.state);
+    };
+}
+function exportGlobalHandler(name, handler) {
+    var w = window;
+    w[name] = handler;
+}
+exports.exportGlobalHandler = exportGlobalHandler;
+var BackAction = (function () {
+    function BackAction() {
+        this.title = "Back";
+    }
+    BackAction.prototype.run = function () {
+        back();
+    };
+    return BackAction;
+}());
+exports.BackAction = BackAction;
+var w = window;
+w.WorkbenchUtils = {};
+w.WorkbenchUtils.getView = getView;
 
-},{"./controls":6}],8:[function(require,module,exports){
+},{"../../lib/Split":16,"./controls":6}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2528,6 +2727,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var workbench = require("./framework/workbench");
 var rc = require("./core/registryCore");
 var GroupNode = rc.GroupNode;
+var state = require("./state");
 var RegistryContentProvider = (function () {
     function RegistryContentProvider() {
     }
@@ -2546,21 +2746,49 @@ var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
         _super.apply(this, arguments);
+        this.updatingFromState = false;
         this.searchable = true;
     }
     RegistryView.prototype.load = function () {
         var _this = this;
-        rc.getInstance("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json", function (data, s) {
+        state.getRegistryInstance((function (data, s) {
             _this.node = data;
             _this.registry = data;
             _this.refresh();
-            if (_this.url) {
-                var n = _this.registry.findNodeWithUrl(_this.url);
+            _this.updateFromState();
+        }));
+    };
+    RegistryView.prototype.updateFromState = function () {
+        try {
+            if (this.updatingFromState) {
+                return;
+            }
+            this.updatingFromState = true;
+            if (state.specificationId()) {
+                var n = this.registry.findNodeWithUrl(state.specificationId());
                 if (n) {
-                    _this.setSelection(n);
+                    this.setSelection(n);
                 }
             }
-        });
+            if (state.registryTab()) {
+                this.showTab(state.registryTab());
+            }
+        }
+        finally {
+            this.updatingFromState = false;
+        }
+    };
+    RegistryView.prototype.onSelection = function (v) {
+        if (!this.updatingFromState && v[0]) {
+            this.updatingFromState = true;
+            try {
+                state.propogateSpecification(this.registry.itemId(v[0]));
+            }
+            finally {
+                this.updatingFromState = false;
+            }
+        }
+        return _super.prototype.onSelection.call(this, v);
     };
     RegistryView.prototype.setSelectedUrl = function (url) {
         this.url = url;
@@ -2578,7 +2806,7 @@ var RegistryView = (function (_super) {
         this.addTree("Apis", node.apis());
         this.addTree("Libraries", node.libraries());
         var v = this;
-        document.getElementById("stat").innerHTML = node.apiCount() + " apis, " + node.specCount() + " unique specifications, and counting.";
+        this.setStatusMessage(node.apiCount() + " apis, " + node.specCount() + " unique specifications, and counting.");
     };
     RegistryView.prototype.customize = function (tree) {
         tree.setContentProvider(new RegistryContentProvider());
@@ -2597,7 +2825,7 @@ var RegistryView = (function (_super) {
 }(workbench.AccorditionTreeView));
 module.exports = RegistryView;
 
-},{"./core/registryCore":4,"./framework/workbench":7}],9:[function(require,module,exports){
+},{"./core/registryCore":4,"./framework/workbench":7,"./state":14}],9:[function(require,module,exports){
 "use strict";
 var or = require("./objectRender");
 var hl = require("../core/hl");
@@ -2610,7 +2838,7 @@ function renderNodes(nodes) {
 }
 exports.renderNodes = renderNodes;
 function renderVersionsSwitch(h) {
-    return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return ("<li><a onclick=\"openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("") + "\n                  </ul>\n    </div></h5>";
+    return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return ("<li><a onclick=\"WorkbenchUtils.getView(event.target).openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("") + "\n                  </ul>\n    </div></h5>";
 }
 ;
 var HeaderRenderer = (function () {
@@ -3124,21 +3352,22 @@ exports.ResponseRenderer = ResponseRenderer;
 
 },{"../core/hl":2,"./nodeRender":9,"./typeRender":13}],12:[function(require,module,exports){
 "use strict";
-exports.OBJECT_IMAGE = "<img src='./images/object.gif'/> ";
-exports.ARRAY_IMAGE = "<img src='./images/arraytype_obj.gif'/> ";
-exports.STRING_IMAGE = "<img src='./images/string.gif'/> ";
-exports.GENERIC_TYPE = "<img src='./images/typedef_obj.gif'/> ";
-exports.ANNOTATION_TYPE = "<img src='./images/annotation_obj.gif'/>";
-exports.BOOLEAN_TYPE = "<img src='./images/boolean.gif'/> ";
-exports.NUMBER_TYPE = "<img src='./images/number.png'/> ";
-exports.DATE_TYPE = "<img src='./images/date.gif'/> ";
-exports.FILE_TYPE = "<img src='./images/file.gif'/> ";
+exports.ROOT = "https://petrochenko-pavel-a.github.io/raml-explorer/";
+exports.OBJECT_IMAGE = "<img src='" + exports.ROOT + "images/object.gif'/> ";
+exports.ARRAY_IMAGE = "<img src='" + exports.ROOT + "images/arraytype_obj.gif'/> ";
+exports.STRING_IMAGE = "<img src='" + exports.ROOT + "images/string.gif'/> ";
+exports.GENERIC_TYPE = "<img src='" + exports.ROOT + "images/typedef_obj.gif'/> ";
+exports.ANNOTATION_TYPE = "<img src='" + exports.ROOT + "images/annotation_obj.gif'/>";
+exports.BOOLEAN_TYPE = "<img src='" + exports.ROOT + "images/boolean.gif'/> ";
+exports.NUMBER_TYPE = "<img src='" + exports.ROOT + "images/number.png'/> ";
+exports.DATE_TYPE = "<img src='" + exports.ROOT + "images/date.gif'/> ";
+exports.FILE_TYPE = "<img src='" + exports.ROOT + "images/file.gif'/> ";
 exports.FOLDER_SPAN = "glyphicon glyphicon-cloud";
 exports.LIBRARY_SPAN = "glyphicon glyphicon-tasks";
 exports.RESOURCE_SPAN = "glyphicon glyphicon-link";
-exports.COLLAPSE_LINK = "images/collapse.gif";
+exports.COLLAPSE_LINK = "" + exports.ROOT + "images/collapse.gif";
 function EXPAND_IMG(id) {
-    return "<img src='images/expand.gif' id='Expand" + id + "'/>";
+    return "<img src='" + exports.ROOT + "images/expand.gif' id='Expand" + id + "'/>";
 }
 exports.EXPAND_IMG = EXPAND_IMG;
 
@@ -3148,6 +3377,7 @@ var hl = require("../core/hl");
 var or = require("./objectRender");
 var nr = require("./nodeRender");
 var usages = require("../core/registryCore");
+var workbench = require("../framework/workbench");
 var rtv = require("../app");
 var images = require("./styles");
 function renderTypeList(t) {
@@ -3680,12 +3910,9 @@ w.expandUsage = function (index) {
             var linkE = di.getElementsByTagName("a");
             linkE.item(0).onclick = function (x) {
                 var rs = x.target.parentElement.getAttribute("key");
-                rtv.setBackUrl(rtv.ramlView.path);
                 var sel = rtv.ramlView.getSelection()[0];
-                rtv.states.push(sel.id());
-                rtv.showApi(url, function () {
-                    Workbench.open(rs);
-                });
+                var inner = sel.id();
+                workbench.processUrl("#" + url + '#' + rs);
             };
         }
         el.appendChild(sp);
@@ -3780,7 +4007,166 @@ function renderParameters(name, ps, result, isMeta) {
 }
 exports.renderParameters = renderParameters;
 
-},{"../app":1,"../core/hl":2,"../core/registryCore":4,"./nodeRender":9,"./objectRender":10,"./styles":12}],14:[function(require,module,exports){
+},{"../app":1,"../core/hl":2,"../core/registryCore":4,"../framework/workbench":7,"./nodeRender":9,"./objectRender":10,"./styles":12}],14:[function(require,module,exports){
+"use strict";
+var workbench = require("./framework/workbench");
+var rc = require("./core/registryCore");
+var hl = require("./core/hl");
+var ExplorerState = (function () {
+    function ExplorerState() {
+        this._registryUrl = "https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json";
+        this.listeners = [];
+        this.requests = [];
+    }
+    ExplorerState.prototype.addListener = function (l) {
+        this.listeners.push(l);
+    };
+    ExplorerState.prototype.removeListener = function (l) {
+        this.listeners = this.listeners.filter(function (x) { return x != l; });
+    };
+    ExplorerState.prototype.specificationId = function () {
+        return this.specificationLink;
+    };
+    ExplorerState.prototype.getApiInstance = function (current, resC, cb) {
+        var _this = this;
+        this.getRegistryInstance(function (r, c) {
+            var n = r.findNodeWithUrl(_this.specificationId());
+            if (n) {
+                if (n instanceof rc.ApiWithVersions) {
+                    var aw = n;
+                    var sel = aw.versions[aw.versions.length - 1];
+                    if (_this.version) {
+                        sel = aw.versions.filter(function (x) { return x.version == _this.version; })[0];
+                        if (!sel) {
+                            sel = aw.versions[aw.versions.length - 1];
+                        }
+                    }
+                    resC(n, sel.location);
+                    if (current == sel.location) {
+                        return;
+                    }
+                    hl.loadApi(sel.location, function (x) {
+                        cb(x);
+                    });
+                }
+            }
+            else {
+                resC(null, null);
+            }
+        });
+    };
+    ExplorerState.prototype.getRegistryInstance = function (f) {
+        var _this = this;
+        if (this.lr) {
+            f(this.lr, 200);
+            return;
+        }
+        this.requests.push(f);
+        if (!this.queried) {
+            this.queried = true;
+            rc.getInstance(this._registryUrl, function (x) {
+                _this.lr = x;
+                _this.queried = false;
+                _this.requests.forEach(function (y) { return y(_this.lr, 200); });
+                _this.requests = [];
+            });
+        }
+    };
+    ExplorerState.prototype.registryUrl = function () {
+        return this._registryUrl;
+    };
+    ExplorerState.prototype.registryTab = function () {
+        return this.registryTabLink;
+    };
+    ExplorerState.prototype.specTab = function () {
+        return this.specTabLink;
+    };
+    ExplorerState.prototype.encode = function () {
+        if (this.registryTabLink) {
+            return "#registryTab:" + this.registryTabLink;
+        }
+        if (this.specificationLink) {
+            var result = [];
+            if (this.version) {
+                result.push(this.specificationLink + "~" + this.version);
+            }
+            else {
+                result.push(this.specificationLink);
+            }
+            if (this.specElementLink) {
+                result.push(this.specElementLink);
+            }
+            else if (this.specTabLink) {
+                result.push("specTab:" + this.specTabLink);
+            }
+            return "#" + result.join("#");
+        }
+    };
+    ExplorerState.prototype.propogateNode = function (nodeId) {
+        this.specElementLink = nodeId;
+        this.stateUpdated();
+    };
+    ExplorerState.prototype.updateVersion = function (v) {
+        this.version = v;
+        this.stateUpdated();
+    };
+    ExplorerState.prototype.specElementId = function () {
+        return this.specElementLink;
+    };
+    ExplorerState.prototype.propogateSpecification = function (specId) {
+        this.version = null;
+        this.specificationLink = specId;
+        this.registryTabLink = null;
+        this.specElementLink = null;
+        this.stateUpdated();
+    };
+    ExplorerState.prototype.onState = function (state) {
+        if (state && state.charAt(0) != '#') {
+            this.propogateNode(state);
+            return;
+        }
+        this.decode(state);
+        this.listeners.forEach(function (x) { return x(); });
+    };
+    ExplorerState.prototype.stateUpdated = function () {
+        workbench.notifyState({ hash: this.encode() });
+        this.listeners.forEach(function (x) { return x(); });
+    };
+    ExplorerState.prototype.decode = function (hash) {
+        if (hash.indexOf("#registryTab:") == 0) {
+            this.registryTabLink = hash.substring("#registryTab:".length);
+            this.specElementLink = null;
+            this.specTabLink = null;
+            this.specificationLink = null;
+            return;
+        }
+        var extraHash = hash.indexOf("#", 1);
+        if (extraHash != -1) {
+            var innerLocation = hash.substring(extraHash);
+            hash = hash.substring(0, extraHash);
+            if (innerLocation.indexOf("#specTab:") == 0) {
+                this.specTabLink = innerLocation.substring("#specTab:".length);
+                this.specElementLink = null;
+            }
+            else {
+                this.specTabLink = null;
+                this.specElementLink = innerLocation.substring(1);
+            }
+        }
+        this.specificationLink = hash.substring(1);
+        var versionIndex = this.specificationLink.indexOf("~");
+        if (versionIndex != -1) {
+            this.version = this.specificationLink.substring(versionIndex + 1);
+            this.specificationLink = this.specificationLink.substring(0, versionIndex);
+        }
+    };
+    return ExplorerState;
+}());
+var state = new ExplorerState();
+state.decode(location.hash);
+module.exports = state;
+
+},{"./core/hl":2,"./core/registryCore":4,"./framework/workbench":7}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -3794,6 +4180,7 @@ var controls_1 = require("./framework/controls");
 var rrend = require("./core/registryCore");
 var methodKey = hl.methodKey;
 var images = require("./rendering/styles");
+var state = require("./state");
 var RAMLTreeProvider = (function () {
     function RAMLTreeProvider() {
     }
@@ -3818,12 +4205,13 @@ var RAMLTreeProvider = (function () {
 }());
 var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
-    function RAMLTreeView(path, title) {
+    function RAMLTreeView(title) {
         if (title === void 0) { title = "Overview"; }
         _super.call(this, title);
-        this.path = path;
         this.searchable = true;
+        this.hasSelection = true;
         this.operations = true;
+        this.updatingFromState = false;
         this.trees = [];
         this.showInternal = true;
         var v = this;
@@ -3838,39 +4226,11 @@ var RAMLTreeView = (function (_super) {
             }
         });
     }
+    RAMLTreeView.prototype.openVersion = function (version) {
+        state.updateVersion(version);
+    };
     RAMLTreeView.prototype.setKnownVersions = function (r) {
         this.versions = r;
-    };
-    RAMLTreeView.prototype.setInput = function (v) {
-        if (v instanceof rrend.ApiWithVersions) {
-            var aw = v;
-            var sel = aw.versions[aw.versions.length - 1];
-            this.setKnownVersions(aw);
-            this.setUrl(sel.location);
-        }
-        else {
-            if (v) {
-                if (v.location) {
-                    this.setUrl(v[0].location);
-                }
-            }
-        }
-    };
-    RAMLTreeView.prototype.setVersion = function (ver) {
-        var _this = this;
-        this.versions.versions.forEach(function (x) {
-            if (x.version == ver) {
-                _this.setUrl(x.location);
-            }
-        });
-    };
-    RAMLTreeView.prototype.setUrl = function (url, cb) {
-        this.path = url;
-        this.node = null;
-        this.api = null;
-        this.refresh();
-        this.cb = cb;
-        rrend.setUrl(url);
     };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
@@ -3928,18 +4288,85 @@ var RAMLTreeView = (function (_super) {
             }
         });
     };
+    RAMLTreeView.prototype.updateFromState = function () {
+        var _this = this;
+        try {
+            if (this.updatingFromState) {
+                return;
+            }
+            this.updatingFromState = true;
+            state.getApiInstance(this.path, function (input, path) {
+                if (input instanceof rrend.ApiWithVersions) {
+                    var aw = input;
+                    _this.setKnownVersions(aw);
+                }
+                if (!path || _this.path != path) {
+                    _this.path = path;
+                    _this.hasSelection = _this.path != null;
+                    _this.node = null;
+                    _this.api = null;
+                    _this.refresh();
+                }
+                else {
+                    _this.selectNodeFromState();
+                }
+            }, function (n) {
+                if (!n) {
+                    _this.hasSelection = false;
+                }
+                else {
+                    _this.hasSelection = true;
+                }
+                rrend.setUrl(_this.path);
+                _this.node = n;
+                _this.api = n;
+                _this.refresh();
+                _this.selectNodeFromState();
+            });
+        }
+        finally {
+            this.updatingFromState = false;
+        }
+    };
+    RAMLTreeView.prototype.selectNodeFromState = function () {
+        var q = this.updatingFromState;
+        this.updatingFromState = true;
+        try {
+            if (this.api) {
+                if (state.specElementId()) {
+                    var mm = hl.findById(state.specElementId());
+                    if (mm) {
+                        this.setSelection(mm);
+                    }
+                }
+            }
+        }
+        finally {
+            this.updatingFromState = q;
+        }
+    };
     RAMLTreeView.prototype.innerRender = function (e) {
-        if (this.path == "") {
+        if (!this.hasSelection) {
             e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Please select API or Library</div></div></div></div>";
         }
         else {
             _super.prototype.innerRender.call(this, e);
-            if (this.cb) {
-                var q = this.cb;
-                setTimeout(q, 100);
-                this.cb = null;
+        }
+    };
+    RAMLTreeView.prototype.onSelection = function (v) {
+        if (!this.updatingFromState && v[0]) {
+            this.updatingFromState = true;
+            try {
+                var node = v[0];
+                if (node.id) {
+                    state.propogateNode(node.id());
+                }
+            }
+            finally {
+                this.updatingFromState = false;
             }
         }
+        return _super.prototype.onSelection.call(this, v);
     };
     RAMLTreeView.prototype.renderArraySection = function (id, label, groups, libs, always) {
         if (always === void 0) { always = false; }
@@ -4042,15 +4469,1876 @@ var RAMLTreeView = (function (_super) {
         var lt = null;
     };
     RAMLTreeView.prototype.load = function () {
-        var _this = this;
-        hl.loadApi(this.path, function (api) {
-            _this.api = api;
-            _this.node = api;
-            _this.refresh();
-        });
+        this.updateFromState();
     };
     return RAMLTreeView;
 }(workbench.AccorditionTreeView));
 module.exports = RAMLTreeView;
 
-},{"./core/hl":2,"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/nodeRender":9,"./rendering/styles":12}]},{},[1]);
+},{"./core/hl":2,"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/nodeRender":9,"./rendering/styles":12,"./state":14}],16:[function(require,module,exports){
+
+'use strict';
+
+(function() {
+
+var global = this
+  , addEventListener = 'addEventListener'
+  , removeEventListener = 'removeEventListener'
+  , getBoundingClientRect = 'getBoundingClientRect'
+  , isIE8 = global.attachEvent && !global[addEventListener]
+  , document = global.document
+
+  , calc = (function () {
+        var el
+          , prefixes = ["", "-webkit-", "-moz-", "-o-"]
+
+        for (var i = 0; i < prefixes.length; i++) {
+            el = document.createElement('div')
+            el.style.cssText = "width:" + prefixes[i] + "calc(9px)"
+
+            if (el.style.length) {
+                return prefixes[i] + "calc"
+            }
+        }
+    })()
+  , elementOrSelector = function (el) {
+        if (typeof el === 'string' || el instanceof String) {
+            return document.querySelector(el)
+        } else {
+            return el
+        }
+    }
+
+  , Split = function (ids, options) {
+    var dimension
+      , i
+      , clientDimension
+      , clientAxis
+      , position
+      , gutterClass
+      , paddingA
+      , paddingB
+      , pairs = []
+
+    // Set defaults
+
+    options = typeof options !== 'undefined' ?  options : {}
+
+    if (typeof options.gutterSize === 'undefined') options.gutterSize = 10
+    if (typeof options.minSize === 'undefined') options.minSize = 100
+    if (typeof options.snapOffset === 'undefined') options.snapOffset = 30
+    if (typeof options.direction === 'undefined') options.direction = 'horizontal'
+
+    if (options.direction == 'horizontal') {
+        dimension = 'width'
+        clientDimension = 'clientWidth'
+        clientAxis = 'clientX'
+        position = 'left'
+        gutterClass = 'gutter gutter-horizontal'
+        paddingA = 'paddingLeft'
+        paddingB = 'paddingRight'
+        if (!options.cursor) options.cursor = 'ew-resize'
+    } else if (options.direction == 'vertical') {
+        dimension = 'height'
+        clientDimension = 'clientHeight'
+        clientAxis = 'clientY'
+        position = 'top'
+        gutterClass = 'gutter gutter-vertical'
+        paddingA = 'paddingTop'
+        paddingB = 'paddingBottom'
+        if (!options.cursor) options.cursor = 'ns-resize'
+    }
+
+    // Event listeners for drag events, bound to a pair object.
+    // Calculate the pair's position and size when dragging starts.
+    // Prevent selection on start and re-enable it when done.
+
+    var startDragging = function (e) {
+            var self = this
+              , a = self.a
+              , b = self.b
+
+            if (!self.dragging && options.onDragStart) {
+                options.onDragStart()
+            }
+
+            e.preventDefault()
+
+            self.dragging = true
+            self.move = drag.bind(self)
+            self.stop = stopDragging.bind(self)
+
+            global[addEventListener]('mouseup', self.stop)
+            global[addEventListener]('touchend', self.stop)
+            global[addEventListener]('touchcancel', self.stop)
+
+            self.parent[addEventListener]('mousemove', self.move)
+            self.parent[addEventListener]('touchmove', self.move)
+
+            a[addEventListener]('selectstart', preventSelection)
+            a[addEventListener]('dragstart', preventSelection)
+            b[addEventListener]('selectstart', preventSelection)
+            b[addEventListener]('dragstart', preventSelection)
+
+            a.style.userSelect = 'none'
+            a.style.webkitUserSelect = 'none'
+            a.style.MozUserSelect = 'none'
+            a.style.pointerEvents = 'none'
+
+            b.style.userSelect = 'none'
+            b.style.webkitUserSelect = 'none'
+            b.style.MozUserSelect = 'none'
+            b.style.pointerEvents = 'none'
+
+            self.gutter.style.cursor = options.cursor
+            self.parent.style.cursor = options.cursor
+
+            calculateSizes.call(self)
+        }
+      , stopDragging = function () {
+            var self = this
+              , a = self.a
+              , b = self.b
+
+            if (self.dragging && options.onDragEnd) {
+                options.onDragEnd()
+            }
+
+            self.dragging = false
+
+            global[removeEventListener]('mouseup', self.stop)
+            global[removeEventListener]('touchend', self.stop)
+            global[removeEventListener]('touchcancel', self.stop)
+
+            self.parent[removeEventListener]('mousemove', self.move)
+            self.parent[removeEventListener]('touchmove', self.move)
+
+            delete self.stop
+            delete self.move
+
+            a[removeEventListener]('selectstart', preventSelection)
+            a[removeEventListener]('dragstart', preventSelection)
+            b[removeEventListener]('selectstart', preventSelection)
+            b[removeEventListener]('dragstart', preventSelection)
+
+            a.style.userSelect = ''
+            a.style.webkitUserSelect = ''
+            a.style.MozUserSelect = ''
+            a.style.pointerEvents = ''
+
+            b.style.userSelect = ''
+            b.style.webkitUserSelect = ''
+            b.style.MozUserSelect = ''
+            b.style.pointerEvents = ''
+
+            self.gutter.style.cursor = ''
+            self.parent.style.cursor = ''
+        }
+      , drag = function (e) {
+            var offset
+
+            if (!this.dragging) return
+
+            // Get the relative position of the event from the first side of the
+            // pair.
+
+            if ('touches' in e) {
+                offset = e.touches[0][clientAxis] - this.start
+            } else {
+                offset = e[clientAxis] - this.start
+            }
+
+            // If within snapOffset of min or max, set offset to min or max
+
+            if (offset <=  this.aMin + options.snapOffset) {
+                offset = this.aMin
+            } else if (offset >= this.size - this.bMin - options.snapOffset) {
+                offset = this.size - this.bMin
+            }
+
+            adjust.call(this, offset)
+
+            if (options.onDrag) {
+                options.onDrag()
+            }
+        }
+      , calculateSizes = function () {
+            // Calculate the pairs size, and percentage of the parent size
+            var computedStyle = global.getComputedStyle(this.parent)
+              , parentSize = this.parent[clientDimension] - parseFloat(computedStyle[paddingA]) - parseFloat(computedStyle[paddingB])
+
+            this.size = this.a[getBoundingClientRect]()[dimension] + this.b[getBoundingClientRect]()[dimension] + this.aGutterSize + this.bGutterSize
+            this.percentage = Math.min(100, 100)
+            this.start = this.a[getBoundingClientRect]()[position]
+        }
+      , adjust = function (offset) {
+            // A size is the same as offset. B size is total size - A size.
+            // Both sizes are calculated from the initial parent percentage.
+
+            this.a.style[dimension] = calc + '(' + (offset / this.size * this.percentage) + '% - ' + this.aGutterSize + 'px)'
+            this.b.style[dimension] = calc + '(' + (this.percentage - (offset / this.size * this.percentage)) + '% - ' + this.bGutterSize + 'px)'
+        },
+        rebalance = function () {
+            // A size is the same as offset. B size is total size - A size.
+            // Both sizes are calculated from the initial parent percentage.
+            var offset=this.a[clientDimension];
+            this.a.style[dimension] = calc + '(' + (offset / this.size * this.percentage) + '% - ' + this.aGutterSize + 'px)'
+            this.b.style[dimension] = calc + '(' + (this.percentage - (offset / this.size * this.percentage)) + '% - ' + this.bGutterSize + 'px)'
+        }
+
+      , fitMin = function () {
+            var self = this
+              , a = self.a
+              , b = self.b
+
+            if (a[getBoundingClientRect]()[dimension] < self.aMin) {
+                a.style[dimension] = (self.aMin - self.aGutterSize) + 'px'
+                b.style[dimension] = (self.size - self.aMin - self.aGutterSize) + 'px'
+            } else if (b[getBoundingClientRect]()[dimension] < self.bMin) {
+                a.style[dimension] = (self.size - self.bMin - self.bGutterSize) + 'px'
+                b.style[dimension] = (self.bMin - self.bGutterSize) + 'px'
+            }
+        }
+      , fitMinReverse = function () {
+            var self = this
+              , a = self.a
+              , b = self.b
+
+            if (b[getBoundingClientRect]()[dimension] < self.bMin) {
+                a.style[dimension] = (self.size - self.bMin - self.bGutterSize) + 'px'
+                b.style[dimension] = (self.bMin - self.bGutterSize) + 'px'
+            } else if (a[getBoundingClientRect]()[dimension] < self.aMin) {
+                a.style[dimension] = (self.aMin - self.aGutterSize) + 'px'
+                b.style[dimension] = (self.size - self.aMin - self.aGutterSize) + 'px'
+            }
+        }
+      , balancePairs = function (pairs) {
+            for (var i = 0; i < pairs.length; i++) {
+                calculateSizes.call(pairs[i])
+                fitMin.call(pairs[i])
+            }
+
+            for (i = pairs.length - 1; i >= 0; i--) {
+                calculateSizes.call(pairs[i])
+                fitMinReverse.call(pairs[i])
+            }
+        }
+      , preventSelection = function () { return false }
+      , parent = elementOrSelector(ids[0]).parentNode
+    parent.onresize=rebalance;
+    if (!options.sizes) {
+        var percent = 100 / ids.length
+
+        options.sizes = []
+
+        for (i = 0; i < ids.length; i++) {
+            options.sizes.push(percent)
+        }
+    }
+
+    if (!Array.isArray(options.minSize)) {
+        var minSizes = []
+
+        for (i = 0; i < ids.length; i++) {
+            minSizes.push(options.minSize)
+        }
+
+        options.minSize = minSizes
+    }
+
+    for (i = 0; i < ids.length; i++) {
+        var el = elementOrSelector(ids[i])
+          , isFirst = (i == 1)
+          , isLast = (i == ids.length - 1)
+          , size
+          , gutterSize = options.gutterSize
+          , pair
+
+        if (i > 0) {
+            pair = {
+                a: elementOrSelector(ids[i - 1]),
+                b: el,
+                aMin: options.minSize[i - 1],
+                bMin: options.minSize[i],
+                dragging: false,
+                parent: parent,
+                isFirst: isFirst,
+                isLast: isLast,
+                direction: options.direction
+            }
+
+            // For first and last pairs, first and last gutter width is half.
+
+            pair.aGutterSize = options.gutterSize
+            pair.bGutterSize = options.gutterSize
+
+            if (isFirst) {
+                pair.aGutterSize = options.gutterSize / 2
+            }
+
+            if (isLast) {
+                pair.bGutterSize = options.gutterSize / 2
+            }
+        }
+
+        // IE9 and above
+        if (!isIE8) {
+            if (i > 0) {
+                var gutter = document.createElement('div')
+
+                gutter.className = gutterClass
+                gutter.style[dimension] = options.gutterSize + 'px'
+
+                gutter[addEventListener]('mousedown', startDragging.bind(pair))
+                gutter[addEventListener]('touchstart', startDragging.bind(pair))
+
+                parent.insertBefore(gutter, el)
+
+                pair.gutter = gutter
+            }
+
+            if (i === 0 || i == ids.length - 1) {
+                gutterSize = options.gutterSize / 2
+            }
+
+            if (typeof options.sizes[i] === 'string' || options.sizes[i] instanceof String) {
+                size = options.sizes[i]
+            } else {
+                size = calc + '(' + options.sizes[i] + '% - ' + gutterSize + 'px)'
+            }
+
+        // IE8 and below
+        } else {
+            if (typeof options.sizes[i] === 'string' || options.sizes[i] instanceof String) {
+                size = options.sizes[i]
+            } else {
+                size = options.sizes[i] + '%'
+            }
+        }
+
+        el.style[dimension] = size
+
+        if (i > 0) {
+            pairs.push(pair)
+        }
+    }
+
+    balancePairs(pairs)
+}
+
+if (typeof exports !== 'undefined') {
+    // if (typeof module !== 'undefined' && module.exports) {
+    //     exports = module.exports = Split
+    // }
+    exports.Split = Split
+} else {
+    global.Split = Split
+}
+
+}).call(window);
+
+},{}],17:[function(require,module,exports){
+/*!
+ * Bootstrap Context Menu
+ * Author: @sydcanem
+ * https://github.com/sydcanem/bootstrap-contextmenu
+ *
+ * Inspired by Bootstrap's dropdown plugin.
+ * Bootstrap (http://getbootstrap.com).
+ *
+ * Licensed under MIT
+ * ========================================================= */
+var lastTime=0;
+;(function($) {
+
+	'use strict';
+
+	/* CONTEXTMENU CLASS DEFINITION
+	 * ============================ */
+	var toggle = '[data-toggle="context"]';
+
+	var ContextMenu = function (element, options) {
+		this.$element = $(element);
+
+		this.before = options.before || this.before;
+		this.onItem = options.onItem || this.onItem;
+		this.scopes = options.scopes || null;
+
+		if (options.target) {
+			this.$element.data('target', options.target);
+		}
+
+		this.listen();
+	};
+
+	ContextMenu.prototype = {
+
+		constructor: ContextMenu
+		,show: function(e) {
+
+			var $menu
+				, evt
+				, tp
+				, items
+				, relatedTarget = { relatedTarget: this, target: e.currentTarget };
+
+			if (this.isDisabled()) return;
+			lastTime=0;
+			this.closemenu();
+
+			if (this.before.call(this,e,$(e.currentTarget)) === false) return;
+
+			$menu = this.getMenu();
+			$menu.trigger(evt = $.Event('show.bs.context', relatedTarget));
+
+			tp = this.getPosition(e, $menu);
+			items = 'li:not(.divider)';
+			$menu.attr('style', '')
+				.css(tp)
+				.addClass('open')
+				.on('click.context.data-api', items, $.proxy(this.onItem, this, $(e.currentTarget)))
+				.trigger('shown.bs.context', relatedTarget);
+
+			// Delegating the `closemenu` only on the currently opened menu.
+			// This prevents other opened menus from closing.
+			lastTime=new Date().getTime();
+					$('html')
+						.on('click.context.data-api', $menu.selector, $.proxy(this.closemenu, this));
+			
+
+
+			return false;
+		}
+
+		,closemenu: function(e) {
+			if (new Date().getTime()-lastTime<200){
+				return;
+			}
+			var $menu
+				, evt
+				, items
+				, relatedTarget;
+
+			$menu = this.getMenu();
+
+			if(!$menu.hasClass('open')) return;
+
+			relatedTarget = { relatedTarget: this };
+			$menu.trigger(evt = $.Event('hide.bs.context', relatedTarget));
+
+			items = 'li:not(.divider)';
+			$menu.removeClass('open')
+				.off('click.context.data-api', items)
+				.trigger('hidden.bs.context', relatedTarget);
+
+			$('html')
+				.off('click.context.data-api', $menu.selector);
+			// Don't propagate click event so other currently
+			// opened menus won't close.
+			if (e) {
+				e.stopPropagation();
+			}
+		}
+
+		,keydown: function(e) {
+			if (e.which == 27) this.closemenu(e);
+		}
+
+		,before: function(e) {
+			return true;
+		}
+
+		,onItem: function(e) {
+			return true;
+		}
+
+		,listen: function () {
+			this.$element.on('contextmenu.context.data-api', this.scopes, $.proxy(this.show, this));
+			$('html').on('click.context.data-api', $.proxy(this.closemenu, this));
+			$('html').on('keydown.context.data-api', $.proxy(this.keydown, this));
+		}
+
+		,destroy: function() {
+			this.$element.off('.context.data-api').removeData('context');
+			$('html').off('.context.data-api');
+		}
+
+		,isDisabled: function() {
+			return this.$element.hasClass('disabled') || 
+					this.$element.attr('disabled');
+		}
+
+		,getMenu: function () {
+			var selector = this.$element.data('target')
+				, $menu;
+
+			if (!selector) {
+				selector = this.$element.attr('href');
+				selector = selector && selector.replace(/.*(?=#[^\s]*$)/, ''); //strip for ie7
+			}
+
+			$menu = $(selector);
+
+			return $menu && $menu.length ? $menu : this.$element.find(selector);
+		}
+
+		,getPosition: function(e, $menu) {
+			var mouseX = e.clientX
+				, mouseY = e.clientY
+				, boundsX = $(window).width()
+				, boundsY = $(window).height()
+				, menuWidth = $menu.find('.dropdown-menu').outerWidth()
+				, menuHeight = $menu.find('.dropdown-menu').outerHeight()
+				, tp = {"position":"absolute","z-index":9999}
+				, Y, X, parentOffset;
+
+			if (mouseY + menuHeight > boundsY) {
+				Y = {"top": mouseY - menuHeight + $(window).scrollTop()};
+			} else {
+				Y = {"top": mouseY + $(window).scrollTop()};
+			}
+
+			if ((mouseX + menuWidth > boundsX) && ((mouseX - menuWidth) > 0)) {
+				X = {"left": mouseX - menuWidth + $(window).scrollLeft()};
+			} else {
+				X = {"left": mouseX + $(window).scrollLeft()};
+			}
+
+			// If context-menu's parent is positioned using absolute or relative positioning,
+			// the calculated mouse position will be incorrect.
+			// Adjust the position of the menu by its offset parent position.
+			parentOffset = $menu.offsetParent().offset();
+			X.left = X.left - parentOffset.left;
+			Y.top = Y.top - parentOffset.top;
+ 
+			return $.extend(tp, Y, X);
+		}
+
+	};
+
+	/* CONTEXT MENU PLUGIN DEFINITION
+	 * ========================== */
+
+	$.fn.contextmenu = function (option,e) {
+		return this.each(function () {
+			var $this = $(this)
+				, data = $this.data('context')
+				, options = (typeof option == 'object') && option;
+
+			if (!data) $this.data('context', (data = new ContextMenu($this, options)));
+			if (typeof option == 'string') data[option].call(data, e);
+		});
+	};
+
+	$.fn.contextmenu.Constructor = ContextMenu;
+
+	/* APPLY TO STANDARD CONTEXT MENU ELEMENTS
+	 * =================================== */
+
+	$(document)
+	   .on('contextmenu.context.data-api', function() {
+			$(toggle).each(function () {
+				var data = $(this).data('context');
+				if (!data) return;
+				data.closemenu();
+			});
+		})
+		.on('contextmenu.context.data-api', toggle, function(e) {
+			$(this).contextmenu('show', e);
+
+			e.preventDefault();
+			e.stopPropagation();
+		});
+		
+}(jQuery));
+
+},{}],18:[function(require,module,exports){
+/* =========================================================
+ * bootstrap-treeview.js v1.2.0
+ * =========================================================
+ * Copyright 2013 Jonathan Miles
+ * Project URL : http://www.jondmiles.com/bootstrap-treeview
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================= */
+
+;(function ($, window, document, undefined) {
+
+	/*global jQuery, console*/
+
+	'use strict';
+
+	var pluginName = 'treeview';
+
+	var _default = {};
+
+	_default.settings = {
+
+		injectStyle: true,
+
+		levels: 2,
+
+		expandIcon: 'glyphicon glyphicon-plus',
+		collapseIcon: 'glyphicon glyphicon-minus',
+		emptyIcon: '',
+		nodeIcon: '',
+		selectedIcon: '',
+		checkedIcon: 'glyphicon glyphicon-check',
+		uncheckedIcon: 'glyphicon glyphicon-unchecked',
+
+		color: undefined, // '#000000',
+		backColor: undefined, // '#FFFFFF',
+		borderColor: undefined, // '#dddddd',
+		onhoverColor: '#F5F5F5',
+		selectedColor: '#FFFFFF',
+		selectedBackColor: '#428bca',
+		searchResultColor: '#D9534F',
+		searchResultBackColor: undefined, //'#FFFFFF',
+
+		enableLinks: false,
+		highlightSelected: true,
+		highlightSearchResults: true,
+		showBorder: true,
+		showIcon: true,
+		showCheckbox: false,
+		showTags: false,
+		multiSelect: false,
+
+		// Event handlers
+		onNodeChecked: undefined,
+		onNodeCollapsed: undefined,
+		onNodeDisabled: undefined,
+		onNodeEnabled: undefined,
+		onNodeExpanded: undefined,
+		onNodeSelected: undefined,
+		onNodeUnchecked: undefined,
+		onNodeUnselected: undefined,
+		onSearchComplete: undefined,
+		onSearchCleared: undefined
+	};
+
+	_default.options = {
+		silent: false,
+		ignoreChildren: false
+	};
+
+	_default.searchOptions = {
+		ignoreCase: true,
+		exactMatch: false,
+		revealResults: true
+	};
+
+	var Tree = function (element, options) {
+
+		this.$element = $(element);
+		this.elementId = element.id;
+		this.styleId = this.elementId + '-style';
+
+		this.init(options);
+
+		return {
+
+			// Options (public access)
+			options: this.options,
+
+			// Initialize / destroy methods
+			init: $.proxy(this.init, this),
+			remove: $.proxy(this.remove, this),
+
+			// Get methods
+			getNode: $.proxy(this.getNode, this),
+			getParent: $.proxy(this.getParent, this),
+			getSiblings: $.proxy(this.getSiblings, this),
+			getSelected: $.proxy(this.getSelected, this),
+			getUnselected: $.proxy(this.getUnselected, this),
+			getExpanded: $.proxy(this.getExpanded, this),
+			getCollapsed: $.proxy(this.getCollapsed, this),
+			getChecked: $.proxy(this.getChecked, this),
+			getUnchecked: $.proxy(this.getUnchecked, this),
+			getDisabled: $.proxy(this.getDisabled, this),
+			getEnabled: $.proxy(this.getEnabled, this),
+
+			// Select methods
+			selectNode: $.proxy(this.selectNode, this),
+			unselectNode: $.proxy(this.unselectNode, this),
+			toggleNodeSelected: $.proxy(this.toggleNodeSelected, this),
+
+			// Expand / collapse methods
+			collapseAll: $.proxy(this.collapseAll, this),
+			collapseNode: $.proxy(this.collapseNode, this),
+			expandAll: $.proxy(this.expandAll, this),
+			expandNode: $.proxy(this.expandNode, this),
+			toggleNodeExpanded: $.proxy(this.toggleNodeExpanded, this),
+			revealNode: $.proxy(this.revealNode, this),
+
+			// Expand / collapse methods
+			checkAll: $.proxy(this.checkAll, this),
+			checkNode: $.proxy(this.checkNode, this),
+			uncheckAll: $.proxy(this.uncheckAll, this),
+			uncheckNode: $.proxy(this.uncheckNode, this),
+			toggleNodeChecked: $.proxy(this.toggleNodeChecked, this),
+
+			// Disable / enable methods
+			disableAll: $.proxy(this.disableAll, this),
+			disableNode: $.proxy(this.disableNode, this),
+			enableAll: $.proxy(this.enableAll, this),
+			enableNode: $.proxy(this.enableNode, this),
+			toggleNodeDisabled: $.proxy(this.toggleNodeDisabled, this),
+
+			// Search methods
+			search: $.proxy(this.search, this),
+			clearSearch: $.proxy(this.clearSearch, this),
+			all: $.proxy(this.all, this)
+		};
+	};
+
+	Tree.prototype.init = function (options) {
+
+		this.tree = [];
+		this.nodes = [];
+
+		if (options.data) {
+			if (typeof options.data === 'string') {
+				options.data = $.parseJSON(options.data);
+			}
+			this.tree = $.extend(true, [], options.data);
+			delete options.data;
+		}
+		this.options = $.extend({}, _default.settings, options);
+
+		this.destroy();
+		this.subscribeEvents();
+		this.setInitialStates({ nodes: this.tree }, 0);
+		this.render();
+	};
+
+	Tree.prototype.remove = function () {
+		this.destroy();
+		$.removeData(this, pluginName);
+		$('#' + this.styleId).remove();
+	};
+
+	Tree.prototype.destroy = function () {
+
+		if (!this.initialized) return;
+
+		this.$wrapper.remove();
+		this.$wrapper = null;
+
+		// Switch off events
+		this.unsubscribeEvents();
+
+		// Reset this.initialized flag
+		this.initialized = false;
+	};
+
+	Tree.prototype.unsubscribeEvents = function () {
+
+		this.$element.off('click');
+		this.$element.off('nodeChecked');
+		this.$element.off('nodeCollapsed');
+		this.$element.off('nodeDisabled');
+		this.$element.off('nodeEnabled');
+		this.$element.off('nodeExpanded');
+		this.$element.off('nodeSelected');
+		this.$element.off('nodeUnchecked');
+		this.$element.off('nodeUnselected');
+		this.$element.off('searchComplete');
+		this.$element.off('searchCleared');
+	};
+
+	Tree.prototype.subscribeEvents = function () {
+
+		this.unsubscribeEvents();
+
+		this.$element.on('click', $.proxy(this.clickHandler, this));
+
+		if (typeof (this.options.onNodeChecked) === 'function') {
+			this.$element.on('nodeChecked', this.options.onNodeChecked);
+		}
+
+		if (typeof (this.options.onNodeCollapsed) === 'function') {
+			this.$element.on('nodeCollapsed', this.options.onNodeCollapsed);
+		}
+
+		if (typeof (this.options.onNodeDisabled) === 'function') {
+			this.$element.on('nodeDisabled', this.options.onNodeDisabled);
+		}
+
+		if (typeof (this.options.onNodeEnabled) === 'function') {
+			this.$element.on('nodeEnabled', this.options.onNodeEnabled);
+		}
+
+		if (typeof (this.options.onNodeExpanded) === 'function') {
+			this.$element.on('nodeExpanded', this.options.onNodeExpanded);
+		}
+
+		if (typeof (this.options.onNodeSelected) === 'function') {
+			this.$element.on('nodeSelected', this.options.onNodeSelected);
+		}
+
+		if (typeof (this.options.onNodeUnchecked) === 'function') {
+			this.$element.on('nodeUnchecked', this.options.onNodeUnchecked);
+		}
+
+		if (typeof (this.options.onNodeUnselected) === 'function') {
+			this.$element.on('nodeUnselected', this.options.onNodeUnselected);
+		}
+
+		if (typeof (this.options.onSearchComplete) === 'function') {
+			this.$element.on('searchComplete', this.options.onSearchComplete);
+		}
+
+		if (typeof (this.options.onSearchCleared) === 'function') {
+			this.$element.on('searchCleared', this.options.onSearchCleared);
+		}
+	};
+
+	/*
+		Recurse the tree structure and ensure all nodes have
+		valid initial states.  User defined states will be preserved.
+		For performance we also take this opportunity to
+		index nodes in a flattened structure
+	*/
+	Tree.prototype.setInitialStates = function (node, level) {
+
+		if (!node.nodes) return;
+		level += 1;
+
+		var parent = node;
+		var _this = this;
+		$.each(node.nodes, function checkStates(index, node) {
+
+			// nodeId : unique, incremental identifier
+			node.nodeId = _this.nodes.length;
+
+			// parentId : transversing up the tree
+			node.parentId = parent.nodeId;
+
+			// if not provided set selectable default value
+			if (!node.hasOwnProperty('selectable')) {
+				node.selectable = true;
+			}
+
+			// where provided we should preserve states
+			node.state = node.state || {};
+
+			// set checked state; unless set always false
+			if (!node.state.hasOwnProperty('checked')) {
+				node.state.checked = false;
+			}
+
+			// set enabled state; unless set always false
+			if (!node.state.hasOwnProperty('disabled')) {
+				node.state.disabled = false;
+			}
+
+			// set expanded state; if not provided based on levels
+			if (!node.state.hasOwnProperty('expanded')) {
+				if (!node.state.disabled &&
+						(level < _this.options.levels) &&
+						(node.nodes && node.nodes.length > 0)) {
+					node.state.expanded = true;
+				}
+				else {
+					node.state.expanded = false;
+				}
+			}
+
+			// set selected state; unless set always false
+			if (!node.state.hasOwnProperty('selected')) {
+				node.state.selected = false;
+			}
+
+			// index nodes in a flattened structure for use later
+			_this.nodes.push(node);
+
+			// recurse child nodes and transverse the tree
+			if (node.nodes) {
+				_this.setInitialStates(node, level);
+			}
+		});
+	};
+
+	Tree.prototype.clickHandler = function (event) {
+
+		if (!this.options.enableLinks) event.preventDefault();
+
+		var target = $(event.target);
+		var node = this.findNode(target);
+		if (!node || node.state.disabled) return;
+		
+		var classList = target.attr('class') ? target.attr('class').split(' ') : [];
+		if ((classList.indexOf('expand-icon') !== -1)) {
+
+			this.toggleExpandedState(node, _default.options);
+			this.render();
+		}
+		else if ((classList.indexOf('check-icon') !== -1)) {
+			
+			this.toggleCheckedState(node, _default.options);
+			this.render();
+		}
+		else {
+			
+			if (node.selectable) {
+				this.toggleSelectedState(node, _default.options);
+				return;
+			} else {
+				this.toggleExpandedState(node, _default.options);
+			}
+
+			this.render();
+		}
+	};
+
+	// Looks up the DOM for the closest parent list item to retrieve the
+	// data attribute nodeid, which is used to lookup the node in the flattened structure.
+	Tree.prototype.findNode = function (target) {
+
+		var nodeId = target.closest('li.list-group-item').attr('data-nodeid');
+		var node = this.nodes[nodeId];
+
+		if (!node) {
+			console.log('Error: node does not exist');
+		}
+		return node;
+	};
+
+	Tree.prototype.toggleExpandedState = function (node, options) {
+		if (!node) return;
+		this.setExpandedState(node, !node.state.expanded, options);
+	};
+
+	Tree.prototype.setExpandedState = function (node, state, options) {
+
+		if (state === node.state.expanded) return;
+
+		if (state && node.nodes) {
+
+			// Expand a node
+			node.state.expanded = true;
+			if (!options.silent) {
+				this.$element.trigger('nodeExpanded', $.extend(true, {}, node));
+			}
+		}
+		else if (!state) {
+
+			// Collapse a node
+			node.state.expanded = false;
+			if (!options.silent) {
+				this.$element.trigger('nodeCollapsed', $.extend(true, {}, node));
+			}
+
+			// Collapse child nodes
+			if (node.nodes && !options.ignoreChildren) {
+				$.each(node.nodes, $.proxy(function (index, node) {
+					this.setExpandedState(node, false, options);
+				}, this));
+			}
+		}
+	};
+
+	Tree.prototype.toggleSelectedState = function (node, options) {
+		if (!node) return;
+		this.setSelectedState(node, !node.state.selected, options);
+	};
+
+	Tree.prototype.setSelectedState = function (node, state, options) {
+
+		if (state === node.state.selected) return;
+
+		if (state) {
+
+			// If multiSelect false, unselect previously selected
+			if (!this.options.multiSelect) {
+				$.each(this.findNodes('true', 'g', 'state.selected'), $.proxy(function (index, node) {
+					this.setSelectedState(node, false, options);
+				}, this));
+			}
+
+			// Continue selecting node
+			node.state.selected = true;
+			try {
+				var nodeel = document.getElementById(this.elementId).querySelector("[data-nodeid=\"" + node.nodeId + "\"]");
+				if (nodeel) {
+					nodeel.classList.add("node-selected")
+					nodeel.setAttribute('style', this.buildStyleOverride(node))
+
+				} else {
+					this.render()
+				}
+			}catch (e){
+				this.render()
+			}
+			if (!options.silent) {
+				this.$element.trigger('nodeSelected', $.extend(true, {}, node));
+			}
+		}
+		else {
+
+			// Unselect node
+			node.state.selected = false;
+			try {
+				var nodeel = document.getElementById(this.elementId).querySelector("[data-nodeid=\"" + node.nodeId + "\"]");
+				if (nodeel) {
+					nodeel.classList.remove("node-selected")
+					nodeel.setAttribute('style', this.buildStyleOverride(node))
+				}
+				else {
+					this.render()
+				}
+			}catch (e){
+				this.render();
+			}
+			if (!options.silent) {
+				this.$element.trigger('nodeUnselected', $.extend(true, {}, node));
+			}
+		}
+	};
+
+	Tree.prototype.toggleCheckedState = function (node, options) {
+		if (!node) return;
+		this.setCheckedState(node, !node.state.checked, options);
+	};
+
+	Tree.prototype.setCheckedState = function (node, state, options) {
+
+		if (state === node.state.checked) return;
+
+		if (state) {
+
+			// Check node
+			node.state.checked = true;
+
+			if (!options.silent) {
+				this.$element.trigger('nodeChecked', $.extend(true, {}, node));
+			}
+		}
+		else {
+
+			// Uncheck node
+			node.state.checked = false;
+			if (!options.silent) {
+				this.$element.trigger('nodeUnchecked', $.extend(true, {}, node));
+			}
+		}
+	};
+
+	Tree.prototype.setDisabledState = function (node, state, options) {
+
+		if (state === node.state.disabled) return;
+
+		if (state) {
+
+			// Disable node
+			node.state.disabled = true;
+
+			// Disable all other states
+			this.setExpandedState(node, false, options);
+			this.setSelectedState(node, false, options);
+			this.setCheckedState(node, false, options);
+
+			if (!options.silent) {
+				this.$element.trigger('nodeDisabled', $.extend(true, {}, node));
+			}
+		}
+		else {
+
+			// Enabled node
+			node.state.disabled = false;
+			if (!options.silent) {
+				this.$element.trigger('nodeEnabled', $.extend(true, {}, node));
+			}
+		}
+	};
+
+	Tree.prototype.render = function () {
+
+		if (!this.initialized) {
+
+			// Setup first time only components
+			this.$element.addClass(pluginName);
+			this.$wrapper = $(this.template.list);
+
+			this.injectStyle();
+
+			this.initialized = true;
+		}
+
+		this.$element.empty().append(this.$wrapper.empty());
+
+		// Build tree
+		this.buildTree(this.tree, 0);
+	};
+
+	// Starting from the root node, and recursing down the
+	// structure we build the tree one node at a time
+	Tree.prototype.buildTree = function (nodes, level) {
+
+		if (!nodes) return;
+		level += 1;
+
+		var _this = this;
+		$.each(nodes, function addNodes(id, node) {
+
+			var treeItem = $(_this.template.item)
+				.addClass('node-' + _this.elementId)
+				.addClass(node.state.checked ? 'node-checked' : '')
+				.addClass(node.state.disabled ? 'node-disabled': '')
+				.addClass(node.state.selected ? 'node-selected' : '')
+				.addClass(node.searchResult ? 'search-result' : '') 
+				.attr('data-nodeid', node.nodeId)
+				.attr('style', _this.buildStyleOverride(node));
+
+			// Add indent/spacer to mimic tree structure
+			for (var i = 0; i < (level - 1); i++) {
+				treeItem.append(_this.template.indent);
+			}
+
+			// Add expand, collapse or empty spacer icons
+			var classList = [];
+			if (node.nodes) {
+				classList.push('expand-icon');
+				if (node.state.expanded) {
+					classList.push(_this.options.collapseIcon);
+				}
+				else {
+					classList.push(_this.options.expandIcon);
+				}
+			}
+			else {
+				classList.push(_this.options.emptyIcon);
+			}
+
+			treeItem
+				.append($(_this.template.icon)
+					.addClass(classList.join(' '))
+				);
+
+
+			// Add node icon
+			if (_this.options.showIcon) {
+				
+				var classList = ['node-icon'];
+
+				classList.push(node.icon || _this.options.nodeIcon);
+				if (node.state.selected) {
+					classList.pop();
+					classList.push(node.selectedIcon || _this.options.selectedIcon || 
+									node.icon || _this.options.nodeIcon);
+				}
+
+				treeItem
+					.append($(_this.template.icon)
+						.addClass(classList.join(' '))
+					);
+			}
+
+			// Add check / unchecked icon
+			if (_this.options.showCheckbox) {
+
+				var classList = ['check-icon'];
+				if (node.state.checked) {
+					classList.push(_this.options.checkedIcon); 
+				}
+				else {
+					classList.push(_this.options.uncheckedIcon);
+				}
+
+				treeItem
+					.append($(_this.template.icon)
+						.addClass(classList.join(' '))
+					);
+			}
+
+			// Add text
+			if (_this.options.enableLinks) {
+				// Add hyperlink
+				treeItem
+					.append($(_this.template.link)
+						.attr('href', node.href)
+						.append(node.text)
+					);
+			}
+			else {
+				// otherwise just text
+				treeItem
+					.append(node.text);
+			}
+
+			// Add tags as badges
+			if (_this.options.showTags && node.tags) {
+				$.each(node.tags, function addTag(id, tag) {
+					treeItem
+						.append($(_this.template.badge)
+							.append(tag)
+						);
+				});
+			}
+
+			// Add item to the tree
+			_this.$wrapper.append(treeItem);
+
+			// Recursively add child ndoes
+			if (node.nodes && node.state.expanded && !node.state.disabled) {
+				return _this.buildTree(node.nodes, level);
+			}
+		});
+	};
+
+	// Define any node level style override for
+	// 1. selectedNode
+	// 2. node|data assigned color overrides
+	Tree.prototype.buildStyleOverride = function (node) {
+
+		if (node.state.disabled) return '';
+
+		var color = node.color;
+		var backColor = node.backColor;
+
+		if (this.options.highlightSelected && node.state.selected) {
+			if (this.options.selectedColor) {
+				color = this.options.selectedColor;
+			}
+			if (this.options.selectedBackColor) {
+				backColor = this.options.selectedBackColor;
+			}
+		}
+
+		if (this.options.highlightSearchResults && node.searchResult && !node.state.disabled) {
+			if (this.options.searchResultColor) {
+				color = this.options.searchResultColor;
+			}
+			if (this.options.searchResultBackColor) {
+				backColor = this.options.searchResultBackColor;
+			}
+		}
+
+		return 'color:' + color +
+			';background-color:' + backColor + ';';
+	};
+
+	// Add inline style into head
+	Tree.prototype.injectStyle = function () {
+
+		if (this.options.injectStyle && !document.getElementById(this.styleId)) {
+			$('<style type="text/css" id="' + this.styleId + '"> ' + this.buildStyle() + ' </style>').appendTo('head');
+		}
+	};
+
+	// Construct trees style based on user options
+	Tree.prototype.buildStyle = function () {
+
+		var style = '.node-' + this.elementId + '{';
+
+		if (this.options.color) {
+			style += 'color:' + this.options.color + ';';
+		}
+
+		if (this.options.backColor) {
+			style += 'background-color:' + this.options.backColor + ';';
+		}
+
+		if (!this.options.showBorder) {
+			style += 'border:none;';
+		}
+		else if (this.options.borderColor) {
+			style += 'border:1px solid ' + this.options.borderColor + ';';
+		}
+		style += '}';
+
+		if (this.options.onhoverColor) {
+			style += '.node-' + this.elementId + ':not(.node-disabled):hover{' +
+				'background-color:' + this.options.onhoverColor + ';' +
+			'}';
+		}
+
+		return this.css + style;
+	};
+
+	Tree.prototype.template = {
+		list: '<ul class="list-group"></ul>',
+		item: '<li class="list-group-item"></li>',
+		indent: '<span class="indent"></span>',
+		icon: '<span class="icon"></span>',
+		link: '<a href="#" style="color:inherit;"></a>',
+		badge: '<span class="badge"></span>'
+	};
+
+	Tree.prototype.css = '.treeview .list-group-item{cursor:pointer}.treeview span.indent{margin-left:10px;margin-right:10px}.treeview span.icon{width:12px;margin-right:5px}.treeview .node-disabled{color:silver;cursor:not-allowed}'
+
+
+	/**
+		Returns a single node object that matches the given node id.
+		@param {Number} nodeId - A node's unique identifier
+		@return {Object} node - Matching node
+	*/
+	Tree.prototype.getNode = function (nodeId) {
+		return this.nodes[nodeId];
+	};
+
+	/**
+		Returns the parent node of a given node, if valid otherwise returns undefined.
+		@param {Object|Number} identifier - A valid node or node id
+		@returns {Object} node - The parent node
+	*/
+	Tree.prototype.getParent = function (identifier) {
+		var node = this.identifyNode(identifier);
+		return this.nodes[node.parentId];
+	};
+
+	/**
+		Returns an array of sibling nodes for a given node, if valid otherwise returns undefined.
+		@param {Object|Number} identifier - A valid node or node id
+		@returns {Array} nodes - Sibling nodes
+	*/
+	Tree.prototype.getSiblings = function (identifier) {
+		var node = this.identifyNode(identifier);
+		var parent = this.getParent(node);
+		var nodes = parent ? parent.nodes : this.tree;
+		return nodes.filter(function (obj) {
+				return obj.nodeId !== node.nodeId;
+			});
+	};
+
+	/**
+		Returns an array of selected nodes.
+		@returns {Array} nodes - Selected nodes
+	*/
+	Tree.prototype.getSelected = function () {
+		return this.findNodes('true', 'g', 'state.selected');
+	};
+
+	/**
+		Returns an array of unselected nodes.
+		@returns {Array} nodes - Unselected nodes
+	*/
+	Tree.prototype.getUnselected = function () {
+		return this.findNodes('false', 'g', 'state.selected');
+	};
+
+	/**
+		Returns an array of expanded nodes.
+		@returns {Array} nodes - Expanded nodes
+	*/
+	Tree.prototype.getExpanded = function () {
+		return this.findNodes('true', 'g', 'state.expanded');
+	};
+
+	/**
+		Returns an array of collapsed nodes.
+		@returns {Array} nodes - Collapsed nodes
+	*/
+	Tree.prototype.getCollapsed = function () {
+		return this.findNodes('false', 'g', 'state.expanded');
+	};
+
+	/**
+		Returns an array of checked nodes.
+		@returns {Array} nodes - Checked nodes
+	*/
+	Tree.prototype.getChecked = function () {
+		return this.findNodes('true', 'g', 'state.checked');
+	};
+
+	/**
+		Returns an array of unchecked nodes.
+		@returns {Array} nodes - Unchecked nodes
+	*/
+	Tree.prototype.getUnchecked = function () {
+		return this.findNodes('false', 'g', 'state.checked');
+	};
+
+	/**
+		Returns an array of disabled nodes.
+		@returns {Array} nodes - Disabled nodes
+	*/
+	Tree.prototype.getDisabled = function () {
+		return this.findNodes('true', 'g', 'state.disabled');
+	};
+
+	/**
+		Returns an array of enabled nodes.
+		@returns {Array} nodes - Enabled nodes
+	*/
+	Tree.prototype.getEnabled = function () {
+		return this.findNodes('false', 'g', 'state.disabled');
+	};
+
+
+	/**
+		Set a node state to selected
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.selectNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setSelectedState(node, true, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Set a node state to unselected
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.unselectNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setSelectedState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Toggles a node selected state; selecting if unselected, unselecting if selected.
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.toggleNodeSelected = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.toggleSelectedState(node, options);
+		}, this));
+
+		this.render();
+	};
+
+
+	/**
+		Collapse all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.collapseAll = function (options) {
+		var identifiers = this.findNodes('true', 'g', 'state.expanded');
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setExpandedState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Collapse a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.collapseNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setExpandedState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Expand all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.expandAll = function (options) {
+		options = $.extend({}, _default.options, options);
+
+		if (options && options.levels) {
+			this.expandLevels(this.tree, options.levels, options);
+		}
+		else {
+			var identifiers = this.findNodes('false', 'g', 'state.expanded');
+			this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+				this.setExpandedState(node, true, options);
+			}, this));
+		}
+
+		this.render();
+	};
+
+	/**
+		Expand a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.expandNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setExpandedState(node, true, options);
+			if (node.nodes && (options && options.levels)) {
+				this.expandLevels(node.nodes, options.levels-1, options);
+			}
+		}, this));
+
+		this.render();
+	};
+
+	Tree.prototype.expandLevels = function (nodes, level, options) {
+		options = $.extend({}, _default.options, options);
+
+		$.each(nodes, $.proxy(function (index, node) {
+			this.setExpandedState(node, (level > 0) ? true : false, options);
+			if (node.nodes) {
+				this.expandLevels(node.nodes, level-1, options);
+			}
+		}, this));
+	};
+
+	/**
+		Reveals a given tree node, expanding the tree from node to root.
+		@param {Object|Number|Array} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.revealNode = function (identifiers, options) {
+		var n=null;
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			n=node;
+			var parentNode = this.getParent(node);
+			while (parentNode) {
+				this.setExpandedState(parentNode, true, options);
+				parentNode = this.getParent(parentNode);
+			};
+		}, this));
+
+		this.render();
+		// try {
+		// 	var e = document.getElementById(this.elementId).querySelector("[data-nodeid=\"" + n.nodeId + "\"]")[0]
+		// 	e.scrollIntoView();
+		// } catch (e){
+        //
+		// }
+
+	};
+
+	/**
+		Toggles a nodes expanded state; collapsing if expanded, expanding if collapsed.
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.toggleNodeExpanded = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.toggleExpandedState(node, options);
+		}, this));
+		
+		this.render();
+	};
+
+
+	/**
+		Check all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.checkAll = function (options) {
+		var identifiers = this.findNodes('false', 'g', 'state.checked');
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setCheckedState(node, true, options);
+		}, this));
+
+		this.render();
+	};
+
+	Tree.prototype.all = function (options) {
+		return this.nodes;
+	};
+
+	/**
+		Check a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.checkNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setCheckedState(node, true, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Uncheck all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.uncheckAll = function (options) {
+		var identifiers = this.findNodes('true', 'g', 'state.checked');
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setCheckedState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Uncheck a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.uncheckNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setCheckedState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Toggles a nodes checked state; checking if unchecked, unchecking if checked.
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.toggleNodeChecked = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.toggleCheckedState(node, options);
+		}, this));
+
+		this.render();
+	};
+
+
+	/**
+		Disable all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.disableAll = function (options) {
+		var identifiers = this.findNodes('false', 'g', 'state.disabled');
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setDisabledState(node, true, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Disable a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.disableNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setDisabledState(node, true, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Enable all tree nodes
+		@param {optional Object} options
+	*/
+	Tree.prototype.enableAll = function (options) {
+		var identifiers = this.findNodes('true', 'g', 'state.disabled');
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setDisabledState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Enable a given tree node
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.enableNode = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setDisabledState(node, false, options);
+		}, this));
+
+		this.render();
+	};
+
+	/**
+		Toggles a nodes disabled state; disabling is enabled, enabling if disabled.
+		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+		@param {optional Object} options
+	*/
+	Tree.prototype.toggleNodeDisabled = function (identifiers, options) {
+		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
+			this.setDisabledState(node, !node.state.disabled, options);
+		}, this));
+
+		this.render();
+	};
+
+
+	/**
+		Common code for processing multiple identifiers
+	*/
+	Tree.prototype.forEachIdentifier = function (identifiers, options, callback) {
+
+		options = $.extend({}, _default.options, options);
+
+		if (!(identifiers instanceof Array)) {
+			identifiers = [identifiers];
+		}
+
+		$.each(identifiers, $.proxy(function (index, identifier) {
+			callback(this.identifyNode(identifier), options);
+		}, this));	
+	};
+
+	/*
+		Identifies a node from either a node id or object
+	*/
+	Tree.prototype.identifyNode = function (identifier) {
+		return ((typeof identifier) === 'number') ?
+						this.nodes[identifier] :
+						identifier;
+	};
+
+	/**
+		Searches the tree for nodes (text) that match given criteria
+		@param {String} pattern - A given string to match against
+		@param {optional Object} options - Search criteria options
+		@return {Array} nodes - Matching nodes
+	*/
+	Tree.prototype.search = function (pattern, options) {
+		options = $.extend({}, _default.searchOptions, options);
+
+		this.clearSearch({ render: false });
+
+		var results = [];
+		if (pattern && pattern.length > 0) {
+
+			if (options.exactMatch) {
+				pattern = '^' + pattern + '$';
+			}
+
+			var modifier = 'g';
+			if (options.ignoreCase) {
+				modifier += 'i';
+			}
+
+			results = this.findNodes(pattern, modifier);
+
+			// Add searchResult property to all matching nodes
+			// This will be used to apply custom styles
+			// and when identifying result to be cleared
+			$.each(results, function (index, node) {
+				node.searchResult = true;
+			})
+		}
+
+		// If revealResults, then render is triggered from revealNode
+		// otherwise we just call render.
+		if (options.revealResults) {
+			this.revealNode(results);
+		}
+		else {
+			this.render();
+		}
+
+		this.$element.trigger('searchComplete', $.extend(true, {}, results));
+
+		return results;
+	};
+
+	/**
+		Clears previous search results
+	*/
+	Tree.prototype.clearSearch = function (options) {
+
+		options = $.extend({}, { render: true }, options);
+
+		var results = $.each(this.findNodes('true', 'g', 'searchResult'), function (index, node) {
+			node.searchResult = false;
+		});
+
+		if (options.render) {
+			this.render();	
+		}
+		
+		this.$element.trigger('searchCleared', $.extend(true, {}, results));
+	};
+
+	/**
+		Find nodes that match a given criteria
+		@param {String} pattern - A given string to match against
+		@param {optional String} modifier - Valid RegEx modifiers
+		@param {optional String} attribute - Attribute to compare pattern against
+		@return {Array} nodes - Nodes that match your criteria
+	*/
+	Tree.prototype.findNodes = function (pattern, modifier, attribute) {
+
+		modifier = modifier || 'g';
+		attribute = attribute || 'text';
+
+		var _this = this;
+		return $.grep(this.nodes, function (node) {
+			var val = _this.getNodeValue(node, attribute);
+			if (typeof val === 'string') {
+				return val.match(new RegExp(pattern, modifier));
+			}
+		});
+	};
+
+	/**
+		Recursive find for retrieving nested attributes values
+		All values are return as strings, unless invalid
+		@param {Object} obj - Typically a node, could be any object
+		@param {String} attr - Identifies an object property using dot notation
+		@return {String} value - Matching attributes string representation
+	*/
+	Tree.prototype.getNodeValue = function (obj, attr) {
+		var index = attr.indexOf('.');
+		if (index > 0) {
+			var _obj = obj[attr.substring(0, index)];
+			var _attr = attr.substring(index + 1, attr.length);
+			return this.getNodeValue(_obj, _attr);
+		}
+		else {
+			if (obj.hasOwnProperty(attr)) {
+				return obj[attr].toString();
+			}
+			else {
+				return undefined;
+			}
+		}
+	};
+
+	var logError = function (message) {
+		if (window.console) {
+			window.console.error(message);
+		}
+	};
+
+	// Prevent against multiple instantiations,
+	// handle updates and method calls
+	$.fn[pluginName] = function (options, args) {
+
+		var result;
+
+		this.each(function () {
+			var _this = $.data(this, pluginName);
+			if (typeof options === 'string') {
+				if (!_this) {
+					logError('Not initialized, can not call method : ' + options);
+				}
+				else if (!$.isFunction(_this[options]) || options.charAt(0) === '_') {
+					logError('No such method : ' + options);
+				}
+				else {
+					if (!(args instanceof Array)) {
+						args = [ args ];
+					}
+					result = _this[options].apply(_this, args);
+				}
+			}
+			else if (typeof options === 'boolean') {
+				result = _this;
+			}
+			else {
+				$.data(this, pluginName, new Tree(this, $.extend(true, {}, options)));
+			}
+		});
+
+		return result || this;
+	};
+
+})(jQuery, window, document);
+},{}]},{},[1]);

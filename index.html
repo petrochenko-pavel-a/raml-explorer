@@ -4,142 +4,20 @@
     <title>RAML Explorer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./lib/bootstrap-treeview.min.css">
-    <script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.9/css/bootstrap-dialog.min.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="lib/styles.css">
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"  integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="./lib/bootstrap-contextmenu.js"></script>
-    <script src="./lib/bootstrap-treeview.js"></script>
-    <script src="./lib/split.js"></script>
-    <script src="./lib/marked.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap3-dialog/1.34.9/js/bootstrap-dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js"></script>
     <script src="./lib/raml-1-parser.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.8.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.8.0/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-        ga('create', 'UA-86661830-1', 'auto');
-        ga('send', 'pageview');
-
-    </script>
-    <!-- Latest compiled and minified CSS -->
-    <!-- Latest compiled and minified JavaScript -->
-    <style>
-        html, body {
-            height: 100%;
-        }
-
-        body {
-            padding: 8px;
-            background-color: #F6F6F6;
-            box-sizing: border-box;
-        }
-
-        .split {
-            -webkit-box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            box-sizing: border-box;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .content {
-            border: 1px solid #C0C0C0;
-            box-shadow: inset 0 1px 2px #e4e4e4;
-            background-color: #fff;
-        }
-
-        .gutter {
-            background-color: transparent;
-            background-repeat: no-repeat;
-            background-position: 50%;
-        }
-
-        .gutter.gutter-horizontal {
-            cursor: col-resize;
-            background-image: url('./lib/grips/vertical.png');
-        }
-
-        .gutter.gutter-vertical {
-            cursor: row-resize;
-            background-image: url('./lib/grips/horizontal.png');
-        }
-
-        .split.split-horizontal, .gutter.gutter-horizontal {
-            height: 100%;
-            float: left;
-        }
-    </style>
+    <script src="analytics.js"></script>
 </head>
-<body style="display: flex;flex-direction: column;margin: 0px;padding: 3px;margin-bottom: 0px;padding-bottom: 0px">
-<div style="height: 100%">
-    <nav class="navbar navbar-inverse" id="header" style="margin-bottom: 5px;background-image: url(https://github.com/themes/midnight/images/nav-bg.gif)">
-        <div class="container-fluid" style="padding-left: 0px">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="#" style="margin: 0px;padding: 0px">
-                    <img src="http://marketplace.eclipse.org/sites/default/files/styles/ds_medium/public/Logo110_80_1.png" height="46px" style="margin-left: 2px;margin-top:2px;margin-right: 10px"/>
-                    <a class = "navbar-brand" href = "#">API REGISTRY</a>
-                </a>
-
-            </div>
-
-            <div class="navbar-right">
-            <ul class="nav navbar-nav" >
-                <li><a href="#" data-toggle="modal" data-target="#myModal">About</a></li>
-                <li><a href="https://goo.gl/forms/SAr1zd6AuKi2EWbD2">Add an API</a></li>
-                <!--<li class="dropdown">-->
-                    <!--<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>-->
-                    <!--<ul class="dropdown-menu">-->
-                        <!--<li><a href="#">Action</a></li>-->
-                        <!--<li><a href="#">Another action</a></li>-->
-                        <!--<li><a href="#">Something else here</a></li>-->
-                        <!--<li role="separator" class="divider"></li>-->
-                        <!--<li><a href="#">Separated link</a></li>-->
-                    <!--</ul>-->
-                <!--</li>-->
-            </ul>
-            <a class="header-logo-invertocat" href="https://github.com/apiregistry/registry" data-hotkey="g d" aria-label="Homepage" data-ga-click="Header, go to dashboard, icon:logo">
-                <img src="./images/GitHub-Mark-Light-32px.png" height="32"style="margin: 8px"/>
-            </a>
-            </div>
-        </div>
-    </nav>
-    <div id="rest" style="height: 90%">
-    </div>
-    <p class="navbar-text" id="stat" style="margin: 0px;padding: 0px;float: right;">...</p>
-    <!-- Modal -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">API Registry</h4>
-                </div>
-                <div class="modal-body">
-                    This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.
-                    <hr>
-                    All API specs contributed to project by authors are covered by the CC01.0 license.
-                    All API specs acquired from public sources under the Fair use principal.
-
-                    <h4>Spec sources</h4>
-
-                    Some specs are taken from Open Source projects:
-
-                    darklynx/swagger-api-collection - OpenAPI(aka Swagger) spec for Instagram API
-                    Mermade/bbcparse - OpenAPI(aka Swagger) spec for BBC Nitro API
-                    amardeshbd/medium-api-specification - OpenAPI (aka Swagger 2.0) spec for Medium API
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<body style="margin: 0px;padding: 3px;margin-bottom: 0px;padding-bottom: 0px">
+<div id="app" style="height: 100%"></div>
 </body>
-<script src="bundle.js">
-</script>
+<script src="bundle.js"></script>
 </html>

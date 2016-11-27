@@ -1,3 +1,8 @@
+
+declare var require: any
+require("../../lib/bootstrap-contextmenu")
+require("../../lib/bootstrap-treeview")
+
 export interface IControl{
     render(e:Element);
     dispose?();
@@ -9,6 +14,7 @@ export interface IControl{
 
 export interface IContributionItem{
     title?: string
+    link?: string
     image?: string
     disabled?: boolean
     checked?:boolean
@@ -48,20 +54,29 @@ export class ToolbarRenderer{
 }
 export class DrowpdownMenu{
 
-    constructor(private menu:IMenu){}
+    constructor(private menu:IMenu,private setRoles:boolean=true){}
 
     render(host:Element){
         this.menu.items.forEach(x=>{
             var li=document.createElement("li");
-            li.setAttribute("role","presentation");
+            if (this.setRoles) {
+                li.setAttribute("role", "presentation");
+            }
+
             if (x.disabled){
                 li.classList.add("disabled");
             }
-            var a=document.createElement("a");
 
-            a.setAttribute("role","menuitem")
+            var a=document.createElement("a");
+            a.setAttribute("href",x.link?x.link:"#")
+            if (this.setRoles) {
+                a.setAttribute("role", "menuitem")
+            }
+            a.style.cursor="hand";
             if ((x).run){
-                a.onclick=(x).run;
+                a.onclick=function (e){
+                    x.run();
+                };
             }
             if (x.checked){
                 a.innerHTML=x.title+"<span class='glyphicon glyphicon-ok' style='float: right'></span>"

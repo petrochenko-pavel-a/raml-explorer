@@ -106,7 +106,9 @@ function groupBy(els:any[], f:(x)=>string){
     return result;
 }
 
-
+function replaceAll(target,search, replacement) {
+    return target.split(search).join(replacement);
+}
 export class LoadedRegistry{
 
     constructor(protected registry:IRegistry){}
@@ -129,8 +131,18 @@ export class LoadedRegistry{
         var f=this.find(this.libraries(),url);
         return f;
     }
+    itemId(apis:(GroupNode|ApiWithVersions)):string{
+        if ((<any>apis).versions){
+            var av:ApiWithVersions=<any>apis;
+            return replaceAll(av.name,' ',"_");
+        }
+        else{
+            return apis.name;
+        }
+    }
 
     private find(apis:(GroupNode|ApiWithVersions)[],url:string){
+        var rs=replaceAll(url,'_'," ");
         for (var i=0;i<apis.length;i++){
             if (apis[i] instanceof ApiWithVersions){
                 var w:ApiWithVersions=<ApiWithVersions>apis[i];
@@ -138,6 +150,9 @@ export class LoadedRegistry{
                     if (w.versions[j].location==url){
                         return w;
                     }
+                }
+                if (w.name==url||w.name==rs){
+                    return w;
                 }
             }
             else{
@@ -225,3 +240,4 @@ export function getInstance(url:string,f:(data:LoadedRegistry,s:number)=>void){
         loadedUsageData(data);
     })
 }
+

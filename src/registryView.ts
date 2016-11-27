@@ -5,7 +5,7 @@ import GroupNode=rc.GroupNode;
 import ApiWithVersions=rc.ApiWithVersions;
 import getInstance=rc.getInstance;
 import LoadedRegistry=rc.LoadedRegistry;
-
+import state=require("./state")
 class RegistryContentProvider implements workbench.ITreeContentProvider{
     elements(i:any):any[]{
         return i;
@@ -23,21 +23,49 @@ class RegistryView extends workbench.AccorditionTreeView{
     protected registry:LoadedRegistry;
 
     protected load() {
-        rc.getInstance("https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json",(data:any,s:number)=>{
+        state.getRegistryInstance(((data:any,s:number)=>{
             this.node=data;
             this.registry=data;
             this.refresh();
-            if (this.url){
-                var n=this.registry.findNodeWithUrl(this.url);
+            this.updateFromState();
+        }))
+    }
+    private updatingFromState=false;
+    public updateFromState() {
+        try {
+            if (this.updatingFromState){
+                return;
+            }
+            this.updatingFromState=true;
+            if (state.specificationId()) {
+                var n = this.registry.findNodeWithUrl(state.specificationId());
                 if (n) {
+
                     this.setSelection(n);
                 }
             }
-        })
+            if (state.registryTab()) {
+                this.showTab(state.registryTab())
+            }
+        }finally {
+            this.updatingFromState=false;
+        }
     }
+    protected onSelection(v: any[]): any {
+        if (!this.updatingFromState&&v[0]){
+            this.updatingFromState=true;
+            try {
+                state.propogateSpecification(this.registry.itemId(v[0]));
+            }
+            finally {
+                this.updatingFromState=false;
+            }
+        }
+        return super.onSelection(v);
+    }
+
     protected url: string;
     setSelectedUrl(url:string){
-
         this.url=url;
         if (!this.node){
             return;
@@ -51,11 +79,13 @@ class RegistryView extends workbench.AccorditionTreeView{
     }
     searchable=true;
 
+
+
     protected customizeAccordition(root: Accordition, node: rc.LoadedRegistry) {
         this.addTree("Apis",node.apis())
         this.addTree("Libraries",node.libraries())
         var v=this;
-        document.getElementById("stat").innerHTML=node.apiCount()+" apis, "+node.specCount()+" unique specifications, and counting.";
+        this.setStatusMessage(node.apiCount()+" apis, "+node.specCount()+" unique specifications, and counting.");
     }
 
     protected customize(tree: workbench.TreeView) {

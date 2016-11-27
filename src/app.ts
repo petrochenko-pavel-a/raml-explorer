@@ -4,97 +4,58 @@ import RAMLTreeView=require("./treeView")
 import RAMLDetailsView=require("./detailsView")
 import RegistryView=require("./registryView")
 import hl=require("./core/hl")
-
-var url=""
-
-var bu:string="";
-export function setBackUrl(u:string){
-    bu=u;
-}
-
-export var states: string[] = [];
-
-export function back(){
-    if (states.length > 0) {
-        if (bu){
-            showApi(bu,()=>{
-                ramlView.openNodeById(states.pop());
-            });
-            bu=null;
-        }
-        else {
-            ramlView.openNodeById(states.pop());
-        }
+import {Application} from "./framework/workbench";
+import state=require("./state")
+class AboutDialog implements controls.IControl{
+    title(){
+        return "About"
     }
-    else{
-        init();
+    render(e:Element){
+        e.innerHTML=
+            `This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.
+        <p>
+        <hr>
+        All API specs contributed to project by authors are covered by the CC01.0 license.
+        All API specs acquired from public sources under the Fair use principal.
+        </p>
+        <hr>
+        Some specs are taken from Open Source projects:
+        <ul>
+        <li>darklynx/swagger-api-collection - OpenAPI(aka Swagger) spec for Instagram API</li>
+        <li>Mermade/bbcparse - OpenAPI(aka Swagger) spec for BBC Nitro API</li>
+        <li>amardeshbd/medium-api-specification - OpenAPI (aka Swagger 2.0) spec for Medium API</li>
+        </ul>`
     }
 }
-var backAction={
-    title:"Back",
-    run(){
-        back()
-    }
-};
-
 export var ramlView=new RAMLTreeView("");
 var details=new RAMLDetailsView("Details","Details");
 var regView=new RegistryView("API Registry")
-details.getContextMenu().add(backAction);
-ramlView.getContextMenu().add(backAction);
+details.getContextMenu().add(new workbench.BackAction());
+ramlView.getContextMenu().add(new workbench.BackAction());
 ramlView.addSelectionConsumer(details);
-regView.addSelectionConsumer(ramlView);
-
-if (history && history.pushState) {
-    window.onpopstate = function (event) {
-        back();
-    };
-}
-workbench.registerHandler((x: string)=> {
-    if (history.pushState) {
-        var node = ramlView.getSelection();
-        if (node && node.length > 0) {
-            states.push(node[0].id())
-        }
-        history.pushState({page: x}, document.title, document.location.toString());
-
-    }
-    ramlView.openNodeById(x);
+workbench.registerHandler((x)=>{
+    state.onState(x);
     return true;
 })
-function init(){
-    var page=new workbench.Page("rest");
-    page.addView(details, "*", 100, workbench.Relation.LEFT);
-    page.addView(regView,"Details",15,workbench.Relation.LEFT);
-    page.addView(ramlView,"Details",20,workbench.Relation.LEFT);
-    function initSizes(){
-        var h=document.getElementById("header").clientHeight+40;
-        document.getElementById("rest").setAttribute("style","height:"+(window.innerHeight-h)+"px");
-    }
-    initSizes();
-    window.onresize=initSizes;
-    var w:any=window;
-    w.openVersion=function(x){
-        ramlView.setVersion(x);
-    }
-}
-export function showApi(url,cb?:()=>any){
-    var b=regView.setSelectedUrl(url)
-    if (b) {
-        ramlView.cb=cb;
+state.addListener(()=>{
+    regView.updateFromState()
+    ramlView.updateFromState();
+});
 
-    }
-    else {
-        ramlView.setUrl(url,cb)
-    }
-}
+var perspective={
 
-var h=document.location.hash
-if (h&&h.length>1){
-    url=h.substr(1);
-    init();
-    showApi(url)
+    title:"API Registry",
+
+    actions:[
+        new workbench.ShowDialogAction("About",new AboutDialog()),
+        {title: "Add an API",link:"https://goo.gl/forms/SAr1zd6AuKi2EWbD2"}
+    ],
+
+    views:[
+        {view:details,ref:"*",ratio:100,relation:workbench.Relation.LEFT},
+        {view:regView,ref:"Details",ratio:15,relation:workbench.Relation.LEFT},
+        {view:ramlView,ref:"Details",ratio:20,relation:workbench.Relation.LEFT}
+    ]
 }
-else{
-    init();
-}
+var app=new Application("API REGISTRY",perspective,"app");
+
