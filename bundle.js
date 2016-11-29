@@ -1835,7 +1835,7 @@ var Accordition = (function (_super) {
             gids.push(gid);
             var styleExpanded = i == 0 ? "flex: 1 1 0" : "display: none";
             var expanded = i == 0;
-            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\" style=\"display: inline\"><a>" + this.children[i].title() + "</a></h4>\n                <div style=\"float: right\" id=\"" + ("T" + hId) + "\"></div>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
+            var s = "<div id=\"" + gid + "\" class=\"panel panel-default\" style=\"margin: 0px;" + styleExpanded + "; display: flex;flex-direction: column\">\n               <div class=\"panel-heading\" id=\"" + hId + "\">\n                <h4 class=\"panel-title\" style=\"display: inline;cursor: pointer\"><a>" + this.children[i].title() + "</a></h4>\n                <div style=\"float: right\" id=\"" + ("T" + hId) + "\"></div>\n            </div>\n            <div id=\"" + elId + "\"  style=\"flex: 1 1 auto;display: flex;flex-direction: column;" + styleExpanded + "\">\n            <div class=\"panel-body\" style=\"background: red;flex: 1 1\"><div id=\"" + bid + "\" style=\"background: green;\"></div></div>\n            </div>\n           </div>";
             templates.push(s);
         }
         var content = "<div class=\"panel-group\" id=\"" + topId + "\" style=\"margin: 0;padding: 0;display: flex;flex-direction: column;flex: 1 1 auto; height: 100%\">\n             " + templates.join('') + "       \n        </div>";
@@ -3350,7 +3350,7 @@ var ResponseRenderer = (function () {
             result.push(nr.renderNode(x, false));
         });
         tr.renderParameters("Headers", h.elements().filter(function (x) { return x.property().nameId() == "headers"; }), result, this.meta);
-        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length == 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
+        result.push(renderTabFolder(null, rs, new tr.TypeRenderer(this.meta, rs.length >= 1 && this.isSingle ? "Response(" + h.name() + ") payload" : "Payload", rs.length == 1)));
         return result.join("");
     };
     return ResponseRenderer;
@@ -4436,6 +4436,7 @@ var RAMLTreeView = (function (_super) {
                         run: function () {
                             v.operations = false;
                             v.refresh();
+                            v.showTab("resources");
                         }
                     }];
                 types.controlId = "ops";
@@ -4446,6 +4447,7 @@ var RAMLTreeView = (function (_super) {
                         run: function () {
                             v.operations = true;
                             v.refresh();
+                            v.showTab("methods");
                         }
                     }];
                 types.controlId = "ops";

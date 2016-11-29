@@ -276,7 +276,7 @@ export class Accordition extends Composite{
             var expanded=i==0;
             var s=`<div id="${gid}" class="panel panel-default" style="margin: 0px;${styleExpanded}; display: flex;flex-direction: column">
                <div class="panel-heading" id="${hId}">
-                <h4 class="panel-title" style="display: inline"><a>${this.children[i].title()}</a></h4>
+                <h4 class="panel-title" style="display: inline;cursor: pointer"><a>${this.children[i].title()}</a></h4>
                 <div style="float: right" id="${"T"+hId}"></div>
             </div>
             <div id="${elId}"  style="flex: 1 1 auto;display: flex;flex-direction: column;${styleExpanded}">

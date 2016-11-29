@@ -246,6 +246,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                     run(){
                         v.operations=false;
                         v.refresh();
+                        v.showTab("resources");
                     }
 
                 }];
@@ -259,6 +260,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                     run(){
                         v.operations=true;
                         v.refresh();
+                        v.showTab("methods");
                     }
 
                 }];

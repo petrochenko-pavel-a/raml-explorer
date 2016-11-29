@@ -41,7 +41,6 @@ state.addListener(()=>{
     regView.updateFromState()
     ramlView.updateFromState();
 });
-
 var perspective={
 
     title:"API Registry",
