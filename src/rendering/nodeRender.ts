@@ -22,6 +22,17 @@ function renderVersionsSwitch(h:HeaderRenderer) {
     </div></h5>`;
 };
 
+var id=12312;
+export function buttonStyleTab(name: string,content:string){
+    var elId="exp"+(id++)
+    var s=`<p>
+    <a class="btn btn-primary btn-sm" data-toggle="collapse" href="#${id}" aria-expanded="false" aria-controls="${id}">
+    ${name}
+    </a>
+    <div class="collapse"  id="${id}">
+    <div class="card card-block">`;
+    return s+content+"</div></div>"
+}
 export class HeaderRenderer{
 
     title: string

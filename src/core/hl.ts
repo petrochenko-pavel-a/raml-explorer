@@ -9,7 +9,8 @@ export interface IProperty{
     local?:boolean
 }
 export interface Example{
-
+    expandAsString():string
+    isEmpty():boolean
 }
 export interface IType{
     nameId():any

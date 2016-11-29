@@ -2841,6 +2841,13 @@ function renderVersionsSwitch(h) {
     return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return ("<li><a onclick=\"WorkbenchUtils.getView(event.target).openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("") + "\n                  </ul>\n    </div></h5>";
 }
 ;
+var id = 12312;
+function buttonStyleTab(name, content) {
+    var elId = "exp" + (id++);
+    var s = "<p>\n    <a class=\"btn btn-primary btn-sm\" data-toggle=\"collapse\" href=\"#" + id + "\" aria-expanded=\"false\" aria-controls=\"" + id + "\">\n    " + name + "\n    </a>\n    <div class=\"collapse\"  id=\"" + id + "\">\n    <div class=\"card card-block\">";
+    return s + content + "</div></div>";
+}
+exports.buttonStyleTab = buttonStyleTab;
 var HeaderRenderer = (function () {
     function HeaderRenderer(versions) {
         this.versions = versions;
@@ -3448,9 +3455,15 @@ var NameColumn = (function () {
     function NameColumn() {
         this.nowrap = true;
     }
-    NameColumn.prototype.id = function () { return "name"; };
-    NameColumn.prototype.caption = function () { return "Name"; };
-    NameColumn.prototype.width = function () { return "15em;"; };
+    NameColumn.prototype.id = function () {
+        return "name";
+    };
+    NameColumn.prototype.caption = function () {
+        return "Name";
+    };
+    NameColumn.prototype.width = function () {
+        return "15em;";
+    };
     NameColumn.prototype.render = function (p, rowId) {
         var rs = p.nameId();
         var s = p.range();
@@ -3513,8 +3526,12 @@ var skipProps = {
 var Facets = (function () {
     function Facets() {
     }
-    Facets.prototype.id = function () { return "name"; };
-    Facets.prototype.caption = function () { return "Facets &amp; Annotations"; };
+    Facets.prototype.id = function () {
+        return "name";
+    };
+    Facets.prototype.caption = function () {
+        return "Facets &amp; Annotations";
+    };
     Facets.prototype.render = function (p) {
         var decl = hl.getDeclaration(p.range(), false);
         var rs = [];
@@ -3559,8 +3576,12 @@ var Facets = (function () {
 var Description = (function () {
     function Description() {
     }
-    Description.prototype.id = function () { return "description"; };
-    Description.prototype.caption = function () { return "Description"; };
+    Description.prototype.id = function () {
+        return "description";
+    };
+    Description.prototype.caption = function () {
+        return "Description";
+    };
     Description.prototype.render = function (p) {
         var desc = hl.description(p.range());
         var s = marked(desc, { gfm: true });
@@ -3583,8 +3604,12 @@ marked.Lexer.rules.tables.heading = marked.Lexer.rules.normal.heading;
 var Type = (function () {
     function Type() {
     }
-    Type.prototype.id = function () { return "type"; };
-    Type.prototype.caption = function () { return "Type"; };
+    Type.prototype.id = function () {
+        return "type";
+    };
+    Type.prototype.caption = function () {
+        return "Type";
+    };
     Type.prototype.render = function (p) {
         var s = p.range();
         if (p.local || (!s.nameId() && !s.isArray() && !s.isUnion())) {
@@ -3602,8 +3627,12 @@ var Type = (function () {
 var Meta = (function () {
     function Meta() {
     }
-    Meta.prototype.id = function () { return "meta"; };
-    Meta.prototype.caption = function () { return "Type &amp; Meta"; };
+    Meta.prototype.id = function () {
+        return "meta";
+    };
+    Meta.prototype.caption = function () {
+        return "Type &amp; Meta";
+    };
     Meta.prototype.render = function (p) {
         var v = new Type().render(p);
         var f = new Facets().render(p);
@@ -3786,7 +3815,14 @@ var TypeRenderer = (function () {
             result.push("Union options:");
             result.push(renderTypeList([at]).join(""));
         }
-        at.examples();
+        var examples = at.examples();
+        if (examples != null && examples.length > 0) {
+            var ex = examples.map(function (e) {
+                return ("<pre><code class='json'>") +
+                    (e.expandAsString()) + ("</code></pre>");
+            }).join("");
+            result.push(nr.buttonStyleTab((examples.length == 1 ? "Example" : "Examples"), ex));
+        }
         if (this.global) {
             var usage = [];
             hl.findUsages(h.root(), at, usage);
