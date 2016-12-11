@@ -16,7 +16,7 @@ class ExplorerState {
 
     private specTabLink: string
 
-
+    private extras: string
 
     private listeners: (()=>void)[] = []
 
@@ -35,6 +35,8 @@ class ExplorerState {
 
     private requests:((data: rc.LoadedRegistry, s: number)=>void)[]=[]
     private queried:boolean;
+
+    private options:{ [name:string]:string}={}
 
     getApiInstance(current:any,resC:(n:any,path:string)=>void,cb:(n:hl.IHighLevelNode)=>void){
         this.getRegistryInstance((r,c)=>{
@@ -83,6 +85,10 @@ class ExplorerState {
         }
     }
 
+    registry(){
+        return this.lr;
+    }
+
 
     registryUrl() {
         return this._registryUrl
@@ -100,6 +106,14 @@ class ExplorerState {
         if (this.registryTabLink) {
             return "#registryTab:" + this.registryTabLink;
         }
+        var optionsString="";
+        if (Object.keys(this.options).length>0){
+            var optArr:string[]=[];
+            Object.keys(this.options).forEach(k=>{
+                optArr.push(k+"="+this.options[k]);
+            })
+            optionsString="^"+optArr.join(",")
+        }
         if (this.specificationLink) {
             var result = [];
             if (this.version){
@@ -113,7 +127,7 @@ class ExplorerState {
             else if (this.specTabLink) {
                 result.push("specTab:" + this.specTabLink);
             }
-            return "#" + result.join("#");
+            return "#" + result.join("#")+optionsString;
         }
     }
     propogateNode(nodeId:string){
@@ -146,12 +160,37 @@ class ExplorerState {
         this.listeners.forEach(x=>x());
     }
 
+    getOptions(){
+        return this.options;
+    }
+    setOption(opt:string,val:string){
+        this.options[opt]=val;
+        this.stateUpdated();
+    }
+
     stateUpdated() {
         workbench.notifyState({hash: this.encode()})
         this.listeners.forEach(x=>x());
     }
-
+    clearOptions(){
+        this.options={}
+        this.stateUpdated();
+    }
     decode(hash: string) {
+        var extras=hash.lastIndexOf('^')
+        this.options={};
+        if (extras!=-1){
+            var extraoptions=hash.substring(extras+1);
+            var elements=extraoptions.split(",");
+            var v=this;
+            elements.forEach(e=>{
+                var a=e.indexOf('=')
+                var key=e.substring(0,a);
+                var val=e.substring(a+1);
+                v.options[key]=val;
+            })
+            hash=hash.substring(0,extras);
+        }
         if (hash.indexOf("#registryTab:") == 0) {
             this.registryTabLink = hash.substring("#registryTab:".length);
             this.specElementLink = null;

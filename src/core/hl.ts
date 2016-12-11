@@ -324,6 +324,64 @@ export interface IHighLevelNode{
     label?:string
 }
 
+export function location(v:IHighLevelNode):string{
+    var location=v.root().lowLevel().unit().absolutePath();
+    return location;
+}
+export function overlayId(v:IHighLevelNode):string[]{
+    if (v.parent()==null){
+        return [];
+    }
+    var res=[v.name()];
+    var ad=(<any>v.property()).adapters[0];
+    var mr=ad.isMerged();
+    if (!mr){
+        res=[v.property().nameId()].concat(res);
+    }
+    return overlayId(v.parent()).concat(res);
+}
+
+export function isMerged(p:IProperty){
+    var ad=(<any>p).adapters[0];
+    var mr=ad.isMerged();
+    return mr;
+}
+
+export function title(h:IHighLevelNode):string{
+    var t=h.attr("title");
+    var result=""
+    if (t){
+        result=t.value();
+    }
+    else{
+        result=location(h);
+    }
+    var v=h.attr("version");
+    if (v){
+        result+=" "+v.value();
+    }
+    return result;
+}
+export function registryId(h:IHighLevelNode):string{
+    var t=h.attr("title");
+    var result=""
+    if (t){
+        result=t.value();
+    }
+    else{
+        result=location(h);
+    }
+    var r="";
+    for (var i=0;i<result.length;i++){
+        var c=result.charAt(i);
+        if (c==' '){
+            c="_";
+        }
+        r=r+c;
+    }
+    return r;
+}
+
 declare var RAML:any;
 
 export interface ElementGroups{

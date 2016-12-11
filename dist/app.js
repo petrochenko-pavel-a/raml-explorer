@@ -5,6 +5,7 @@ var RAMLDetailsView = require("./detailsView");
 var RegistryView = require("./registryView");
 var workbench_1 = require("./framework/workbench");
 var state = require("./state");
+var RAMLOverlayView = require("./overlayView");
 var AboutDialog = (function () {
     function AboutDialog() {
     }
@@ -20,9 +21,12 @@ var AboutDialog = (function () {
 exports.ramlView = new RAMLTreeView("");
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new RegistryView("API Registry");
+var overlay = new RAMLOverlayView("Overlay", "Overlay");
 details.getContextMenu().add(new workbench.BackAction());
 exports.ramlView.getContextMenu().add(new workbench.BackAction());
 exports.ramlView.addSelectionConsumer(details);
+exports.ramlView.addSelectionConsumer(overlay);
+var inExpansion = false;
 workbench.registerHandler(function (x) {
     state.onState(x);
     return true;
@@ -30,8 +34,21 @@ workbench.registerHandler(function (x) {
 state.addListener(function () {
     regView.updateFromState();
     exports.ramlView.updateFromState();
+    if (inExpansion) {
+        return;
+    }
+    if (state.getOptions()["fullScreen"] == "true") {
+        if (app.currentPerspective() != fullSpecPerspective) {
+            app.openPerspective(fullSpecPerspective);
+        }
+    }
+    else {
+        if (app.currentPerspective() != registryPerspective) {
+            app.openPerspective(registryPerspective);
+        }
+    }
 });
-var perspective = {
+var registryPerspective = {
     title: "API Registry",
     actions: [
         new workbench.ShowDialogAction("About", new AboutDialog()),
@@ -40,7 +57,60 @@ var perspective = {
     views: [
         { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
         { view: regView, ref: "Details", ratio: 15, relation: workbench.Relation.LEFT },
-        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT }
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
     ]
 };
-var app = new workbench_1.Application("API REGISTRY", perspective, "app");
+var fullSpecPerspective = {
+    title: "API Registry",
+    actions: [
+        new workbench.ShowDialogAction("About", new AboutDialog()),
+        { title: "Add an API", link: "https://goo.gl/forms/SAr1zd6AuKi2EWbD2" }
+    ],
+    views: [
+        { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
+    ],
+    onOpen: function () {
+    }
+};
+var overlayPerspective = {
+    title: "API Registry",
+    actions: [
+        new workbench.ShowDialogAction("About", new AboutDialog()),
+        { title: "Add an API", link: "https://goo.gl/forms/SAr1zd6AuKi2EWbD2" }
+    ],
+    views: [
+        { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
+        { view: overlay, ref: "Details", ratio: 50, relation: workbench.Relation.BOTTOM }
+    ],
+    onOpen: function () {
+    }
+};
+var p = registryPerspective;
+if (state.getOptions()["fullScreen"] == "true") {
+    p = fullSpecPerspective;
+}
+var app = new workbench_1.Application("API REGISTRY", registryPerspective, "app", p);
+app.home = function () {
+    inExpansion = false;
+    state.clearOptions();
+};
+workbench.addCommand({
+    id: "/commands/ramlExplorer/focusOnSpec",
+    run: function () {
+        fullSpecPerspective.title = exports.ramlView.getSpecTitle();
+        state.setOption("fullScreen", "true");
+    }
+});
+workbench.addCommand({
+    id: "/commands/ramlExplorer/overlayWithLib/",
+    run: function (lib) {
+        inExpansion = true;
+        overlay.setLib(lib);
+        app.openPerspective(overlayPerspective);
+        setTimeout(function () {
+            overlay.setInput(exports.ramlView.specRoot());
+        }, 200);
+    }
+});

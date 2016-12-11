@@ -116,6 +116,7 @@ export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,pa
             result.push(marked(c.value()));
         }
     })
+    result.push("<div>Registry id: "+hl.registryId(api)+"</div>");
     if (path){
         result.push("<hr/>");
         result.push("<a href='"+path+"'>Get RAML</a>");

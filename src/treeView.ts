@@ -8,6 +8,7 @@ import IHighLevelNode=hl.IHighLevelNode;
 import methodKey=hl.methodKey;
 import images=require("./rendering/styles")
 import state=require("./state")
+import actions=require("./actions")
 class RAMLTreeProvider implements workbench.ITreeContentProvider{
 
     children(x:hl.IHighLevelNode){
@@ -197,7 +198,9 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
 
                 var node: hl.IHighLevelNode = v[0];
                 if (node.id) {
-                    state.propogateNode(node.id());
+                    if (typeof node.id=="function") {
+                        state.propogateNode(node.id());
+                    }
                 }
             }finally {
                 this.updatingFromState = false;
@@ -234,6 +237,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                         run(){
                             v.showInternal=!v.showInternal;
                             v.refresh();
+                            v.showTab("Data Types");
                         }
 
                     }];
@@ -246,7 +250,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                     run(){
                         v.operations=false;
                         v.refresh();
-                        v.showTab("resources");
+                        v.showTab("ops");
                     }
 
                 }];
@@ -260,7 +264,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                     run(){
                         v.operations=true;
                         v.refresh();
-                        v.showTab("methods");
+                        v.showTab("ops");
                     }
 
                 }];
@@ -279,13 +283,30 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             this.setSelection(node);
         }
     }
-
+    getSpecTitle(){
+        var result="";
+        var t=this.api.attr("title");
+        if (t!=null){
+            result+=t.value();
+        }
+        var v=this.api.attr("version");
+        if (v!=null){
+            result+=' '+v.value();
+        }
+        return result;
+    }
+    specRoot(){
+        return this.api.root();
+    }
     protected customizeAccordition(a: Accordition, node: any) {
 
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
 
         var overview:string=nr.renderNodesOverview(this.api,this.versions,this.path);
+
+        overview=overview+actions.renderActionsBlock(state.registry());
+
         if (overview.length>0) {
             a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
         }

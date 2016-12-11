@@ -10,15 +10,22 @@ export interface IControl{
 
     controlId?:string
     contextActions?:IContributionItem[]
+
+    extraStyles?:CSSStyleDeclaration
 }
 
 export interface IContributionItem{
+    id?:string
     title?: string
     link?: string
     image?: string
     disabled?: boolean
     checked?:boolean
-    run?():void
+    danger?:boolean
+    warning?:boolean
+    primary?: boolean
+    success?: boolean
+    run?(args?:any):void
     items?:IContributionItem[]
 }
 
@@ -30,6 +37,8 @@ export class ToolbarRenderer{
 
     constructor(private menu:IMenu){}
 
+    style: CSSStyleDeclaration=<any>{}
+
     render(host:Element){
         this.menu.items.forEach(x=>{
             var button=document.createElement("button");
@@ -39,14 +48,23 @@ export class ToolbarRenderer{
                 button.classList.add("btn-success");
             }
             else {
-                button.classList.add("btn-primary")
+                if (x.danger){
+                    button.classList.add("btn-danger")
+                }
+                else {
+                    button.classList.add("btn-primary")
+                }
             }
+            copyProps(this.style,button.style);
             button.textContent=x.title
             if (x.image){
                 button.innerHTML=`<span class="${x.image}">${x.title}</span>`
             }
             if (x.run){
                 button.onclick=x.run
+            }
+            if (x.disabled){
+                button.disabled=true;
             }
             host.appendChild(button);
         })
@@ -112,12 +130,16 @@ export class Context{
         })
     }
 }
-export abstract class Composite implements IControl{
+
+
+export abstract class AbstractComposite implements IControl{
 
     private _title: string;
 
     children:IControl[]=[]
     protected _element:Element;
+
+
 
     render(e:Element){
         this._element=e;
@@ -130,7 +152,7 @@ export abstract class Composite implements IControl{
         }
     }
 
-    protected abstract innerRender(e:Element);
+    protected abstract innerRender(e:Element):Element|void
 
     add(c:IControl){
         this.children.push(c);
@@ -159,16 +181,143 @@ export abstract class Composite implements IControl{
         return this._title;
     }
 }
+
+function copyProps(a:any,b:any){
+    Object.keys(a).forEach(k=>{
+        b[k]=a[k];
+    })
+}
+export class Composite extends AbstractComposite{
+
+    constructor(private tagName:string){super()}
+
+    _style:CSSStyleDeclaration=<CSSStyleDeclaration>{}
+
+    _styleString: string;
+
+    attrs:any={};
+
+    _className:string
+
+    _classNames:string[]=[]
+
+    _text:string
+
+    addLabel(l:string){
+        var cnt=new Composite("span");
+        cnt._text=l;
+        this.add(cnt);
+        return cnt;
+    }
+
+    addClassName(c:string){
+        this._classNames.push(c);
+    }
+
+    style(){
+        return this._style;
+    }
+    withClass(c:string){
+        this._className=c;
+        return this;
+    }
+
+    protected innerRender(e:Element){
+        var ch=document.createElement(this.tagName)
+        e.appendChild(ch);
+        this.renderContent(ch);
+    }
+
+    refresh(){
+        if (this._element) {
+            this._element.innerHTML = null;
+            this.renderContent(<HTMLElement>this._element);
+        }
+    }
+
+    protected renderContent(ch: HTMLElement) {
+        if (this._styleString){
+            ch.setAttribute("style",this._styleString);
+        }
+        else if (this._style){
+            copyProps(this._style,ch.style);
+        }
+        if (this._className){
+            ch.className=this._className;
+        }
+        Object.keys(this.attrs).forEach(k=>{
+            ch.setAttribute(k,this.attrs[k])
+        })
+        this._classNames.forEach(x=>{ch.classList.add(x)})
+        if (this._text){
+            ch.innerText=this._text;
+        }
+        this.children.forEach(c=> {
+            var w=this.wrap(ch);
+            var el = c.render(w);
+            if (el) {
+                w.appendChild(el)
+            }
+        })
+    }
+    protected wrap(p:HTMLElement){
+        return p;
+    }
+}
+
+export class WrapComposite extends Composite{
+
+    wrapElement:string="div"
+
+    protected wrap(p:HTMLElement){
+        var d=document.createElement(this.wrapElement);
+        p.appendChild(d);
+        return d;
+    }
+}
+export class HorizontalFlex extends Composite{
+
+    constructor(){
+        super("div")
+        this._style.display="flex";
+        this._style.flexDirection="row"
+    }
+    wrapStyle: CSSStyleDeclaration=<any>{}
+
+    protected wrap(p:HTMLElement){
+        var d=document.createElement("div");
+        copyProps(this.wrapStyle,d.style);
+        p.appendChild(d);
+        return d;
+    }
+}
+export class VerticalFlex extends Composite{
+
+    constructor(){
+        super("div")
+        this._style.display="flex";
+        this._style.flexDirection="column"
+    }
+    wrapStyle: CSSStyleDeclaration=<any>{}
+
+    protected wrap(p:HTMLElement){
+        var d=document.createElement("div");
+        copyProps(this.wrapStyle,d.style);
+        p.appendChild(d);
+        return d;
+    }
+}
+
 var globalId=0;
 function nextId(){
     return "el"+(globalId++);
 }
-export class Loading extends  Composite{
+export class Loading extends  AbstractComposite{
     protected innerRender(e:Element){
         e.innerHTML=`<div style="display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;"><div style="display: flex;flex-direction: row;justify-content: center"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>`
     }
 }
-export class Label extends Composite{
+export class Label extends AbstractComposite{
 
     constructor(title?:string,private content?:string){
         super();
@@ -183,7 +332,7 @@ export class Label extends Composite{
         }
     }
 }
-export class Accordition extends Composite{
+export class Accordition extends AbstractComposite{
 
     public expand(c:IControl){
         var index=this.children.indexOf(c);
@@ -212,14 +361,18 @@ export class Accordition extends Composite{
         this.selectedIndex=index;
         for (var j=0;j<bids.length;j++) {
             if (j!=index) {
-                document.getElementById(bids[j]).style.display = "none";
-                document.getElementById(gids[j]).style.flex = null;
+                if(document.getElementById(bids[j])) {
+                    document.getElementById(bids[j]).style.display = "none";
+                    document.getElementById(gids[j]).style.flex = null;
+                }
                 //document.getElementById(gids[j]).style.display = "none";
             }
             else{
-                document.getElementById(bids[j]).style.display = "flex";
-                document.getElementById(gids[j]).style.flex = "1 1 0";
-                document.getElementById(gids[j]).style.display = "flex";
+                if(document.getElementById(bids[j])) {
+                    document.getElementById(bids[j]).style.display = "flex";
+                    document.getElementById(gids[j]).style.flex = "1 1 0";
+                    document.getElementById(gids[j]).style.display = "flex";
+                }
             }
         }
     }

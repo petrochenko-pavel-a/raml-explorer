@@ -188,6 +188,9 @@ export class LoadedRegistry{
         this._libs= this.group(els,false);
         return this._libs;
     }
+    plainLibs(){
+        return  this.registry.libraries;
+    }
     apis():(GroupNode|ApiWithVersions)[]{
         if (this._apis){
             return this._apis;

@@ -9,6 +9,9 @@ body {
     background-color: #F6F6F6;
     box-sizing: border-box;
 }
+.tooltip-inner {
+    max-width: 500px !important;
+}
 
 .split {
     -webkit-box-sizing: border-box;

@@ -61,7 +61,12 @@ export class TableRenderer{
 
         hl.forEach(x=> {
             var h=this.st.hidden(x)?"none":"table-row";
-            result.push(`<tr id="${"tr"+mm}" level="${x.level()}" style="display: ${h}" onclick="toggleRow('${"tr"+mm}')">`)
+            if (x.level) {
+                result.push(`<tr id="${"tr" + mm}" level="${x.level()}" style="display: ${h}" onclick="toggleRow('${"tr" + mm}')">`)
+            }
+            else{
+                result.push(`<tr id="${"tr" + mm}" style="display: ${h}" onclick="toggleRow('${"tr" + mm}')">`)
+            }
             fp.forEach(p=> {
                 var pn=p.nowrap;
                 var es=pn?"white-space: nowrap":"";
@@ -166,6 +171,9 @@ export function renderKeyValue(k:string,vl:any,small:boolean=false):string{
         var res=`<h5 style="background: gainsboro">${k}: </h5><div>${vl}</div>`
         return res;
     }
+    if (typeof  vl=="object"){
+        vl=JSON.stringify(vl);
+    }
     var str=""+vl;
 
     vl=highlight(str)
@@ -180,6 +188,10 @@ export function renderKeyValue(k:string,vl:any,small:boolean=false):string{
 }
 
 export function renderObj(v:any):string{
+    if (!v){
+        return "";
+    }
+
     if (Array.isArray(v)){
         var r:any[]=v;
         return r.map(x=>renderObj(x)).join("");

@@ -77,6 +77,7 @@ export interface IPartHolder {
     setToolbar(m: IMenu);
     setContextMenu(m: IMenu);
     setStatusMessage(message: string)
+    updateTitle(t:string);
 }
 
 export interface IWorkbenchPart extends controls.IControl {
@@ -134,12 +135,13 @@ class Pane implements IPartHolder {
         this._v = v;
         this.render();
     }
+    hid:string
 
     render() {
         var hid = nextId();
         var bid = nextId();
         var mid = nextId();
-
+        this.hid=hid;
         var menuId = nextId();
         var cmenuId = nextId();
         var cmenuInnerId = nextId();
@@ -149,19 +151,9 @@ class Pane implements IPartHolder {
         var cnt = `<div style='display: flex;flex-direction: column;height: 100%;width: 99.9%;margin-bottom:0px;overflow: hidden' class="panel panel-primary"><div id="${hid}" class="panel-heading" style="flex: 0 0 auto;display: flex"></div>
         <div class="panel-body"  data-toggle="context" data-target="#${cmenuId}" style="flex: 1 1 0;display: flex;overflow: hidden;margin: 0;padding: 0" ><div style="width: 100%" id="${bid}"></div>${cmenu}</div></div>`
         this._part.element().innerHTML = cnt;
-        var hel = document.getElementById(hid);
-        var headerHtml = `<div style="display: flex;flex-direction: row;width: 100%"><div style="flex:1 1 auto">${this._v.title()}</div>`
-        var searchHtml = `<input type="text"style="color: black;border-radius: 3px;height: 23px;margin-right: 4px" id="${searchId}"/>`
-        if (!this._v.searchable) {
-            searchHtml = "";
-        }
-        var th = `<span id="${tid}"></span>`
-        var dropMenu = `<div class="dropdown" style="flex: 0 0 auto"/><button class="btn btn-primary dropdown-toggle btn-xs" style="display: none" type="button" id="${mid}" data-toggle="dropdown">
-  <span class="caret"></span></button>
-  <ul class="dropdown-menu dropdown-menu-left" style="right: 0;left: auto" role="menu" id='${menuId}' aria-labelledby="${mid}"/></div>`
 
-        headerHtml = headerHtml + searchHtml + th + dropMenu + `</div>`;
-        hel.innerHTML = headerHtml;
+        this.updateHeader(searchId, tid, mid, menuId);
+
         this.menuContentElement = document.getElementById(menuId);
         this.toolbarContentElement = document.getElementById(tid);
         this.contextMenuElement = document.getElementById(cmenuInnerId);
@@ -173,6 +165,7 @@ class Pane implements IPartHolder {
         if (this._v.init) {
             this._v.init(this);
         }
+        var hel = document.getElementById(this.hid);
         //hel.style.background="green"
         var pe = this._part.element();
 
@@ -195,6 +188,30 @@ class Pane implements IPartHolder {
             }
         }
         handleResize();
+    }
+    titleId:string
+
+    updateTitle(newTitle:string){
+        document.getElementById(this.titleId).innerText=newTitle;
+    }
+
+    private updateHeader(searchId: string, tid: string, mid: string, menuId: string) {
+        var hel = document.getElementById(this.hid);
+        var tid2=nextId();
+        this.titleId=tid2;
+        var headerHtml = `<div style="display: flex;flex-direction: row;width: 100%"><div id='${tid2}'style="flex:1 1 auto">${this._v.title()}</div>`
+        var searchHtml = `<input type="text"style="color: black;border-radius: 3px;height: 23px;margin-right: 4px" id="${searchId}"/>`
+        if (!this._v.searchable) {
+            searchHtml = "";
+        }
+        var th = `<span id="${tid}"></span>`
+        var dropMenu = `<div class="dropdown" style="flex: 0 0 auto"/><button class="btn btn-primary dropdown-toggle btn-xs" style="display: none" type="button" id="${mid}" data-toggle="dropdown">
+  <span class="caret"></span></button>
+  <ul class="dropdown-menu dropdown-menu-left" style="right: 0;left: auto" role="menu" id='${menuId}' aria-labelledby="${mid}"/></div>`
+
+        headerHtml = headerHtml + searchHtml + th + dropMenu + `</div>`;
+        hel.innerHTML = headerHtml;
+        return headerHtml;
     }
 }
 export class ContributionManager {
@@ -225,6 +242,9 @@ var nh = {
     setContextMenu(m: IMenu){
     },
     setStatusMessage(m: string){
+    },
+    updateTitle(s:string){
+
     }
 };
 
@@ -244,11 +264,12 @@ export abstract class ViewPart implements IWorkbenchPart, ISelectionProvider {
             }
         })
     }
+    protected selectionListeners: ISelectionListener[] = []
 
     protected contentElement: Element
     protected holder: IPartHolder = nh;
     protected selection: any[] = []
-    protected selectionListeners: ISelectionListener[] = []
+
 
     protected contextMenu: ContributionManager = new ContributionManager(m=>this.holder.setContextMenu(m));
     protected toolbar: ContributionManager = new ContributionManager(m=>this.holder.setToolbar(m));
@@ -276,6 +297,11 @@ export abstract class ViewPart implements IWorkbenchPart, ISelectionProvider {
 
     addSelectionListener(l: ISelectionListener) {
         this.selectionListeners.push(l);
+    }
+
+    setTitle(t:string){
+        this._title=t;
+        this.holder.updateTitle(t);
     }
 
     removeSelectionListener(l: ISelectionListener) {
@@ -314,6 +340,17 @@ export abstract class ViewPart implements IWorkbenchPart, ISelectionProvider {
         this.contentElement = e;
         this.innerRender(e);
         (<any>e).view=this;
+    }
+
+    hide(){
+        if (this.contentElement){
+            (<HTMLElement>this.contentElement).style.display="none"
+        }
+    }
+    show(){
+        if (this.contentElement){
+            (<HTMLElement>this.contentElement).style.display="visible"
+        }
     }
 
     refresh() {
@@ -375,11 +412,11 @@ function buildTreeNode(x: any, t: ITreeContentProvider, l: ILabelProvider, selec
         }
     }
 }
-interface ISelectionListener {
+export interface ISelectionListener {
     selectionChanged(newSelection: any[])
 }
 
-interface ISelectionProvider {
+export interface ISelectionProvider {
     addSelectionListener(l: ISelectionListener)
     removeSelectionListener(l: ISelectionListener);
     getSelection(): any[]
@@ -599,11 +636,13 @@ export class TreeView extends ViewPart {
         this.refresh();
     }
 
+    styleString:string="width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block"
+
     innerRender(e: Element) {
         var treeId = nextId();
         this.treeId = treeId;
         var view = this;
-        e.innerHTML = `<div id='${treeId}' style='width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block'></div>`;
+        e.innerHTML = `<div id='${treeId}' style='${this.styleString}'></div>`;
         $('#' + treeId).treeview({
             data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
             onNodeSelected: function (x) {
@@ -804,6 +843,8 @@ export abstract class AccorditionTreeView extends ViewPart {
 
     innerRender(e: Element) {
         if (!this.node) {
+
+
             new controls.Loading().render(e);
             this.load();
         }
@@ -857,6 +898,7 @@ export class NavBar implements controls.IControl {
     }
 
     private element: Element
+    homeDisplay: boolean
 
     setTitle(t: string) {
         this._title = t;
@@ -873,12 +915,20 @@ export class NavBar implements controls.IControl {
          style="${this._theme.style}">
          <div class="container-fluid" style="padding-left: 0px">
             <div class="navbar-header">
+                
                 <a class="navbar-brand" href="#" style="margin: 0px;padding: 0px">
+                    
                     <img src="${this._theme.brandImage}"
                          height="${this._theme.brandImageHeight}" style="${this._theme.brandImageStyle}"/>
-                    <a class="navbar-brand" href="#">${this._title}</a>
+                    
+                    <a class="navbar-brand" href="#" >
+                    <span class="glyphicon glyphicon-home" onclick="Workbench.open('home')" style="display: ${this.homeDisplay?"visible":"none"}">
+                    </span>
+                    ${this._title}
+                    </a>
                 </a>
             </div>
+            
             <div class="navbar-right">
                 <ul class="nav navbar-nav" id="${id}"></ul>
                 <a class="header-logo-invertocat" href="https://github.com/apiregistry/registry" 
@@ -909,6 +959,7 @@ export interface IPerspective {
     actions: IContributionItem[];
     views: IViewRef[ ]
 
+    onOpen?: ()=>void
 }
 export class Application implements controls.IControl {
 
@@ -922,8 +973,8 @@ export class Application implements controls.IControl {
     private status: Element;
     private perspective: IPerspective;
 
-    constructor(private _title: string, initialPerspective: IPerspective, element?: Element|string) {
-        this.perspective = initialPerspective;
+    constructor(private _title: string, private initialPerspective: IPerspective, element?: Element|string,currentP?:IPerspective) {
+        this.perspective = currentP?currentP:initialPerspective;
         this.perspective.actions.forEach(a=>this.nb.getMenuBar().add(a))
         if (element) {
             if (typeof element == "string") {
@@ -933,6 +984,25 @@ export class Application implements controls.IControl {
                 this.render(<Element>element)
             }
         }
+        var v=this;
+        addCommand({
+            id:"home",
+            run(){
+                v.home();
+            }
+        })
+    }
+
+    currentPerspective(){
+        return this.perspective;
+    }
+
+    homePerspective(){
+        return this.initialPerspective;
+    }
+
+    home(){
+        this.openPerspective(this.initialPerspective)
     }
 
     setStatusMessage(m: string) {
@@ -947,6 +1017,7 @@ export class Application implements controls.IControl {
 
     openPerspective(perspective: IPerspective) {
         this.nb.getMenuBar().menu.items = [];
+        this._title=perspective.title;
         this.perspective.actions.forEach(a=>this.nb.getMenuBar().add(a))
         this.perspective = perspective;
         this.render(this.element);
@@ -959,6 +1030,12 @@ export class Application implements controls.IControl {
         var nb = nextId();
         var main = nextId();
         var status = nextId();
+        if (this.currentPerspective()!=this.initialPerspective){
+            this.nb.homeDisplay=true;
+        }
+        else{
+            this.nb.homeDisplay=false;
+        }
         this.nb.setTitle(this.title());
         var tmplt = `<div style="height: 100%;display: flex;flex-direction: column">
         <div id="${nb}"></div>    
@@ -988,20 +1065,45 @@ declare var BootstrapDialog: any;
 
 export class ShowDialogAction implements IContributionItem {
 
-    constructor(public title, private control: controls.IControl|string, close: boolean = false) {
+    constructor(public title, private control: controls.IControl|string, private buttons:IContributionItem[]=[]) {
     }
 
     run() {
         var title = this.title
-        var dlg = BootstrapDialog.show({
-            title: title, buttons: [
-                {
-                    label: "Close",
-                    action: (dlg)=> {
-                        dlg.close()
-                    }
+        var bs=[];
+        this.buttons.forEach(x=>{
+            var csCl="";
+            if (x.primary){
+                csCl="btn-primary";
+            }
+            if (x.warning){
+                csCl="btn-warning";
+            }
+            if (x.success){
+                csCl="btn-success";
+            }
+            if (x.danger){
+                csCl="btn-danger";
+            }
+            bs.push({
+                label:x.title,
+                action: (dlg)=> {
+                    dlg.close()
+                    x.run();
+                },
+                cssClass:csCl
+            })
+        })
+        if (bs.length==0){
+            bs.push({
+                label: "Close",
+                action: (dlg)=> {
+                    dlg.close()
                 }
-            ]
+            });
+        }
+        var dlg = BootstrapDialog.show({
+            title: title, buttons: bs
         })
         if (typeof this.control == "string") {
             dlg.$modalBody.html(this.control)
@@ -1011,6 +1113,10 @@ export class ShowDialogAction implements IContributionItem {
         }
     }
 }
+export function showInDialog(title:string,control: controls.IControl|string){
+    new ShowDialogAction(title,control).run();
+}
+
 interface StateRecord {
     hash: string
 }
@@ -1036,8 +1142,31 @@ w.Workbench = {
 export function back() {
     history.back()
 }
+
+
+var commands={}
+
+
+export function addCommand(ci:IContributionItem ){
+    commands[ci.id]=ci;
+}
+
 export function processUrl(url: string) {
-    setState({ hash: url})
+    if (commands[url]){
+        commands[url].run();
+        return;
+    }
+    var sState=true;
+    Object.keys(commands).forEach(x=>{
+        if (url.indexOf(x)==0){
+            url=url.substring(x.length);
+            commands[x].run(url);
+            sState=false;
+        }
+    })
+    if (sState) {
+        setState({hash: url})
+    }
 }
 export function processState(s: StateRecord) {
     for (var i = 0; i < handlers.length; i++) {
@@ -1066,7 +1195,12 @@ export function setState(s: StateRecord) {
 
 if (history && history.pushState) {
     window.onpopstate = function (event) {
-        processState(event.state)
+        if (event.state) {
+            processState(event.state)
+        }
+        else{
+            processState({hash:document.location.hash})
+        }
     };
 }
 export function exportGlobalHandler(name:string, handler:()=>void){
@@ -1080,6 +1214,7 @@ export class BackAction implements IContributionItem {
 
     constructor(){
         this.title="Back"
+
     }
 
     run() {

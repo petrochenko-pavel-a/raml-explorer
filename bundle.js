@@ -1,11 +1,29 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+function link(link, title) {
+    return "<a onclick='Workbench.open(\"" + link + "\")'>" + title + "</a>";
+}
+function renderActionsBlock(reg) {
+    var result = "<h4>Actions</h4>";
+    result += link("/commands/ramlExplorer/focusOnSpec", "Focus on this specification");
+    result += "<br>";
+    reg.plainLibs().forEach(function (x) {
+        result += link("/commands/ramlExplorer/overlayWithLib/" + x.location, "Overlay with " + x.name);
+        result += "<br>";
+    });
+    return result;
+}
+exports.renderActionsBlock = renderActionsBlock;
+
+},{}],2:[function(require,module,exports){
+"use strict";
 var workbench = require("./framework/workbench");
 var RAMLTreeView = require("./treeView");
 var RAMLDetailsView = require("./detailsView");
 var RegistryView = require("./registryView");
 var workbench_1 = require("./framework/workbench");
 var state = require("./state");
+var RAMLOverlayView = require("./overlayView");
 var AboutDialog = (function () {
     function AboutDialog() {
     }
@@ -21,9 +39,12 @@ var AboutDialog = (function () {
 exports.ramlView = new RAMLTreeView("");
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new RegistryView("API Registry");
+var overlay = new RAMLOverlayView("Overlay", "Overlay");
 details.getContextMenu().add(new workbench.BackAction());
 exports.ramlView.getContextMenu().add(new workbench.BackAction());
 exports.ramlView.addSelectionConsumer(details);
+exports.ramlView.addSelectionConsumer(overlay);
+var inExpansion = false;
 workbench.registerHandler(function (x) {
     state.onState(x);
     return true;
@@ -31,8 +52,21 @@ workbench.registerHandler(function (x) {
 state.addListener(function () {
     regView.updateFromState();
     exports.ramlView.updateFromState();
+    if (inExpansion) {
+        return;
+    }
+    if (state.getOptions()["fullScreen"] == "true") {
+        if (app.currentPerspective() != fullSpecPerspective) {
+            app.openPerspective(fullSpecPerspective);
+        }
+    }
+    else {
+        if (app.currentPerspective() != registryPerspective) {
+            app.openPerspective(registryPerspective);
+        }
+    }
 });
-var perspective = {
+var registryPerspective = {
     title: "API Registry",
     actions: [
         new workbench.ShowDialogAction("About", new AboutDialog()),
@@ -41,12 +75,65 @@ var perspective = {
     views: [
         { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
         { view: regView, ref: "Details", ratio: 15, relation: workbench.Relation.LEFT },
-        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT }
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
     ]
 };
-var app = new workbench_1.Application("API REGISTRY", perspective, "app");
+var fullSpecPerspective = {
+    title: "API Registry",
+    actions: [
+        new workbench.ShowDialogAction("About", new AboutDialog()),
+        { title: "Add an API", link: "https://goo.gl/forms/SAr1zd6AuKi2EWbD2" }
+    ],
+    views: [
+        { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
+    ],
+    onOpen: function () {
+    }
+};
+var overlayPerspective = {
+    title: "API Registry",
+    actions: [
+        new workbench.ShowDialogAction("About", new AboutDialog()),
+        { title: "Add an API", link: "https://goo.gl/forms/SAr1zd6AuKi2EWbD2" }
+    ],
+    views: [
+        { view: details, ref: "*", ratio: 100, relation: workbench.Relation.LEFT },
+        { view: exports.ramlView, ref: "Details", ratio: 20, relation: workbench.Relation.LEFT },
+        { view: overlay, ref: "Details", ratio: 50, relation: workbench.Relation.BOTTOM }
+    ],
+    onOpen: function () {
+    }
+};
+var p = registryPerspective;
+if (state.getOptions()["fullScreen"] == "true") {
+    p = fullSpecPerspective;
+}
+var app = new workbench_1.Application("API REGISTRY", registryPerspective, "app", p);
+app.home = function () {
+    inExpansion = false;
+    state.clearOptions();
+};
+workbench.addCommand({
+    id: "/commands/ramlExplorer/focusOnSpec",
+    run: function () {
+        fullSpecPerspective.title = exports.ramlView.getSpecTitle();
+        state.setOption("fullScreen", "true");
+    }
+});
+workbench.addCommand({
+    id: "/commands/ramlExplorer/overlayWithLib/",
+    run: function (lib) {
+        inExpansion = true;
+        overlay.setLib(lib);
+        app.openPerspective(overlayPerspective);
+        setTimeout(function () {
+            overlay.setInput(exports.ramlView.specRoot());
+        }, 200);
+    }
+});
 
-},{"./detailsView":5,"./framework/workbench":7,"./registryView":8,"./state":14,"./treeView":15}],2:[function(require,module,exports){
+},{"./detailsView":8,"./framework/workbench":11,"./overlayView":12,"./registryView":13,"./state":19,"./treeView":20}],3:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -318,6 +405,66 @@ function asObject(vl) {
     return r;
 }
 exports.asObject = asObject;
+function location(v) {
+    var location = v.root().lowLevel().unit().absolutePath();
+    return location;
+}
+exports.location = location;
+function overlayId(v) {
+    if (v.parent() == null) {
+        return [];
+    }
+    var res = [v.name()];
+    var ad = v.property().adapters[0];
+    var mr = ad.isMerged();
+    if (!mr) {
+        res = [v.property().nameId()].concat(res);
+    }
+    return overlayId(v.parent()).concat(res);
+}
+exports.overlayId = overlayId;
+function isMerged(p) {
+    var ad = p.adapters[0];
+    var mr = ad.isMerged();
+    return mr;
+}
+exports.isMerged = isMerged;
+function title(h) {
+    var t = h.attr("title");
+    var result = "";
+    if (t) {
+        result = t.value();
+    }
+    else {
+        result = location(h);
+    }
+    var v = h.attr("version");
+    if (v) {
+        result += " " + v.value();
+    }
+    return result;
+}
+exports.title = title;
+function registryId(h) {
+    var t = h.attr("title");
+    var result = "";
+    if (t) {
+        result = t.value();
+    }
+    else {
+        result = location(h);
+    }
+    var r = "";
+    for (var i = 0; i < result.length; i++) {
+        var c = result.charAt(i);
+        if (c == ' ') {
+            c = "_";
+        }
+        r = r + c;
+    }
+    return r;
+}
+exports.registryId = registryId;
 function elementGroups(hl) {
     var groups = {};
     hl.elements().forEach(function (x) {
@@ -1000,7 +1147,7 @@ exports.collapseScalarArrays = function (nodesToRender) {
     return resultNodes;
 };
 
-},{"./keywords":3}],3:[function(require,module,exports){
+},{"./keywords":4}],4:[function(require,module,exports){
 "use strict";
 function isLetter(c) {
     return c.toLowerCase() != c.toUpperCase();
@@ -1297,7 +1444,540 @@ function trimDesc(s) {
 }
 exports.trimDesc = trimDesc;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+"use strict";
+var hl = require("./hl");
+var pg = require("./propertyGroup");
+function loadData(url, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.send();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        var data = JSON.parse(xhr.responseText);
+        c(data, xhr.status);
+    };
+}
+function postData(url, content, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.send(content);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        var data = JSON.parse(xhr.responseText);
+        c(data, xhr.status);
+    };
+}
+function getOverlays(id, f) {
+    loadData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, f);
+}
+function storeOverlays(id, value, f) {
+    postData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, JSON.stringify(value), f);
+}
+function childObject(ovr, node) {
+    if (!hl.isMerged(node.property())) {
+        ovr = ovr[node.property().nameId()];
+    }
+    if (!ovr) {
+        return null;
+    }
+    return ovr[node.name()];
+}
+var OverlayManager = (function () {
+    function OverlayManager(root, lib_url, main_url, loadedOverlays) {
+        this.root = root;
+        this.lib_url = lib_url;
+        this.main_url = main_url;
+        this.loadedOverlays = loadedOverlays;
+        this.overlays = new Map();
+        this.loaded = false;
+    }
+    OverlayManager.prototype.loadDataToStore = function (ovr, node) {
+        var _this = this;
+        node.children().forEach(function (x) {
+            var obj = childObject(ovr, x);
+            if (obj) {
+                _this.loadDataToStore(obj, x);
+                var ToPut = {};
+                Object.keys(obj).forEach(function (x) {
+                    if (x.charAt(0) == '(') {
+                        var oo = obj[x];
+                        if (oo === null) {
+                            oo = '!!!NULL_VALUE';
+                        }
+                        var key = x.substring(x.lastIndexOf('.') + 1, x.length - 1);
+                        ToPut[key] = oo;
+                    }
+                });
+                if (Object.keys(ToPut).length > 0) {
+                    _this.overlays.set(x, ToPut);
+                }
+            }
+        });
+    };
+    OverlayManager.prototype.possibleOverlays = function (target) {
+        var annotations = this.root.elements().filter(function (x) { return x.property().nameId() == "annotationTypes"; });
+        return annotations.filter(function (x) {
+            var ss = x.attrs();
+            var found = !x.attr("allowedTargets");
+            ss.forEach(function (a) {
+                if (a.name() != "allowedTargets") {
+                    return;
+                }
+                if (ss) {
+                    var val = a.value();
+                    if (val == target.definition().nameId()) {
+                        found = true;
+                    }
+                    if (val == "TypeDeclaration") {
+                        if (target.property()) {
+                            found = found || target.property().nameId() == "types" || target.property().nameId() == "annotationTypes";
+                        }
+                    }
+                    if (val == "API") {
+                        if (target.definition().nameId() == "Api") {
+                            found = true;
+                        }
+                    }
+                }
+            });
+            return found;
+        });
+    };
+    OverlayManager.prototype.getOvelayProperties = function (target) {
+        if (!this.loaded) {
+            this.loaded = true;
+            if (this.loadedOverlays.overlaysFor[this.lib_url]) {
+                var ovr = jsyaml.load(this.loadedOverlays.overlaysFor[this.lib_url]);
+                this.loadDataToStore(ovr, target.root());
+            }
+        }
+        var overlays = this.possibleOverlays(target);
+        return pg.overlayedGroupedProperties(overlays);
+    };
+    OverlayManager.prototype.overlay = function (h) {
+        if (this.overlays.has(h)) {
+            return this.overlays.get(h);
+        }
+        var rs = {};
+        this.overlays.set(h, rs);
+        return rs;
+    };
+    OverlayManager.prototype.save = function (f) {
+        if (!this.loadedOverlays.overlaysFor) {
+            this.loadedOverlays.overlaysFor = {};
+        }
+        this.loadedOverlays.overlaysFor[this.lib_url] = this.dump();
+        storeOverlays(escapeUrl(this.main_url), this.loadedOverlays, function (x) {
+            f(x);
+        });
+    };
+    OverlayManager.prototype.dump = function () {
+        var objToDump = {};
+        objToDump["extends"] = this.main_url;
+        var fn = this.lib_url.substring(this.lib_url.lastIndexOf('/') + 1);
+        if (fn.lastIndexOf(".") != -1) {
+            fn = fn.substring(0, fn.lastIndexOf('.'));
+        }
+        var u = {};
+        u[fn] = this.lib_url;
+        objToDump["uses"] = u;
+        var keys = this.overlays.keys();
+        while (true) {
+            var n = keys.next().value;
+            if (!n) {
+                break;
+            }
+            var val = this.overlays.get(n);
+            if (Object.keys(val).length > 0) {
+                var ovId = hl.overlayId(n);
+                var overlayed = objToDump;
+                for (var i = 0; i < ovId.length; i++) {
+                    var obj = overlayed[ovId[i]];
+                    if (!obj) {
+                        obj = {};
+                        overlayed[ovId[i]] = obj;
+                    }
+                    overlayed = obj;
+                }
+                Object.keys(val).forEach(function (k) {
+                    overlayed["(" + fn + "." + k + ")"] = val[k];
+                });
+            }
+        }
+        var res = dump(objToDump);
+        return "#%RAML 1.0 Overlay\n" + res;
+    };
+    return OverlayManager;
+}());
+exports.OverlayManager = OverlayManager;
+function escapeUrl(u) {
+    var rs = "";
+    for (var i = 0; i < u.length; i++) {
+        var c = u.charAt(i);
+        if (c == '/') {
+            c = '_';
+        }
+        if (c == ':') {
+            c = '_';
+        }
+        rs = rs + c;
+    }
+    return rs;
+}
+function createManager(main_url, lib_url, f) {
+    hl.loadApi(lib_url, function (v) {
+        getOverlays(escapeUrl(main_url), function (o) {
+            f(new OverlayManager(v, lib_url, main_url, o));
+        });
+    }, false);
+}
+exports.createManager = createManager;
+function dump(v) {
+    var ov = jsyaml.dump(v);
+    var old = "";
+    while (ov != old) {
+        old = ov;
+        ov = ov.replace("'!!!NULL_VALUE'", "");
+    }
+    return ov;
+}
+exports.dump = dump;
+
+},{"./hl":3,"./propertyGroup":6}],6:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var keywords = require("./keywords");
+function propertyDescription(tp) {
+    var t = (tp).adapters[1];
+    if (!t) {
+        var mm = tp.superTypes()[0];
+        if (mm) {
+            t = (mm).adapters[1];
+        }
+    }
+    return describe("", false, t);
+}
+var describe = function (id, required, t, level) {
+    if (level === void 0) { level = 0; }
+    var result = {};
+    var name = nicerName(id);
+    result.displayName = name;
+    result.id = id;
+    result.required = required;
+    var facets = t.allFacets();
+    updateDescription(facets, result, level + 1);
+    if (t.isScalar()) {
+        result.scalar = true;
+    }
+    if (t.isBoolean()) {
+        result.boolean = true;
+    }
+    if (t.isArray()) {
+        result.array = true;
+    }
+    return result;
+};
+function updateDescription(facets, result, level) {
+    if (level === void 0) { level = 0; }
+    if (level > 6) {
+        return;
+    }
+    result.children = [];
+    var required = {};
+    facets.forEach(function (x) {
+        if (x.facetName() == "enum") {
+            result.enumOptions = x.value();
+        }
+        if (x.facetName() == "should be null") {
+            result.nil = true;
+        }
+        if (x.facetName() == "mapPropertyIs") {
+            var pf = describe(x.regexp, false, x.value(), level);
+            pf.map = true;
+            pf.regExp = x.regexp;
+            result.children.push(pf);
+        }
+        if (x.facetName() == "propertyIs") {
+            var pf = describe(x.name, false, x.type, level);
+            result.children.push(pf);
+        }
+        if (x.facetName() == "items") {
+            var pf = describe("item", false, x.value(), level);
+            result.children.push(pf);
+        }
+        if (x.facetName() == "hasProperty") {
+            required[x.value()] = true;
+        }
+        if (x.facetName() == "additionalPropertyIs") {
+            result.enumOptions = x.value();
+        }
+        if (x.facetName() == "description") {
+            result.description = x.value();
+        }
+    });
+    Object.keys(required).forEach(function (x) {
+        result.children.forEach(function (y) {
+            if (y.id == x) {
+                y.required = true;
+            }
+        });
+    });
+}
+var properties = function (at, isAnnotation) {
+    var props = at.allProperties();
+    if (props.length == 0) {
+        if (isAnnotation) {
+            at = at.superTypes()[0];
+            var ts = at.superTypes();
+            if (ts.length == 1) {
+                return propertyDescription(ts[0]).children;
+            }
+        }
+    }
+    return propertyDescription(at).children;
+};
+var PropertyGroup = (function () {
+    function PropertyGroup() {
+        this.properties = [];
+    }
+    return PropertyGroup;
+}());
+exports.PropertyGroup = PropertyGroup;
+var AbstractProvider = (function () {
+    function AbstractProvider() {
+        this._result = new PropertyGroup();
+    }
+    AbstractProvider.prototype.consumeProperty = function (p) {
+        var r = this.consume(p);
+        if (r) {
+            this._result.properties.push(p);
+        }
+        return r;
+    };
+    AbstractProvider.prototype.getResult = function () {
+        this.updateGroup();
+        return [this._result];
+    };
+    AbstractProvider.prototype.updateGroup = function () {
+    };
+    return AbstractProvider;
+}());
+var RequiredProvider = (function (_super) {
+    __extends(RequiredProvider, _super);
+    function RequiredProvider() {
+        _super.call(this);
+        this._result.caption = "General";
+    }
+    RequiredProvider.prototype.consume = function (p) {
+        return p.required;
+    };
+    return RequiredProvider;
+}(AbstractProvider));
+function nicerName(n) {
+    var result = [];
+    var needUpperCase = true;
+    var p = "";
+    for (var i = 0; i < n.length; i++) {
+        var c = n.charAt(i);
+        if (p.toUpperCase() != p) {
+            if (c.toLowerCase() != c) {
+                result.push(' ');
+            }
+        }
+        if (needUpperCase) {
+            c = c.toUpperCase();
+            needUpperCase = false;
+        }
+        result.push(c);
+        p = c;
+    }
+    return result.join("");
+}
+exports.nicerName = nicerName;
+var OtherScalar = (function (_super) {
+    __extends(OtherScalar, _super);
+    function OtherScalar() {
+        _super.call(this);
+        this._result.caption = "Advanced";
+    }
+    OtherScalar.prototype.consume = function (p) {
+        return (p.scalar);
+    };
+    return OtherScalar;
+}(AbstractProvider));
+var CatchAll = (function () {
+    function CatchAll() {
+        this._result = [];
+    }
+    CatchAll.prototype.consumeProperty = function (p) {
+        var g = new PropertyGroup();
+        g.properties.push(p);
+        g.caption = p.displayName;
+        this._result.push(g);
+        return true;
+    };
+    CatchAll.prototype.getResult = function () {
+        return this._result;
+    };
+    return CatchAll;
+}());
+function createProviders() {
+    return [new RequiredProvider(), new OtherScalar(), new CatchAll()];
+}
+exports.createProviders = createProviders;
+var iterateProviders = function (providers, props, consumed) {
+    providers.forEach(function (x) {
+        props.forEach(function (y) {
+            if (!consumed.hasOwnProperty(y.id)) {
+                var r = x.consumeProperty(y);
+                if (r) {
+                    consumed[y.id] = true;
+                }
+            }
+        });
+    });
+};
+var processKw = function (kv, map, x) {
+    kv.forEach(function (w) {
+        if (!map.has(w)) {
+            map.set(w, []);
+        }
+        var pg = map.get(w);
+        if (pg.indexOf(x) == -1) {
+            map.get(w).push(x);
+        }
+    });
+};
+function collapseInner(g) {
+    if (g.properties.length == 1) {
+        if (g.properties[0].children && g.properties[0].children.length == 1) {
+            if (!g.properties[0].map && !g.properties[0].array) {
+                var tc = deepCopy(g.properties[0].children[0]);
+                if (tc.map) {
+                    tc.displayName = g.properties[0].displayName;
+                    tc.id = g.properties[0].id + "=>" + tc.id + "</p>";
+                    tc.description = g.properties[0].description + "<p>" + tc.description + "</p>";
+                    g.properties = [tc];
+                }
+            }
+        }
+    }
+}
+exports.collapseInner = collapseInner;
+function deepCopy(obj) {
+    var newObj = $.extend(true, {}, obj);
+    return newObj;
+}
+function collapseInnerProps(g) {
+    if (g.children && g.children.length == 1) {
+        if (g.children[0].map || g.children[0].array) {
+            var tc = deepCopy(g.children[0]);
+            if (tc.map) {
+                tc.displayName = g.displayName;
+                tc.id = g.id + "=>" + tc.id;
+                tc.description = g.description + "<p>" + tc.description + "</p>";
+                return tc;
+            }
+        }
+    }
+    return g;
+}
+exports.collapseInnerProps = collapseInnerProps;
+function tryMerge(g) {
+    g = g.filter(function (x) { return x.properties.length > 0; });
+    var map = new Map();
+    g.forEach(function (gr) {
+        collapseInner(gr);
+    });
+    var keys = {};
+    g.forEach(function (x) {
+        var kv = keywords.keywords(x.caption, false);
+        kv.forEach(function (w) { return keys[w] = 1; });
+        processKw(kv, map, x);
+        x.properties.forEach(function (p) {
+            var ww = keywords.keywords(p.displayName, false);
+            processKw(ww, map, x);
+            ww.forEach(function (w) { return keys[w] = 1; });
+        });
+    });
+    Object.keys(keys).forEach(function (key) {
+        var groups = map.get(key);
+        if (groups.length > 1) {
+            var toMerge = [];
+            var toRemove = [];
+            groups.forEach(function (g) {
+                if (g.properties.length <= 1) {
+                    toRemove.push(g);
+                }
+                else {
+                    if (g.properties.length < 5) {
+                        toMerge.push(g);
+                    }
+                }
+            });
+            if (toRemove.length > 0 && toMerge.length > 0) {
+                toRemove.forEach(function (x) {
+                    toMerge[0].properties = toMerge[0].properties.concat(x.properties);
+                    g = g.filter(function (y) { return y != x; });
+                });
+            }
+        }
+    });
+    return g;
+}
+function groupedProperties(n) {
+    var at = n.localType();
+    var isAnnotation = n.property().nameId() == "annotationTypes";
+    var props = properties(at, isAnnotation);
+    var providers = createProviders();
+    var consumed = {};
+    iterateProviders(providers, props, consumed);
+    var result = [];
+    providers.forEach(function (x) { return result = result.concat(x.getResult()); });
+    result = tryMerge(result);
+    return result;
+}
+exports.groupedProperties = groupedProperties;
+function overlayedGroupedProperties(items) {
+    var propertiesA = [];
+    items.forEach(function (n) {
+        var at = n.localType();
+        var isAnnotation = n.property().nameId() == "annotationTypes";
+        if (at.isObject()) {
+            var props = properties(at, isAnnotation);
+            props.forEach(function (x) {
+                x.id = at.nameId() + "=>" + x.id;
+            });
+            propertiesA = propertiesA.concat(props);
+        }
+        else if (at.isArray()) {
+        }
+        else {
+            var ds = propertyDescription(at);
+            ds.id = at.nameId() + "=>" + "$value";
+            ds.displayName = nicerName(at.nameId());
+            ds.scalar = true;
+            propertiesA.push(ds);
+        }
+    });
+    var providers = createProviders();
+    var consumed = {};
+    iterateProviders(providers, propertiesA, consumed);
+    var result = [];
+    providers.forEach(function (x) { return result = result.concat(x.getResult()); });
+    result = tryMerge(result);
+    return result;
+}
+exports.overlayedGroupedProperties = overlayedGroupedProperties;
+
+},{"./keywords":4}],7:[function(require,module,exports){
 "use strict";
 exports.usages = {
     usageRegistry: null
@@ -1466,6 +2146,9 @@ var LoadedRegistry = (function () {
         this._libs = this.group(els, false);
         return this._libs;
     };
+    LoadedRegistry.prototype.plainLibs = function () {
+        return this.registry.libraries;
+    };
     LoadedRegistry.prototype.apis = function () {
         if (this._apis) {
             return this._apis;
@@ -1520,7 +2203,7 @@ function getInstance(url, f) {
 }
 exports.getInstance = getInstance;
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1584,7 +2267,7 @@ var RAMLDetailsView = (function (_super) {
 }(workbench.ViewPart));
 module.exports = RAMLDetailsView;
 
-},{"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/resourceRender":11,"./rendering/typeRender":13}],6:[function(require,module,exports){
+},{"./core/registryCore":7,"./framework/controls":9,"./framework/workbench":11,"./rendering/resourceRender":16,"./rendering/typeRender":18}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1596,8 +2279,10 @@ require("../../lib/bootstrap-treeview");
 var ToolbarRenderer = (function () {
     function ToolbarRenderer(menu) {
         this.menu = menu;
+        this.style = {};
     }
     ToolbarRenderer.prototype.render = function (host) {
+        var _this = this;
         this.menu.items.forEach(function (x) {
             var button = document.createElement("button");
             button.classList.add("btn");
@@ -1606,14 +2291,23 @@ var ToolbarRenderer = (function () {
                 button.classList.add("btn-success");
             }
             else {
-                button.classList.add("btn-primary");
+                if (x.danger) {
+                    button.classList.add("btn-danger");
+                }
+                else {
+                    button.classList.add("btn-primary");
+                }
             }
+            copyProps(_this.style, button.style);
             button.textContent = x.title;
             if (x.image) {
                 button.innerHTML = "<span class=\"" + x.image + "\">" + x.title + "</span>";
             }
             if (x.run) {
                 button.onclick = x.run;
+            }
+            if (x.disabled) {
+                button.disabled = true;
             }
             host.appendChild(button);
         });
@@ -1683,28 +2377,28 @@ var Context = (function () {
     return Context;
 }());
 exports.Context = Context;
-var Composite = (function () {
-    function Composite() {
+var AbstractComposite = (function () {
+    function AbstractComposite() {
         this.children = [];
     }
-    Composite.prototype.render = function (e) {
+    AbstractComposite.prototype.render = function (e) {
         this._element = e;
         this.innerRender(e);
     };
-    Composite.prototype.refresh = function () {
+    AbstractComposite.prototype.refresh = function () {
         if (this._element) {
             this.innerRender(this._element);
         }
     };
-    Composite.prototype.add = function (c) {
+    AbstractComposite.prototype.add = function (c) {
         this.children.push(c);
         this.refresh();
     };
-    Composite.prototype.remove = function (c) {
+    AbstractComposite.prototype.remove = function (c) {
         this.children = this.children.filter(function (x) { return x != c; });
         this.refresh();
     };
-    Composite.prototype.dispose = function () {
+    AbstractComposite.prototype.dispose = function () {
         this._element = null;
         this.children.forEach(function (x) {
             if (x.dispose) {
@@ -1712,15 +2406,136 @@ var Composite = (function () {
             }
         });
     };
-    Composite.prototype.setTitle = function (title) {
+    AbstractComposite.prototype.setTitle = function (title) {
         this._title = title;
     };
-    Composite.prototype.title = function () {
+    AbstractComposite.prototype.title = function () {
         return this._title;
     };
-    return Composite;
+    return AbstractComposite;
 }());
+exports.AbstractComposite = AbstractComposite;
+function copyProps(a, b) {
+    Object.keys(a).forEach(function (k) {
+        b[k] = a[k];
+    });
+}
+var Composite = (function (_super) {
+    __extends(Composite, _super);
+    function Composite(tagName) {
+        _super.call(this);
+        this.tagName = tagName;
+        this._style = {};
+        this.attrs = {};
+        this._classNames = [];
+    }
+    Composite.prototype.addLabel = function (l) {
+        var cnt = new Composite("span");
+        cnt._text = l;
+        this.add(cnt);
+        return cnt;
+    };
+    Composite.prototype.addClassName = function (c) {
+        this._classNames.push(c);
+    };
+    Composite.prototype.style = function () {
+        return this._style;
+    };
+    Composite.prototype.withClass = function (c) {
+        this._className = c;
+        return this;
+    };
+    Composite.prototype.innerRender = function (e) {
+        var ch = document.createElement(this.tagName);
+        e.appendChild(ch);
+        this.renderContent(ch);
+    };
+    Composite.prototype.refresh = function () {
+        if (this._element) {
+            this._element.innerHTML = null;
+            this.renderContent(this._element);
+        }
+    };
+    Composite.prototype.renderContent = function (ch) {
+        var _this = this;
+        if (this._styleString) {
+            ch.setAttribute("style", this._styleString);
+        }
+        else if (this._style) {
+            copyProps(this._style, ch.style);
+        }
+        if (this._className) {
+            ch.className = this._className;
+        }
+        Object.keys(this.attrs).forEach(function (k) {
+            ch.setAttribute(k, _this.attrs[k]);
+        });
+        this._classNames.forEach(function (x) { ch.classList.add(x); });
+        if (this._text) {
+            ch.innerText = this._text;
+        }
+        this.children.forEach(function (c) {
+            var w = _this.wrap(ch);
+            var el = c.render(w);
+            if (el) {
+                w.appendChild(el);
+            }
+        });
+    };
+    Composite.prototype.wrap = function (p) {
+        return p;
+    };
+    return Composite;
+}(AbstractComposite));
 exports.Composite = Composite;
+var WrapComposite = (function (_super) {
+    __extends(WrapComposite, _super);
+    function WrapComposite() {
+        _super.apply(this, arguments);
+        this.wrapElement = "div";
+    }
+    WrapComposite.prototype.wrap = function (p) {
+        var d = document.createElement(this.wrapElement);
+        p.appendChild(d);
+        return d;
+    };
+    return WrapComposite;
+}(Composite));
+exports.WrapComposite = WrapComposite;
+var HorizontalFlex = (function (_super) {
+    __extends(HorizontalFlex, _super);
+    function HorizontalFlex() {
+        _super.call(this, "div");
+        this.wrapStyle = {};
+        this._style.display = "flex";
+        this._style.flexDirection = "row";
+    }
+    HorizontalFlex.prototype.wrap = function (p) {
+        var d = document.createElement("div");
+        copyProps(this.wrapStyle, d.style);
+        p.appendChild(d);
+        return d;
+    };
+    return HorizontalFlex;
+}(Composite));
+exports.HorizontalFlex = HorizontalFlex;
+var VerticalFlex = (function (_super) {
+    __extends(VerticalFlex, _super);
+    function VerticalFlex() {
+        _super.call(this, "div");
+        this.wrapStyle = {};
+        this._style.display = "flex";
+        this._style.flexDirection = "column";
+    }
+    VerticalFlex.prototype.wrap = function (p) {
+        var d = document.createElement("div");
+        copyProps(this.wrapStyle, d.style);
+        p.appendChild(d);
+        return d;
+    };
+    return VerticalFlex;
+}(Composite));
+exports.VerticalFlex = VerticalFlex;
 var globalId = 0;
 function nextId() {
     return "el" + (globalId++);
@@ -1734,7 +2549,7 @@ var Loading = (function (_super) {
         e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>";
     };
     return Loading;
-}(Composite));
+}(AbstractComposite));
 exports.Loading = Loading;
 var Label = (function (_super) {
     __extends(Label, _super);
@@ -1752,7 +2567,7 @@ var Label = (function (_super) {
         }
     };
     return Label;
-}(Composite));
+}(AbstractComposite));
 exports.Label = Label;
 var Accordition = (function (_super) {
     __extends(Accordition, _super);
@@ -1784,13 +2599,17 @@ var Accordition = (function (_super) {
         this.selectedIndex = index;
         for (var j = 0; j < bids.length; j++) {
             if (j != index) {
-                document.getElementById(bids[j]).style.display = "none";
-                document.getElementById(gids[j]).style.flex = null;
+                if (document.getElementById(bids[j])) {
+                    document.getElementById(bids[j]).style.display = "none";
+                    document.getElementById(gids[j]).style.flex = null;
+                }
             }
             else {
-                document.getElementById(bids[j]).style.display = "flex";
-                document.getElementById(gids[j]).style.flex = "1 1 0";
-                document.getElementById(gids[j]).style.display = "flex";
+                if (document.getElementById(bids[j])) {
+                    document.getElementById(bids[j]).style.display = "flex";
+                    document.getElementById(gids[j]).style.flex = "1 1 0";
+                    document.getElementById(gids[j]).style.display = "flex";
+                }
             }
         }
     };
@@ -1864,10 +2683,878 @@ var Accordition = (function (_super) {
         });
     };
     return Accordition;
-}(Composite));
+}(AbstractComposite));
 exports.Accordition = Accordition;
 
-},{"../../lib/bootstrap-contextmenu":17,"../../lib/bootstrap-treeview":18}],7:[function(require,module,exports){
+},{"../../lib/bootstrap-contextmenu":22,"../../lib/bootstrap-treeview":23}],10:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var controls = require("./controls");
+var wb = require("./workbench");
+var controls_1 = require("./controls");
+var or = require("../rendering/objectRender");
+var pg = require("../core/propertyGroup");
+var propertyGroup_1 = require("../core/propertyGroup");
+var Severity;
+(function (Severity) {
+    Severity[Severity["OK"] = 0] = "OK";
+    Severity[Severity["WARNING"] = 1] = "WARNING";
+    Severity[Severity["ERROR"] = 2] = "ERROR";
+})(Severity || (Severity = {}));
+var Status = (function () {
+    function Status() {
+    }
+    return Status;
+}());
+exports.Status = Status;
+var Form = (function (_super) {
+    __extends(Form, _super);
+    function Form() {
+        _super.call(this, "form");
+        this._style.padding = "10px";
+        this._style.width = "100%";
+    }
+    return Form;
+}(controls.Composite));
+exports.Form = Form;
+var InputGroup = (function (_super) {
+    __extends(InputGroup, _super);
+    function InputGroup() {
+        _super.call(this, "div");
+        this.addClassName("input-group");
+        this.addClassName("input-group-sm");
+        this._style.padding = "5px";
+    }
+    return InputGroup;
+}(controls.Composite));
+exports.InputGroup = InputGroup;
+var InputGroupAddOn = (function (_super) {
+    __extends(InputGroupAddOn, _super);
+    function InputGroupAddOn() {
+        _super.call(this, "div");
+        this.addClassName("input-group-addon");
+    }
+    return InputGroupAddOn;
+}(controls.Composite));
+exports.InputGroupAddOn = InputGroupAddOn;
+var BindableControl = (function (_super) {
+    __extends(BindableControl, _super);
+    function BindableControl() {
+        _super.apply(this, arguments);
+    }
+    BindableControl.prototype.renderContent = function (ch) {
+        _super.prototype.renderContent.call(this, ch);
+        this.initBinding(ch);
+    };
+    return BindableControl;
+}(controls.Composite));
+exports.BindableControl = BindableControl;
+var Input = (function (_super) {
+    __extends(Input, _super);
+    function Input() {
+        _super.call(this, "input");
+        this.addClassName("form-control");
+    }
+    Input.prototype.initBinding = function (ch) {
+        var _this = this;
+        var el = ch;
+        if (this._binding) {
+            var val = this._binding.get();
+            if (!val) {
+                val = "";
+            }
+            el.value = val;
+            el.onkeyup = function (e) {
+                _this._binding.set(el.value);
+            };
+        }
+    };
+    return Input;
+}(BindableControl));
+exports.Input = Input;
+var Option = (function (_super) {
+    __extends(Option, _super);
+    function Option(value) {
+        _super.call(this, "option");
+        this._text = value;
+        this.addClassName("form-control");
+    }
+    return Option;
+}(controls.Composite));
+exports.Option = Option;
+var Help = (function (_super) {
+    __extends(Help, _super);
+    function Help(value) {
+        _super.call(this, "span");
+        this.addClassName("glyphicon");
+        this.addClassName("glyphicon-question-sign");
+        this.attrs["data-toggle"] = "tooltip";
+        this.attrs["data-placement"] = "right";
+        this.attrs.title = value;
+    }
+    return Help;
+}(controls.Composite));
+exports.Help = Help;
+var Select = (function (_super) {
+    __extends(Select, _super);
+    function Select() {
+        _super.call(this, "select");
+        this.addClassName("form-control");
+    }
+    Select.prototype.initBinding = function (ch) {
+        var _this = this;
+        var el = ch;
+        if (this._binding) {
+            el.value = this._binding.get();
+            el.onchange = function (e) {
+                _this._binding.set(el.value);
+            };
+        }
+    };
+    return Select;
+}(BindableControl));
+exports.Select = Select;
+var Button = (function (_super) {
+    __extends(Button, _super);
+    function Button(text) {
+        _super.call(this, "button");
+        this.addClassName("form-control");
+        this._text = text;
+    }
+    return Button;
+}(controls.Composite));
+exports.Button = Button;
+var SimpleColumn = (function () {
+    function SimpleColumn(name) {
+        this.name = name;
+        this.nowrap = false;
+    }
+    SimpleColumn.prototype.id = function () {
+        return "title";
+    };
+    SimpleColumn.prototype.caption = function () {
+        return "value";
+    };
+    SimpleColumn.prototype.render = function (o, rowId) {
+        return "" + o;
+    };
+    SimpleColumn.prototype.width = function () {
+        return "10em";
+    };
+    return SimpleColumn;
+}());
+var Toolbar = (function (_super) {
+    __extends(Toolbar, _super);
+    function Toolbar() {
+        _super.call(this, "span");
+        this.items = [];
+        this._styleString = "float: right";
+    }
+    Toolbar.prototype.renderContent = function (ch) {
+        _super.prototype.renderContent.call(this, ch);
+        var rnd = new controls.ToolbarRenderer(this);
+        rnd.style.marginRight = "5px";
+        rnd.render(ch);
+    };
+    return Toolbar;
+}(controls.Composite));
+exports.Toolbar = Toolbar;
+var Section = (function (_super) {
+    __extends(Section, _super);
+    function Section(title) {
+        if (title === void 0) { title = ""; }
+        _super.call(this, "div");
+        this.toolbar = new Toolbar();
+        this.setTitle(title);
+        this.addClassName("panel");
+        this.addClassName("panel-default");
+        var heading = new controls.WrapComposite("div");
+        heading._text = this.title();
+        heading.wrapElement = "span";
+        heading.addClassName("panel-heading");
+        heading.add(this.toolbar);
+        this._style.paddingBottom = "0px";
+        this._style.marginBottom = "0px";
+        this.heading = heading;
+        _super.prototype.add.call(this, heading);
+        var body = new controls.WrapComposite("div");
+        body.addClassName("panel-body");
+        _super.prototype.add.call(this, body);
+        this.body = body;
+    }
+    Section.prototype.add = function (c) {
+        this.body.add(c);
+    };
+    return Section;
+}(controls.Composite));
+exports.Section = Section;
+var Table = (function (_super) {
+    __extends(Table, _super);
+    function Table() {
+        _super.apply(this, arguments);
+    }
+    return Table;
+}(controls.Composite));
+exports.Table = Table;
+function createControl(p, b) {
+    var cm = new controls.VerticalFlex();
+    var group = new propertyGroup_1.PropertyGroup();
+    cm.add(new controls_1.Label(marked(p.description)));
+    if (p.map) {
+        var kd = {};
+        kd.displayName = "Key";
+        kd.id = "$key";
+        kd.required = true;
+        kd.scalar = true;
+        group.properties.push(kd);
+    }
+    if (p.children && p.children.length > 0) {
+        p.children.forEach(function (x) {
+            group.properties.push(pg.collapseInnerProps(x));
+        });
+    }
+    else {
+        var kd = {};
+        kd.displayName = "Value";
+        kd.id = "$value";
+        kd.required = true;
+        kd.scalar = true;
+        group.properties.push(kd);
+    }
+    cm.add(renderPropertyGroup(group, b));
+    return cm;
+}
+function deepCopy(obj) {
+    var newObj = $.extend(true, {}, obj);
+    return newObj;
+}
+var CreateAction = (function () {
+    function CreateAction(pd, b) {
+        this.pd = pd;
+        this.b = b;
+        this.obj = {};
+    }
+    CreateAction.prototype.run = function () {
+        var control = createControl(this.pd, new ObjectBridge(this.obj));
+        var view = this;
+        new wb.ShowDialogAction("Create " + this.pd.displayName, control, [{
+                title: "Create",
+                run: function () {
+                    view.b.set(view.obj);
+                },
+                primary: true
+            }, {
+                title: "Cancel",
+                run: function () {
+                },
+                warning: true
+            }]).run();
+    };
+    return CreateAction;
+}());
+exports.CreateAction = CreateAction;
+var EditAction = (function () {
+    function EditAction(pd, b) {
+        this.pd = pd;
+        this.b = b;
+        this.obj = {};
+        this.obj = deepCopy(b.get());
+    }
+    EditAction.prototype.run = function () {
+        var control = createControl(this.pd, new ObjectBridge(this.obj));
+        var view = this;
+        new wb.ShowDialogAction("Edit " + this.pd.displayName, control, [{
+                title: "Apply",
+                run: function () {
+                    view.b.set(view.obj);
+                },
+                primary: true
+            }, {
+                title: "Cancel",
+                run: function () {
+                },
+                warning: true
+            }]).run();
+    };
+    return EditAction;
+}());
+exports.EditAction = EditAction;
+var ListView = (function (_super) {
+    __extends(ListView, _super);
+    function ListView(pd, emptyText) {
+        if (emptyText === void 0) { emptyText = ""; }
+        _super.call(this, "ul");
+        this.pd = pd;
+        this.emptyText = emptyText;
+        this.selectionListeners = [];
+        this.selectedIndex = 0;
+    }
+    ListView.prototype.addSelectionListener = function (l) {
+        this.selectionListeners.push(l);
+    };
+    ListView.prototype.removeSelectionListener = function (l) {
+        this.selectionListeners = this.selectionListeners.filter(function (x) { return x != l; });
+    };
+    ListView.prototype.getSelection = function () {
+        if (this.selectedIndex > 0) {
+            var val = this._binding.get();
+            if (Array.isArray(val)) {
+                if (val.length > this.selectedIndex) {
+                    return [val[this.selectedIndex]];
+                }
+            }
+        }
+        return [];
+    };
+    ListView.prototype.renderValue = function (v) {
+        if (this.pd.array) {
+            v = v["item"];
+        }
+        if (this.pd.map) {
+            var key = v["$key"];
+            var vl = v["$value"];
+            if (!vl) {
+                vl = deepCopy(v);
+                delete vl["$key"];
+            }
+            var bg = "<span class=\"badge\">" + key + "</span>";
+            return or.renderObj(vl) + bg;
+        }
+        return or.renderObj(v);
+    };
+    ListView.prototype.initBinding = function (ch) {
+        var _this = this;
+        ch.innerHTML = "";
+        var view = this;
+        if (this._binding != null) {
+            var b = this._binding.get();
+            if (b && Array.isArray(b) && (b.length > 0)) {
+                var elements = b;
+                var position = 0;
+                var view = this;
+                elements.forEach(function (z) {
+                    var index = position;
+                    var el = document.createElement("li");
+                    el.classList.add("list-group-item");
+                    if (position == _this.selectedIndex) {
+                        el.classList.add("active");
+                    }
+                    el.style.borderRadius = "0px";
+                    el.style.border = "0px";
+                    el.style.cursor = "pointer";
+                    el.style.margin = "1px";
+                    el.style.borderBottom = "1px";
+                    el.onclick = function (e) {
+                        view.selectedIndex = index;
+                        view.initBinding(ch);
+                        _this.selectionListeners.forEach(function (x) {
+                            x.selectionChanged(view.getSelection());
+                        });
+                    };
+                    el.innerHTML = view.renderValue(z);
+                    ch.appendChild(el);
+                    position++;
+                });
+            }
+            else {
+                ch.innerHTML = this.emptyText;
+            }
+        }
+    };
+    return ListView;
+}(BindableControl));
+exports.ListView = ListView;
+var TableEditor = (function (_super) {
+    __extends(TableEditor, _super);
+    function TableEditor(pd) {
+        _super.call(this, "div");
+        this.pd = pd;
+        this._style.height = "100%";
+        this._style.width = "100%";
+        var v = new controls.VerticalFlex();
+        v._style.height = "100%";
+        v._style.width = "100%";
+        v.wrapStyle.flex = "1 1 0";
+        this.add(v);
+        var tb = new controls.HorizontalFlex();
+        var s = new Section(pd.displayName);
+        s.body._style.padding = "0px";
+        var view = this;
+        this.content = s;
+        this.listView = new ListView(pd, "<div style='padding: 10px'>" + marked(pd.description) + "</div>");
+        s.add(this.listView);
+        var toolbar = s.toolbar;
+        this.listView.addSelectionListener({
+            selectionChanged: function (v) {
+                if (v != null && v.length > 0) {
+                    view._selection = v[0];
+                    view.updateToolbar(toolbar);
+                }
+            }
+        });
+        tb._style.width = "100%";
+        tb._style.height = "100%";
+        tb.wrapStyle.flex = "1 1 0";
+        tb.wrapStyle.padding = "5px";
+        tb.add(s);
+        v.add(tb);
+    }
+    TableEditor.prototype.initBinding = function () {
+        this.listView._binding = this._binding;
+        this.listView.refresh();
+        if (this._binding.get() && Array.isArray(this._binding.get())) {
+            var el = this._binding.get();
+            this._selection = el[0];
+        }
+        this.updateToolbar(this.content.toolbar);
+    };
+    TableEditor.prototype.appendValue = function (v) {
+        if (this._binding != null) {
+            if (this.pd.array || this.pd.map) {
+                var value = this._binding.get();
+                var ar = [];
+                if (!Array.isArray(value)) {
+                    if (value) {
+                        ar = [value];
+                    }
+                }
+                else {
+                    ar = value;
+                }
+                ar.push(v);
+                if (v["$value"]) {
+                    v = v["$value"];
+                }
+                this._binding.set(ar);
+                this.initBinding();
+            }
+        }
+    };
+    TableEditor.prototype.replaceValue = function (old, v) {
+        if (this._binding != null) {
+            if (this.pd.array || this.pd.map) {
+                var value = this._binding.get();
+                var ar = [];
+                if (!Array.isArray(value)) {
+                    if (value) {
+                        ar = [value];
+                    }
+                }
+                else {
+                    ar = value;
+                }
+                ar[old] = v;
+                this._binding.set(ar);
+                this.initBinding();
+            }
+        }
+    };
+    TableEditor.prototype.removeValue = function (v) {
+        if (this._binding != null) {
+            if (this.pd.array || this.pd.map) {
+                var value = this._binding.get();
+                var ar = [];
+                if (!Array.isArray(value)) {
+                    if (value) {
+                        ar = [value];
+                    }
+                }
+                else {
+                    ar = value;
+                }
+                ar = ar.filter(function (x, i) { return x != v && i != v; });
+                this._binding.set(ar);
+                this.initBinding();
+            }
+        }
+    };
+    TableEditor.prototype.updateToolbar = function (toolbar) {
+        toolbar.items = [];
+        var view = this;
+        toolbar.items.push({
+            title: "Create",
+            run: function () {
+                new CreateAction(view.pd, {
+                    get: function () {
+                        return {};
+                    },
+                    set: function (v) {
+                        view.appendValue(v);
+                    }
+                }).run();
+            }
+        });
+        toolbar.items.push({
+            title: "Edit Selected",
+            disabled: (view._selection == null),
+            run: function () {
+                new EditAction(view.pd, {
+                    get: function () {
+                        return view._selection;
+                    },
+                    set: function (v) {
+                        view.replaceValue(view.listView.selectedIndex, v);
+                    }
+                }).run();
+            }
+        });
+        toolbar.items.push({
+            title: "Delete Selected",
+            danger: true,
+            disabled: (view._selection == null),
+            run: function () {
+                view.removeValue(view.listView.selectedIndex);
+            }
+        });
+        toolbar.refresh();
+    };
+    return TableEditor;
+}(BindableControl));
+exports.TableEditor = TableEditor;
+var CheckBox = (function (_super) {
+    __extends(CheckBox, _super);
+    function CheckBox(caption) {
+        if (caption === void 0) { caption = ""; }
+        _super.call(this, "div");
+        this.setTitle(caption);
+        this.addClassName("checkbox");
+        this.addClassName("checkbox-inline");
+        this._style.paddingLeft = "5px";
+        this._style.paddingRight = "2px";
+        this._style.margin = "0px";
+    }
+    CheckBox.prototype.initBinding = function (ch) {
+        var _this = this;
+        var lab = document.createElement("label");
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.onchange = function (e) {
+            _this._binding.set(input.checked);
+        };
+        if (this._binding) {
+            input.checked = ("" + this._binding.get()) == "true";
+        }
+        lab.appendChild(input);
+        lab.appendChild(document.createTextNode(this.title()));
+        ch.appendChild(lab);
+    };
+    return CheckBox;
+}(BindableControl));
+exports.CheckBox = CheckBox;
+var ObjectBridge = (function () {
+    function ObjectBridge(obj) {
+        this.obj = obj;
+        this.listeners = [];
+    }
+    ObjectBridge.prototype.addListener = function (l) {
+        this.listeners.push(l);
+    };
+    ObjectBridge.prototype.removeListener = function (l) {
+        this.listeners = this.listeners.filter(function (x) { return x != l; });
+    };
+    ObjectBridge.prototype.get = function (path) {
+        return this.obj[path];
+    };
+    ObjectBridge.prototype.set = function (path, v) {
+        var _this = this;
+        if (v == null || v == "") {
+            delete this.obj[path];
+        }
+        else {
+            this.obj[path] = v;
+        }
+        this.listeners.forEach(function (x) { return x(_this.obj); });
+    };
+    ObjectBridge.prototype.binding = function (p) {
+        return new BridgeBinding(p, this);
+    };
+    ObjectBridge.prototype.keys = function () {
+        return Object.keys(this.obj);
+    };
+    return ObjectBridge;
+}());
+exports.ObjectBridge = ObjectBridge;
+var BridgeBinding = (function () {
+    function BridgeBinding(id, br) {
+        this.id = id;
+        this.br = br;
+    }
+    BridgeBinding.prototype.get = function () {
+        return this.br.get(this.id);
+    };
+    BridgeBinding.prototype.set = function (v) {
+        this.br.set(this.id, v);
+    };
+    return BridgeBinding;
+}());
+exports.BridgeBinding = BridgeBinding;
+var ArrayBinding = (function () {
+    function ArrayBinding(p, br) {
+        this.p = p;
+        this.br = br;
+    }
+    ArrayBinding.prototype.get = function () {
+        var vl = this.br.get();
+        if (this.p.array) {
+            if (Array.isArray(vl)) {
+                var ar = vl;
+                return ar.map(function (x) {
+                    return { item: x };
+                });
+            }
+        }
+        return vl;
+    };
+    ArrayBinding.prototype.set = function (v) {
+        if (this.p.array) {
+            if (Array.isArray(v)) {
+                var ar = v;
+                this.br.set(ar.map(function (x) { return x.item; }));
+            }
+            else {
+                this.br.set(v);
+            }
+        }
+    };
+    return ArrayBinding;
+}());
+exports.ArrayBinding = ArrayBinding;
+var MapBinding = (function () {
+    function MapBinding(id, br) {
+        this.id = id;
+        this.br = br;
+    }
+    MapBinding.prototype.get = function () {
+        var _this = this;
+        var result = [];
+        this.br.keys().forEach(function (k) {
+            var v = {
+                $key: k
+            };
+            var cl = _this.br.get(k);
+            if (Array.isArray(cl)) {
+                v["$value"] = cl;
+            }
+            else if (typeof cl == "object") {
+                var vl = deepCopy(cl);
+                vl["$key"] = k;
+                v = vl;
+            }
+            else {
+                if (cl) {
+                    v["$value"] = cl;
+                }
+            }
+            result.push(v);
+        });
+        return result;
+    };
+    MapBinding.prototype.set = function (v) {
+        var _this = this;
+        this.br.keys().forEach(function (c) {
+            _this.br.set(c, null);
+        });
+        if (Array.isArray(v)) {
+            var items = v;
+            items.forEach(function (x) {
+                var vl = x["$value"];
+                if (!vl) {
+                    vl = deepCopy(x);
+                    delete vl["$key"];
+                }
+                var key = x["$key"];
+                _this.br.set(key, vl);
+            });
+        }
+    };
+    return MapBinding;
+}());
+exports.MapBinding = MapBinding;
+var ProxyBridge = (function () {
+    function ProxyBridge(parent, segment) {
+        this.parent = parent;
+        this.segment = segment;
+    }
+    ProxyBridge.prototype.get = function (path) {
+        var vl = this.parent.get(this.segment);
+        if (path == "$value") {
+            return vl;
+        }
+        if (vl == null) {
+            return null;
+        }
+        return vl[path];
+    };
+    ProxyBridge.prototype.set = function (path, v) {
+        if (path == "$value") {
+            if (v) {
+                this.parent.set(this.segment, v);
+                return;
+            }
+            else {
+                this.parent.set(this.segment, null);
+                return;
+            }
+        }
+        var vl = this.parent.get(this.segment);
+        if (vl == null) {
+            if (!v) {
+                return;
+            }
+            vl = {};
+        }
+        {
+            if (!v) {
+                delete vl[path];
+            }
+            else {
+                vl[path] = v;
+            }
+            if (Object.keys(vl).length == 0) {
+                vl = null;
+            }
+            this.parent.set(this.segment, vl);
+        }
+    };
+    ProxyBridge.prototype.keys = function () {
+        var vl = this.parent.get(this.segment);
+        if (vl) {
+            return Object.keys(vl);
+        }
+        return [];
+    };
+    ProxyBridge.prototype.binding = function (p) {
+        return new BridgeBinding(p, this);
+    };
+    return ProxyBridge;
+}());
+var NillBinding = (function () {
+    function NillBinding(p) {
+        this.p = p;
+    }
+    NillBinding.prototype.get = function () {
+        var r = this.p.get();
+        if (r) {
+            return true;
+        }
+    };
+    NillBinding.prototype.set = function (v) {
+        if (v) {
+            this.p.set("!!!NULL_VALUE");
+        }
+    };
+    return NillBinding;
+}());
+var binding = function (bridge, p) {
+    var segments = p.id.split("=>");
+    var lst = p.id;
+    if (segments.length > 0) {
+        lst = segments[segments.length - 1];
+        for (var i = 0; i < segments.length - 1; i++) {
+            bridge = new ProxyBridge(bridge, segments[i]);
+        }
+    }
+    var ls = bridge.binding(lst);
+    if (p.array) {
+        ls = new ArrayBinding(p, ls);
+    }
+    if (p.map) {
+        ls = new MapBinding(p.id, bridge);
+    }
+    if (p.nil) {
+        ls = new NillBinding(ls);
+    }
+    return ls;
+};
+function renderPropertyGroup(p, bridge) {
+    var maxLength = 0;
+    var container = new controls.VerticalFlex();
+    p.properties.forEach(function (x) {
+        if (x.scalar) {
+            var dl = x.displayName.length;
+            if (dl > maxLength) {
+                maxLength = dl;
+            }
+        }
+    });
+    maxLength += 5;
+    p.properties.forEach(function (p) {
+        if (p.map) {
+            return;
+        }
+        if (p.array) {
+            return;
+        }
+        if (p.scalar) {
+            if (!p.boolean && !p.nil) {
+                var r = new InputGroup();
+                var nAddon = new InputGroupAddOn();
+                r._style.width = "100%";
+                r.add(nAddon);
+                nAddon._style.width = maxLength + "ch";
+                nAddon._style.textAlign = "left";
+                var ll = new controls.Composite("span");
+                ll.addLabel(p.displayName + (p.required ? "* " : " "));
+                if (p.description) {
+                    ll.add(new Help(p.description));
+                }
+                ll._style.cssFloat = "left";
+                nAddon.add(ll);
+                if (p.enumOptions) {
+                    var select = new Select();
+                    select._binding = binding(bridge, p);
+                    p.enumOptions.forEach(function (x) {
+                        select.add(new Option(x));
+                    });
+                    r.add(select);
+                }
+                else {
+                    var w = new Input();
+                    w._binding = binding(bridge, p);
+                    r.add(w);
+                }
+                container.add(r);
+            }
+        }
+    });
+    p.properties.forEach(function (p) {
+        if (p.map) {
+            var rs = new TableEditor(p);
+            rs._binding = binding(bridge, p);
+            container.add(rs);
+            return;
+        }
+        if (p.array) {
+            var rs = new TableEditor(p);
+            rs._binding = binding(bridge, p);
+            container.add(rs);
+            return;
+        }
+    });
+    var checks = new controls_1.WrapComposite("span");
+    checks.wrapElement = "span";
+    p.properties.forEach(function (p) {
+        if (p.nil || p.boolean) {
+            var rs = new CheckBox(p.displayName);
+            rs._binding = binding(bridge, p);
+            checks.add(rs);
+            var h = new Help(p.description);
+            checks.add(h);
+            h._style.paddingRight = "10px";
+            h._style.marginTop = "2px";
+            return;
+        }
+    });
+    container.add(checks);
+    return container;
+}
+exports.renderPropertyGroup = renderPropertyGroup;
+
+},{"../core/propertyGroup":6,"../rendering/objectRender":15,"./controls":9,"./workbench":11}],11:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1955,6 +3642,7 @@ var Pane = (function () {
         var hid = nextId();
         var bid = nextId();
         var mid = nextId();
+        this.hid = hid;
         var menuId = nextId();
         var cmenuId = nextId();
         var cmenuInnerId = nextId();
@@ -1963,16 +3651,7 @@ var Pane = (function () {
         var cmenu = "<div id='" + cmenuId + "'><ul class=\"dropdown-menu\"  id=\"" + cmenuInnerId + "\"role=\"menu\"  aria-labelledby=\"" + mid + "\"></ul></div>";
         var cnt = "<div style='display: flex;flex-direction: column;height: 100%;width: 99.9%;margin-bottom:0px;overflow: hidden' class=\"panel panel-primary\"><div id=\"" + hid + "\" class=\"panel-heading\" style=\"flex: 0 0 auto;display: flex\"></div>\n        <div class=\"panel-body\"  data-toggle=\"context\" data-target=\"#" + cmenuId + "\" style=\"flex: 1 1 0;display: flex;overflow: hidden;margin: 0;padding: 0\" ><div style=\"width: 100%\" id=\"" + bid + "\"></div>" + cmenu + "</div></div>";
         this._part.element().innerHTML = cnt;
-        var hel = document.getElementById(hid);
-        var headerHtml = "<div style=\"display: flex;flex-direction: row;width: 100%\"><div style=\"flex:1 1 auto\">" + this._v.title() + "</div>";
-        var searchHtml = "<input type=\"text\"style=\"color: black;border-radius: 3px;height: 23px;margin-right: 4px\" id=\"" + searchId + "\"/>";
-        if (!this._v.searchable) {
-            searchHtml = "";
-        }
-        var th = "<span id=\"" + tid + "\"></span>";
-        var dropMenu = "<div class=\"dropdown\" style=\"flex: 0 0 auto\"/><button class=\"btn btn-primary dropdown-toggle btn-xs\" style=\"display: none\" type=\"button\" id=\"" + mid + "\" data-toggle=\"dropdown\">\n  <span class=\"caret\"></span></button>\n  <ul class=\"dropdown-menu dropdown-menu-left\" style=\"right: 0;left: auto\" role=\"menu\" id='" + menuId + "' aria-labelledby=\"" + mid + "\"/></div>";
-        headerHtml = headerHtml + searchHtml + th + dropMenu + "</div>";
-        hel.innerHTML = headerHtml;
+        this.updateHeader(searchId, tid, mid, menuId);
         this.menuContentElement = document.getElementById(menuId);
         this.toolbarContentElement = document.getElementById(tid);
         this.contextMenuElement = document.getElementById(cmenuInnerId);
@@ -1984,6 +3663,7 @@ var Pane = (function () {
         if (this._v.init) {
             this._v.init(this);
         }
+        var hel = document.getElementById(this.hid);
         var pe = this._part.element();
         function handleResize() {
             var h = hel.getBoundingClientRect().height;
@@ -2002,6 +3682,24 @@ var Pane = (function () {
             };
         }
         handleResize();
+    };
+    Pane.prototype.updateTitle = function (newTitle) {
+        document.getElementById(this.titleId).innerText = newTitle;
+    };
+    Pane.prototype.updateHeader = function (searchId, tid, mid, menuId) {
+        var hel = document.getElementById(this.hid);
+        var tid2 = nextId();
+        this.titleId = tid2;
+        var headerHtml = "<div style=\"display: flex;flex-direction: row;width: 100%\"><div id='" + tid2 + "'style=\"flex:1 1 auto\">" + this._v.title() + "</div>";
+        var searchHtml = "<input type=\"text\"style=\"color: black;border-radius: 3px;height: 23px;margin-right: 4px\" id=\"" + searchId + "\"/>";
+        if (!this._v.searchable) {
+            searchHtml = "";
+        }
+        var th = "<span id=\"" + tid + "\"></span>";
+        var dropMenu = "<div class=\"dropdown\" style=\"flex: 0 0 auto\"/><button class=\"btn btn-primary dropdown-toggle btn-xs\" style=\"display: none\" type=\"button\" id=\"" + mid + "\" data-toggle=\"dropdown\">\n  <span class=\"caret\"></span></button>\n  <ul class=\"dropdown-menu dropdown-menu-left\" style=\"right: 0;left: auto\" role=\"menu\" id='" + menuId + "' aria-labelledby=\"" + mid + "\"/></div>";
+        headerHtml = headerHtml + searchHtml + th + dropMenu + "</div>";
+        hel.innerHTML = headerHtml;
+        return headerHtml;
     };
     return Pane;
 }());
@@ -2029,6 +3727,8 @@ var nh = {
     setContextMenu: function (m) {
     },
     setStatusMessage: function (m) {
+    },
+    updateTitle: function (s) {
     }
 };
 var ViewPart = (function () {
@@ -2036,9 +3736,9 @@ var ViewPart = (function () {
         var _this = this;
         this._id = _id;
         this._title = _title;
+        this.selectionListeners = [];
         this.holder = nh;
         this.selection = [];
-        this.selectionListeners = [];
         this.contextMenu = new ContributionManager(function (m) { return _this.holder.setContextMenu(m); });
         this.toolbar = new ContributionManager(function (m) { return _this.holder.setToolbar(m); });
         this.viewMenu = new ContributionManager(function (m) { return _this.holder.setViewMenu(m); });
@@ -2073,6 +3773,10 @@ var ViewPart = (function () {
     ViewPart.prototype.addSelectionListener = function (l) {
         this.selectionListeners.push(l);
     };
+    ViewPart.prototype.setTitle = function (t) {
+        this._title = t;
+        this.holder.updateTitle(t);
+    };
     ViewPart.prototype.removeSelectionListener = function (l) {
         this.selectionListeners = this.selectionListeners.filter(function (x) { return x != l; });
     };
@@ -2099,6 +3803,16 @@ var ViewPart = (function () {
         this.contentElement = e;
         this.innerRender(e);
         e.view = this;
+    };
+    ViewPart.prototype.hide = function () {
+        if (this.contentElement) {
+            this.contentElement.style.display = "none";
+        }
+    };
+    ViewPart.prototype.show = function () {
+        if (this.contentElement) {
+            this.contentElement.style.display = "visible";
+        }
     };
     ViewPart.prototype.refresh = function () {
         if (this.contentElement) {
@@ -2229,6 +3943,7 @@ var TreeView = (function (_super) {
     function TreeView() {
         _super.apply(this, arguments);
         this.searchable = true;
+        this.styleString = "width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block";
     }
     TreeView.prototype.setSorter = function (s) {
         this.contentProvider.sorter = s;
@@ -2319,7 +4034,7 @@ var TreeView = (function (_super) {
         var treeId = nextId();
         this.treeId = treeId;
         var view = this;
-        e.innerHTML = "<div id='" + treeId + "' style='width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block'></div>";
+        e.innerHTML = "<div id='" + treeId + "' style='" + this.styleString + "'></div>";
         $('#' + treeId).treeview({
             data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
             onNodeSelected: function (x) {
@@ -2546,7 +4261,7 @@ var NavBar = (function () {
     NavBar.prototype.render = function (e) {
         this.element = e;
         var id = nextId();
-        var tmplt = "<nav class=\"navbar navbar-inverse\" id=\"header\"\n         style=\"" + this._theme.style + "\">\n         <div class=\"container-fluid\" style=\"padding-left: 0px\">\n            <div class=\"navbar-header\">\n                <a class=\"navbar-brand\" href=\"#\" style=\"margin: 0px;padding: 0px\">\n                    <img src=\"" + this._theme.brandImage + "\"\n                         height=\"" + this._theme.brandImageHeight + "\" style=\"" + this._theme.brandImageStyle + "\"/>\n                    <a class=\"navbar-brand\" href=\"#\">" + this._title + "</a>\n                </a>\n            </div>\n            <div class=\"navbar-right\">\n                <ul class=\"nav navbar-nav\" id=\"" + id + "\"></ul>\n                <a class=\"header-logo-invertocat\" href=\"https://github.com/apiregistry/registry\" \n                   aria-label=\"Homepage\" >\n                   <img src=\"./images/GitHub-Mark-Light-32px.png\" height=\"32\" style=\"margin: 8px\"/>\n                </a>\n            </div>\n        </div>        \n    </nav>";
+        var tmplt = "<nav class=\"navbar navbar-inverse\" id=\"header\"\n         style=\"" + this._theme.style + "\">\n         <div class=\"container-fluid\" style=\"padding-left: 0px\">\n            <div class=\"navbar-header\">\n                \n                <a class=\"navbar-brand\" href=\"#\" style=\"margin: 0px;padding: 0px\">\n                    \n                    <img src=\"" + this._theme.brandImage + "\"\n                         height=\"" + this._theme.brandImageHeight + "\" style=\"" + this._theme.brandImageStyle + "\"/>\n                    \n                    <a class=\"navbar-brand\" href=\"#\" >\n                    <span class=\"glyphicon glyphicon-home\" onclick=\"Workbench.open('home')\" style=\"display: " + (this.homeDisplay ? "visible" : "none") + "\">\n                    </span>\n                    " + this._title + "\n                    </a>\n                </a>\n            </div>\n            \n            <div class=\"navbar-right\">\n                <ul class=\"nav navbar-nav\" id=\"" + id + "\"></ul>\n                <a class=\"header-logo-invertocat\" href=\"https://github.com/apiregistry/registry\" \n                   aria-label=\"Homepage\" >\n                   <img src=\"./images/GitHub-Mark-Light-32px.png\" height=\"32\" style=\"margin: 8px\"/>\n                </a>\n            </div>\n        </div>        \n    </nav>";
         e.innerHTML = tmplt;
         this.globalMenuElement = document.getElementById(id);
         this.renderMenu();
@@ -2561,11 +4276,12 @@ var NavBar = (function () {
 }());
 exports.NavBar = NavBar;
 var Application = (function () {
-    function Application(_title, initialPerspective, element) {
+    function Application(_title, initialPerspective, element, currentP) {
         var _this = this;
         this._title = _title;
+        this.initialPerspective = initialPerspective;
         this.nb = new NavBar();
-        this.perspective = initialPerspective;
+        this.perspective = currentP ? currentP : initialPerspective;
         this.perspective.actions.forEach(function (a) { return _this.nb.getMenuBar().add(a); });
         if (element) {
             if (typeof element == "string") {
@@ -2575,9 +4291,25 @@ var Application = (function () {
                 this.render(element);
             }
         }
+        var v = this;
+        addCommand({
+            id: "home",
+            run: function () {
+                v.home();
+            }
+        });
     }
     Application.prototype.title = function () {
         return this._title;
+    };
+    Application.prototype.currentPerspective = function () {
+        return this.perspective;
+    };
+    Application.prototype.homePerspective = function () {
+        return this.initialPerspective;
+    };
+    Application.prototype.home = function () {
+        this.openPerspective(this.initialPerspective);
     };
     Application.prototype.setStatusMessage = function (m) {
         if (this.status) {
@@ -2590,6 +4322,7 @@ var Application = (function () {
     Application.prototype.openPerspective = function (perspective) {
         var _this = this;
         this.nb.getMenuBar().menu.items = [];
+        this._title = perspective.title;
         this.perspective.actions.forEach(function (a) { return _this.nb.getMenuBar().add(a); });
         this.perspective = perspective;
         this.render(this.element);
@@ -2599,6 +4332,12 @@ var Application = (function () {
         var nb = nextId();
         var main = nextId();
         var status = nextId();
+        if (this.currentPerspective() != this.initialPerspective) {
+            this.nb.homeDisplay = true;
+        }
+        else {
+            this.nb.homeDisplay = false;
+        }
         this.nb.setTitle(this.title());
         var tmplt = "<div style=\"height: 100%;display: flex;flex-direction: column\">\n        <div id=\"" + nb + "\"></div>    \n        <div id=\"" + main + "\" style=\"flex: 1 0 0\"></div>\n        <div>\n            <p class=\"navbar-text\" id=\"" + status + "\" style=\"margin: 0px;padding: 0px;float: right;\">...</p>\n        </div>\n        </div>";
         e.innerHTML = tmplt;
@@ -2618,22 +4357,48 @@ var Application = (function () {
 }());
 exports.Application = Application;
 var ShowDialogAction = (function () {
-    function ShowDialogAction(title, control, close) {
-        if (close === void 0) { close = false; }
+    function ShowDialogAction(title, control, buttons) {
+        if (buttons === void 0) { buttons = []; }
         this.title = title;
         this.control = control;
+        this.buttons = buttons;
     }
     ShowDialogAction.prototype.run = function () {
         var title = this.title;
-        var dlg = BootstrapDialog.show({
-            title: title, buttons: [
-                {
-                    label: "Close",
-                    action: function (dlg) {
-                        dlg.close();
-                    }
+        var bs = [];
+        this.buttons.forEach(function (x) {
+            var csCl = "";
+            if (x.primary) {
+                csCl = "btn-primary";
+            }
+            if (x.warning) {
+                csCl = "btn-warning";
+            }
+            if (x.success) {
+                csCl = "btn-success";
+            }
+            if (x.danger) {
+                csCl = "btn-danger";
+            }
+            bs.push({
+                label: x.title,
+                action: function (dlg) {
+                    dlg.close();
+                    x.run();
+                },
+                cssClass: csCl
+            });
+        });
+        if (bs.length == 0) {
+            bs.push({
+                label: "Close",
+                action: function (dlg) {
+                    dlg.close();
                 }
-            ]
+            });
+        }
+        var dlg = BootstrapDialog.show({
+            title: title, buttons: bs
         });
         if (typeof this.control == "string") {
             dlg.$modalBody.html(this.control);
@@ -2645,6 +4410,10 @@ var ShowDialogAction = (function () {
     return ShowDialogAction;
 }());
 exports.ShowDialogAction = ShowDialogAction;
+function showInDialog(title, control) {
+    new ShowDialogAction(title, control).run();
+}
+exports.showInDialog = showInDialog;
 var w = window;
 var handlers = [];
 function registerHandler(f) {
@@ -2664,8 +4433,27 @@ function back() {
     history.back();
 }
 exports.back = back;
+var commands = {};
+function addCommand(ci) {
+    commands[ci.id] = ci;
+}
+exports.addCommand = addCommand;
 function processUrl(url) {
-    setState({ hash: url });
+    if (commands[url]) {
+        commands[url].run();
+        return;
+    }
+    var sState = true;
+    Object.keys(commands).forEach(function (x) {
+        if (url.indexOf(x) == 0) {
+            url = url.substring(x.length);
+            commands[x].run(url);
+            sState = false;
+        }
+    });
+    if (sState) {
+        setState({ hash: url });
+    }
 }
 exports.processUrl = processUrl;
 function processState(s) {
@@ -2695,7 +4483,12 @@ function setState(s) {
 exports.setState = setState;
 if (history && history.pushState) {
     window.onpopstate = function (event) {
-        processState(event.state);
+        if (event.state) {
+            processState(event.state);
+        }
+        else {
+            processState({ hash: document.location.hash });
+        }
     };
 }
 function exportGlobalHandler(name, handler) {
@@ -2717,7 +4510,136 @@ var w = window;
 w.WorkbenchUtils = {};
 w.WorkbenchUtils.getView = getView;
 
-},{"../../lib/Split":16,"./controls":6}],8:[function(require,module,exports){
+},{"../../lib/Split":21,"./controls":9}],12:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var workbench = require("./framework/workbench");
+var hl = require("./core/hl");
+var oc = require("./core/overlayCore");
+var controls = require("./framework/controls");
+var forms = require("./framework/forms");
+var forms_1 = require("./framework/forms");
+var RAMLOverlayView = (function (_super) {
+    __extends(RAMLOverlayView, _super);
+    function RAMLOverlayView(id, title) {
+        _super.call(this, id, title);
+        this.compact = true;
+        this.loading = false;
+        this.libLocation = "https://raw.githubusercontent.com/OnPositive/aml/master/org.aml.apigatewayimporter/apigateway-lib.raml";
+        this.obj = {};
+        var view = this;
+        this.getToolbar().add({
+            title: "Save",
+            run: function () {
+                view.manager.save(function (x) {
+                    workbench.showInDialog("Saved", "Overlay stored");
+                });
+            }
+        });
+    }
+    RAMLOverlayView.prototype.setLib = function (lib) {
+        this.libLocation = lib;
+        this.location = null;
+        this.setInput(this._element);
+    };
+    RAMLOverlayView.prototype.setInput = function (v) {
+        var _this = this;
+        this._element = v;
+        if (v) {
+            var view = this;
+            var loc = hl.location(v);
+            if (this.location != loc) {
+                this.loading = true;
+                this.manager = null;
+                this.refresh();
+                oc.createManager(loc, this.libLocation, function (m) {
+                    _this.loading = false;
+                    view.manager = m;
+                    view.location = loc;
+                    _this.refresh();
+                });
+            }
+            else {
+                this.refresh();
+            }
+        }
+    };
+    RAMLOverlayView.prototype.innerRender = function (e) {
+        e.innerHTML = "";
+        if (this.loading && !this.manager) {
+            new controls.Loading().render(e);
+            return;
+        }
+        if (!this._element) {
+            return;
+        }
+        var mm = hl.overlayId(this._element).join("/");
+        if (!this._element.property()) {
+            mm = " root";
+        }
+        this.setTitle("Overlays for: " + mm + " of (" + hl.title(this._element) + ")");
+        var f = new forms.Form();
+        f._style.height = "100%";
+        var vv = new controls.VerticalFlex();
+        vv.wrapStyle.height = "100%";
+        var m = new controls.HorizontalFlex();
+        vv._style.height = "100%";
+        m._style.flex = "1 1 0";
+        m._style.height = "100%";
+        var view = this;
+        var hide = false;
+        if (this._element && this.manager) {
+            this.obj = view.manager.overlay(this._element);
+            if (true) {
+                var t = new workbench.TreeView("", "");
+                t.styleString = "overflow: auto;flex: 1 1 0; min-height: 50px;height: 100%;display: block;background: lightgray; min-width:200px";
+                m.add(t);
+                m.add(f);
+                t.setLabelProvider({
+                    label: function (e) {
+                        return e.caption;
+                    }
+                });
+                t.setContentProvider(new workbench.ArrayContentProvider());
+                var groups = [];
+                groups = groups.concat(this.manager.getOvelayProperties(this._element));
+                t.setInput(groups);
+                t.addSelectionListener({
+                    selectionChanged: function (v) {
+                        if (v.length == 1) {
+                            f.children = [];
+                            var p = v[0];
+                            var b = new forms_1.ObjectBridge(view.obj);
+                            f.add(forms.renderPropertyGroup(p, b));
+                            f.refresh();
+                            $('[data-toggle="tooltip"]').tooltip();
+                        }
+                    }
+                });
+                if (groups.length <= 1) {
+                    hide = true;
+                }
+            }
+        }
+        vv.add(m);
+        vv.render(e);
+        $('[data-toggle="tooltip"]').tooltip();
+        if (hide) {
+            t.hide();
+        }
+        if (groups && groups.length > 0) {
+            t.select(groups[0]);
+        }
+    };
+    return RAMLOverlayView;
+}(workbench.ViewPart));
+module.exports = RAMLOverlayView;
+
+},{"./core/hl":3,"./core/overlayCore":5,"./framework/controls":9,"./framework/forms":10,"./framework/workbench":11}],13:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2825,7 +4747,7 @@ var RegistryView = (function (_super) {
 }(workbench.AccorditionTreeView));
 module.exports = RegistryView;
 
-},{"./core/registryCore":4,"./framework/workbench":7,"./state":14}],9:[function(require,module,exports){
+},{"./core/registryCore":7,"./framework/workbench":11,"./state":19}],14:[function(require,module,exports){
 "use strict";
 var or = require("./objectRender");
 var hl = require("../core/hl");
@@ -2922,6 +4844,7 @@ function renderNodesOverview(api, v, path) {
             result.push(marked(c.value()));
         }
     });
+    result.push("<div>Registry id: " + hl.registryId(api) + "</div>");
     if (path) {
         result.push("<hr/>");
         result.push("<a href='" + path + "'>Get RAML</a>");
@@ -3043,7 +4966,7 @@ function renderNode(h, small) {
 }
 exports.renderNode = renderNode;
 
-},{"../core/hl":2,"./objectRender":10}],10:[function(require,module,exports){
+},{"../core/hl":3,"./objectRender":15}],15:[function(require,module,exports){
 "use strict";
 function encode(r) {
     return r.replace(/[\x26\x0A\<>'"]/g, function (r) { return "&#" + r.charCodeAt(0) + ";"; });
@@ -3078,7 +5001,12 @@ var TableRenderer = (function () {
         });
         hl.forEach(function (x) {
             var h = _this.st.hidden(x) ? "none" : "table-row";
-            result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
+            if (x.level) {
+                result.push("<tr id=\"" + ("tr" + mm) + "\" level=\"" + x.level() + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
+            }
+            else {
+                result.push("<tr id=\"" + ("tr" + mm) + "\" style=\"display: " + h + "\" onclick=\"toggleRow('" + ("tr" + mm) + "')\">");
+            }
             fp.forEach(function (p) {
                 var pn = p.nowrap;
                 var es = pn ? "white-space: nowrap" : "";
@@ -3173,6 +5101,9 @@ function renderKeyValue(k, vl, small) {
         var res = "<h5 style=\"background: gainsboro\">" + k + ": </h5><div>" + vl + "</div>";
         return res;
     }
+    if (typeof vl == "object") {
+        vl = JSON.stringify(vl);
+    }
     var str = "" + vl;
     vl = highlight(str);
     if (str.length > 70 && str.indexOf('\n') != -1 && !small) {
@@ -3186,6 +5117,9 @@ function renderKeyValue(k, vl, small) {
 }
 exports.renderKeyValue = renderKeyValue;
 function renderObj(v) {
+    if (!v) {
+        return "";
+    }
     if (Array.isArray(v)) {
         var r = v;
         return r.map(function (x) { return renderObj(x); }).join("");
@@ -3212,7 +5146,7 @@ function renderObj(v) {
 }
 exports.renderObj = renderObj;
 
-},{}],11:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var tr = require("./typeRender");
@@ -3357,7 +5291,7 @@ var ResponseRenderer = (function () {
 }());
 exports.ResponseRenderer = ResponseRenderer;
 
-},{"../core/hl":2,"./nodeRender":9,"./typeRender":13}],12:[function(require,module,exports){
+},{"../core/hl":3,"./nodeRender":14,"./typeRender":18}],17:[function(require,module,exports){
 "use strict";
 exports.ROOT = "https://petrochenko-pavel-a.github.io/raml-explorer/";
 exports.OBJECT_IMAGE = "<img src='" + exports.ROOT + "images/object.gif'/> ";
@@ -3378,7 +5312,7 @@ function EXPAND_IMG(id) {
 }
 exports.EXPAND_IMG = EXPAND_IMG;
 
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var or = require("./objectRender");
@@ -4043,7 +5977,7 @@ function renderParameters(name, ps, result, isMeta) {
 }
 exports.renderParameters = renderParameters;
 
-},{"../app":1,"../core/hl":2,"../core/registryCore":4,"../framework/workbench":7,"./nodeRender":9,"./objectRender":10,"./styles":12}],14:[function(require,module,exports){
+},{"../app":2,"../core/hl":3,"../core/registryCore":7,"../framework/workbench":11,"./nodeRender":14,"./objectRender":15,"./styles":17}],19:[function(require,module,exports){
 "use strict";
 var workbench = require("./framework/workbench");
 var rc = require("./core/registryCore");
@@ -4053,6 +5987,7 @@ var ExplorerState = (function () {
         this._registryUrl = "https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json";
         this.listeners = [];
         this.requests = [];
+        this.options = {};
     }
     ExplorerState.prototype.addListener = function (l) {
         this.listeners.push(l);
@@ -4108,6 +6043,9 @@ var ExplorerState = (function () {
             });
         }
     };
+    ExplorerState.prototype.registry = function () {
+        return this.lr;
+    };
     ExplorerState.prototype.registryUrl = function () {
         return this._registryUrl;
     };
@@ -4118,8 +6056,17 @@ var ExplorerState = (function () {
         return this.specTabLink;
     };
     ExplorerState.prototype.encode = function () {
+        var _this = this;
         if (this.registryTabLink) {
             return "#registryTab:" + this.registryTabLink;
+        }
+        var optionsString = "";
+        if (Object.keys(this.options).length > 0) {
+            var optArr = [];
+            Object.keys(this.options).forEach(function (k) {
+                optArr.push(k + "=" + _this.options[k]);
+            });
+            optionsString = "^" + optArr.join(",");
         }
         if (this.specificationLink) {
             var result = [];
@@ -4135,7 +6082,7 @@ var ExplorerState = (function () {
             else if (this.specTabLink) {
                 result.push("specTab:" + this.specTabLink);
             }
-            return "#" + result.join("#");
+            return "#" + result.join("#") + optionsString;
         }
     };
     ExplorerState.prototype.propogateNode = function (nodeId) {
@@ -4164,11 +6111,36 @@ var ExplorerState = (function () {
         this.decode(state);
         this.listeners.forEach(function (x) { return x(); });
     };
+    ExplorerState.prototype.getOptions = function () {
+        return this.options;
+    };
+    ExplorerState.prototype.setOption = function (opt, val) {
+        this.options[opt] = val;
+        this.stateUpdated();
+    };
     ExplorerState.prototype.stateUpdated = function () {
         workbench.notifyState({ hash: this.encode() });
         this.listeners.forEach(function (x) { return x(); });
     };
+    ExplorerState.prototype.clearOptions = function () {
+        this.options = {};
+        this.stateUpdated();
+    };
     ExplorerState.prototype.decode = function (hash) {
+        var extras = hash.lastIndexOf('^');
+        this.options = {};
+        if (extras != -1) {
+            var extraoptions = hash.substring(extras + 1);
+            var elements = extraoptions.split(",");
+            var v = this;
+            elements.forEach(function (e) {
+                var a = e.indexOf('=');
+                var key = e.substring(0, a);
+                var val = e.substring(a + 1);
+                v.options[key] = val;
+            });
+            hash = hash.substring(0, extras);
+        }
         if (hash.indexOf("#registryTab:") == 0) {
             this.registryTabLink = hash.substring("#registryTab:".length);
             this.specElementLink = null;
@@ -4202,7 +6174,7 @@ var state = new ExplorerState();
 state.decode(location.hash);
 module.exports = state;
 
-},{"./core/hl":2,"./core/registryCore":4,"./framework/workbench":7}],15:[function(require,module,exports){
+},{"./core/hl":3,"./core/registryCore":7,"./framework/workbench":11}],20:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4217,6 +6189,7 @@ var rrend = require("./core/registryCore");
 var methodKey = hl.methodKey;
 var images = require("./rendering/styles");
 var state = require("./state");
+var actions = require("./actions");
 var RAMLTreeProvider = (function () {
     function RAMLTreeProvider() {
     }
@@ -4395,7 +6368,9 @@ var RAMLTreeView = (function (_super) {
             try {
                 var node = v[0];
                 if (node.id) {
-                    state.propogateNode(node.id());
+                    if (typeof node.id == "function") {
+                        state.propogateNode(node.id());
+                    }
                 }
             }
             finally {
@@ -4427,6 +6402,7 @@ var RAMLTreeView = (function (_super) {
                         run: function () {
                             v.showInternal = !v.showInternal;
                             v.refresh();
+                            v.showTab("Data Types");
                         }
                     }];
             }
@@ -4436,7 +6412,7 @@ var RAMLTreeView = (function (_super) {
                         run: function () {
                             v.operations = false;
                             v.refresh();
-                            v.showTab("resources");
+                            v.showTab("ops");
                         }
                     }];
                 types.controlId = "ops";
@@ -4447,7 +6423,7 @@ var RAMLTreeView = (function (_super) {
                         run: function () {
                             v.operations = true;
                             v.refresh();
-                            v.showTab("methods");
+                            v.showTab("ops");
                         }
                     }];
                 types.controlId = "ops";
@@ -4464,10 +6440,26 @@ var RAMLTreeView = (function (_super) {
             this.setSelection(node);
         }
     };
+    RAMLTreeView.prototype.getSpecTitle = function () {
+        var result = "";
+        var t = this.api.attr("title");
+        if (t != null) {
+            result += t.value();
+        }
+        var v = this.api.attr("version");
+        if (v != null) {
+            result += ' ' + v.value();
+        }
+        return result;
+    };
+    RAMLTreeView.prototype.specRoot = function () {
+        return this.api.root();
+    };
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
         var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
+        overview = overview + actions.renderActionsBlock(state.registry());
         if (overview.length > 0) {
             a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
         }
@@ -4513,7 +6505,7 @@ var RAMLTreeView = (function (_super) {
 }(workbench.AccorditionTreeView));
 module.exports = RAMLTreeView;
 
-},{"./core/hl":2,"./core/registryCore":4,"./framework/controls":6,"./framework/workbench":7,"./rendering/nodeRender":9,"./rendering/styles":12,"./state":14}],16:[function(require,module,exports){
+},{"./actions":1,"./core/hl":3,"./core/registryCore":7,"./framework/controls":9,"./framework/workbench":11,"./rendering/nodeRender":14,"./rendering/styles":17,"./state":19}],21:[function(require,module,exports){
 
 'use strict';
 
@@ -4875,7 +6867,7 @@ if (typeof exports !== 'undefined') {
 
 }).call(window);
 
-},{}],17:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*!
  * Bootstrap Context Menu
  * Author: @sydcanem
@@ -5090,7 +7082,7 @@ var lastTime=0;
 		
 }(jQuery));
 
-},{}],18:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /* =========================================================
  * bootstrap-treeview.js v1.2.0
  * =========================================================
@@ -6379,4 +8371,4 @@ var lastTime=0;
 	};
 
 })(jQuery, window, document);
-},{}]},{},[1]);
+},{}]},{},[2]);
