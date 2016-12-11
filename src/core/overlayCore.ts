@@ -41,10 +41,10 @@ interface ILoadedOverlays {
     overlaysFor:{ [name: string]: string}
 }
 function getOverlays(id: string, f: (t: ILoadedOverlays)=>void) {
-    loadData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, f);
+    loadData("https://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, f);
 }
 function storeOverlays(id: string, value: ILoadedOverlays, f: (t: ILoadedOverlays)=>void) {
-    postData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/"+id, JSON.stringify(value), f)
+    postData("https://1-dot-adept-turbine-152120.appspot.com/ramlregistry/"+id, JSON.stringify(value), f)
 }
 
 function childObject(ovr:any,node:hl.IHighLevelNode){

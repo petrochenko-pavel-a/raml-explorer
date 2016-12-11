@@ -1471,10 +1471,10 @@ function postData(url, content, c) {
     };
 }
 function getOverlays(id, f) {
-    loadData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, f);
+    loadData("https://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, f);
 }
 function storeOverlays(id, value, f) {
-    postData("http://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, JSON.stringify(value), f);
+    postData("https://1-dot-adept-turbine-152120.appspot.com/ramlregistry/" + id, JSON.stringify(value), f);
 }
 function childObject(ovr, node) {
     if (!hl.isMerged(node.property())) {
