@@ -94,7 +94,7 @@ export class HeaderRenderer{
 }
 declare var marked:any;
 
-export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,path?:string):string{
+export function renderNodesOverview(api:IHighLevelNode,ab:string,v?:reg.ApiWithVersions,path?:string):string{
     var result:string[]=[];
     var nodes:IHighLevelNode[]=api.attrs();
     var obj:any={};
@@ -104,7 +104,7 @@ export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,pa
     var hr=new HeaderRenderer(v);
     nodes=hr.consume(nodes);
     result.push(hr.render())
-
+    result.push(ab)
     nodes.forEach(x=>result.push(renderNode(x)));
     docs.forEach(x=>{
         var t=x.attr("title");
@@ -117,10 +117,10 @@ export function renderNodesOverview(api:IHighLevelNode,v?:reg.ApiWithVersions,pa
         }
     })
     result.push("<div>Registry id: "+hl.registryId(api)+"</div>");
-    if (path){
-        result.push("<hr/>");
-        result.push("<a href='"+path+"'>Get RAML</a>");
-    }
+    // if (path){
+    //     result.push("<hr/>");
+    //     result.push("<a href='"+path+"'>Get RAML</a>");
+    // }
     return result.join("");
 }
 var ToSkip={"LogicalStructure":1,"EnumDescriptions":1,"is":1,"Id":1,"displayName":1}

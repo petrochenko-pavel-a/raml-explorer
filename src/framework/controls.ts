@@ -58,7 +58,7 @@ export class ToolbarRenderer{
             copyProps(this.style,button.style);
             button.textContent=x.title
             if (x.image){
-                button.innerHTML=`<span class="${x.image}">${x.title}</span>`
+                button.innerHTML=`<span class="${x.image}"></span>`+x.title;
             }
             if (x.run){
                 button.onclick=x.run

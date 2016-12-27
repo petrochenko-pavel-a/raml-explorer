@@ -929,6 +929,9 @@ export function label(x:IHighLevelNode&{$name?:string}){
     var result="";
     var pr=x.property();
     var mm:any=x;
+    if (!pr){
+        return title(x);
+    }
     if (mm.label){
         return mm.label;
     }

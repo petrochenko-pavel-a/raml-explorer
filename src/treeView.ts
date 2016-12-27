@@ -1,7 +1,7 @@
 import workbench=require("./framework/workbench")
 import hl=require("./core/hl")
 import nr=require("./rendering/nodeRender")
-
+import ui=require("./uiUtils")
 import {IControl,Accordition, Label} from "./framework/controls";
 import rrend=require("./core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
@@ -29,6 +29,7 @@ class RAMLTreeProvider implements workbench.ITreeContentProvider{
         return x;
     }
 }
+
 class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected api:hl.IHighLevelNode;
@@ -66,59 +67,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
 
     protected customize(tree: workbench.TreeView) {
         tree.setContentProvider(new RAMLTreeProvider());
-        tree.setLabelProvider({
-            label(x:any){
-                if (x instanceof hl.TreeLike){
-                    var t:hl.TreeLike=x;
-                    if (t.id.indexOf("!!")==0){
-                        var ss=t.id.substr(2);
-                        if (ss=="object"){
-                            return images.OBJECT_IMAGE+ss;
-                        }
-                        if (ss=="array"){
-                            return images.ARRAY_IMAGE+ss;
-                        }
-                        if (ss=="scalar"){
-                            return images.STRING_IMAGE+ss;
-                        }
-                        return images.OBJECT_IMAGE+ss;
-                    }
-                    return t.id;
-                }
-                var result="";
-                var pr=x.property?x.property():null;
-                var isMethod=pr&&pr.nameId()=="methods";
-                var isType=pr&&pr.nameId()=="types";
-                var isAType=pr&&pr.nameId()=="annotationTypes";
-                result=hl.label(x);
-                if (isMethod){
-                    result=methodKey(x.name())+result;
-                }
-                if (isType){
-                    result=images.GENERIC_TYPE+result;
-                }
-                if (isAType){
-                    result=images.ANNOTATION_TYPE+result;
-                }
-                return result;
-            },
-            icon(x:any){
-                if (x instanceof hl.TreeLike){
-                    var t:hl.TreeLike=x;
-                    if (t.id.indexOf("!!")==0){
-                        return ""
-                    }
-                    return images.FOLDER_SPAN;
-                }
-                if (x instanceof hl.ProxyNode){
-                    return images.LIBRARY_SPAN;
-                }
-                if (x.property().nameId()=="resources"){
-                    return images.RESOURCE_SPAN;
-                }
-                return ""
-            }
-        })
+        tree.setLabelProvider(ui.HLNodeLabelProvider)
     }
     private updatingFromState=false;
 
@@ -190,6 +139,8 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             super.innerRender(e);
         }
     }
+
+    
 
     protected onSelection(v: any[]): any {
         if (!this.updatingFromState&&v[0]){
@@ -302,13 +253,13 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
 
         var x=this.api.elements();
         var libs=hl.getUsedLibraries(this.api);
+        var ab=actions.renderActionsBlock(state.registry());
+        var overview:string=nr.renderNodesOverview(this.api,ab,this.versions,this.path);
 
-        var overview:string=nr.renderNodesOverview(this.api,this.versions,this.path);
-
-        overview=overview+actions.renderActionsBlock(state.registry());
+        overview=overview;
 
         if (overview.length>0) {
-            a.add(new Label("Generic Info", "<div style='min-height: 200px'>"+overview+"</div>"))
+            a.add(new Label("Generic Info", "<div style='min-height: 900px'>"+overview+"</div>"))
         }
         if (!this.devMode){
             libs=[]

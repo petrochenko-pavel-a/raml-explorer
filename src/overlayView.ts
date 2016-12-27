@@ -2,6 +2,7 @@ import workbench=require("./framework/workbench")
 import hl=require("./core/hl")
 import oc=require("./core/overlayCore")
 import controls=require("./framework/controls");
+import ui=require("./uiUtils")
 import {Label, Accordition} from "./framework/controls";
 import forms=require("./framework/forms")
 import  tr=require("./rendering/typeRender")
@@ -11,6 +12,8 @@ import nr=require("./rendering/nodeRender")
 import {ObjectBridge} from "./framework/forms";
 import pg=require("./core/propertyGroup")
 import {OverlayManager} from "./core/overlayCore";
+import tools=require("./core/tools")
+import {ITool} from "./core/registryCore";
 declare var $: any
 declare var hljs:any;
 
@@ -57,6 +60,22 @@ class RAMLOverlayView extends workbench.ViewPart{
 
         var view=this;
         this.getToolbar().add({
+            title:" Select node",
+            image:"glyphicon glyphicon-screenshot",
+            run(){
+                workbench.selectDialog("Select node",'Please select a node to overlay from the tree of possible targets',x=>{
+                  view.setInput(x)
+                },[view._element.root()],ui.HLNodeLabelProvider,{
+                    elements(v){
+                        return v;
+                    },
+                    children(c){
+                        return c.elements().filter(x=>view.manager.hasOverlayableChildren(x));
+                    }
+                })
+            }
+        });
+        this.getToolbar().add({
             title:"Save",
             run(){
                 view.manager.save(x=>{
@@ -65,8 +84,38 @@ class RAMLOverlayView extends workbench.ViewPart{
             }
 
         })
+        this.getToolbar().add({
+            title:"Run",
+            primary:true,
+            checked:true,
+            run(){
+                var ovr=view.manager.dump();
+                tools.executeWithConfig(view.tool,ovr,res=>{
+                    if (res.resultUrl){
+                        if (res.resultUrl.indexOf("http://")==0||res.resultUrl.indexOf("https://")==0){
+                            document.location=res.resultUrl;
+                            return;
+                        }
+                        var ll=view.tool.location.indexOf('/',7);
+                        var loc=view.tool.location.substring(0,ll);
+                        loc+=res.resultUrl;
+                        document.location=<any>loc;
+                    }
+                    else {
+                        workbench.showInDialog("Result", new Label(res.result))
+                    }
+                });
+            }
+
+        })
     }
     obj={};
+
+    tool:ITool={
+        name: "",
+        category:"Test",
+        location:"http://localhost:8080/home/hello"
+    }
 
     innerRender(e:Element) {
         e.innerHTML="";
@@ -81,7 +130,12 @@ class RAMLOverlayView extends workbench.ViewPart{
         if (!this._element.property()){
             mm=" root"
         }
-        this.setTitle("Overlays for: "+mm+" of ("+hl.title(this._element)+")")
+        if (this.tool.name){
+            this.setTitle("Configuring execution of "+this.tool.name+" " + mm + " of (" + hl.title(this._element) + ")")
+        }
+        else {
+            this.setTitle("Overlays for: " + mm + " of (" + hl.title(this._element) + ")")
+        }
         var f=new forms.Form();
         f._style.height="100%"
         var vv=new controls.VerticalFlex();
@@ -95,6 +149,8 @@ class RAMLOverlayView extends workbench.ViewPart{
         var view=this;
         var hide=false;
         if (this._element&&this.manager) {
+            var groups=[]
+            groups=groups.concat(this.manager.getOvelayProperties(this._element));
             this.obj=view.manager.overlay(this._element);
             if (true) {
                 var t=new workbench.TreeView("","");
@@ -107,8 +163,7 @@ class RAMLOverlayView extends workbench.ViewPart{
                     }
                 })
                 t.setContentProvider(new workbench.ArrayContentProvider())
-                var groups=[]
-                groups=groups.concat(this.manager.getOvelayProperties(this._element));
+
                 t.setInput(groups)
                 t.addSelectionListener({
                     selectionChanged(v:any[]){
@@ -137,7 +192,6 @@ class RAMLOverlayView extends workbench.ViewPart{
         if (groups && groups.length>0){
             t.select(groups[0]);
         }
-
     }
 }
 export = RAMLOverlayView;

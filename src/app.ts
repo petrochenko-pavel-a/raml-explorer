@@ -8,7 +8,8 @@ import hl=require("./core/hl")
 import {Application} from "./framework/workbench";
 import state=require("./state")
 import RAMLOverlayView = require("./overlayView");
-
+import tools=require("./core/tools")
+import {Label} from "./framework/controls";
 class AboutDialog implements controls.IControl{
     title(){
         return "About"
@@ -30,6 +31,7 @@ class AboutDialog implements controls.IControl{
         </ul>`
     }
 }
+tools.V
 export var ramlView=new RAMLTreeView("");
 var details=new RAMLDetailsView("Details","Details");
 
@@ -135,6 +137,45 @@ workbench.addCommand({
     run(){
         fullSpecPerspective.title=ramlView.getSpecTitle();
         state.setOption("fullScreen","true")
+    }
+})
+workbench.addCommand({
+    id:"/commands/ramlExplorer/runTool/",
+    run(tool:string){
+        state.registry().tools().forEach(x=>{
+            if (x.location==tool){
+                if (x.needsConfig){
+                    inExpansion=true;
+                    overlay.setLib(x.libUrl)
+                    overlay.tool=x;
+                    app.openPerspective(overlayPerspective);
+                    setTimeout(function(){
+                        overlay.setInput(ramlView.specRoot())
+                    },200)
+                    return;
+                }
+                if (x.codeToRun){
+                    x.codeToRun(ramlView.specRoot());
+                }
+                else{
+                    tools.execute(x,ramlView.specRoot(),res=>{
+                       if (res.resultUrl){
+                            if (res.resultUrl.indexOf("http://")==0||res.resultUrl.indexOf("https://")==0){
+                                document.location=res.resultUrl;
+                                return;
+                            }
+                            var ll=x.location.indexOf('/',7);
+                            var loc=x.location.substring(0,ll);
+                            loc+=res.resultUrl;
+                            document.location=<any>loc;
+                       }
+                       else {
+                           workbench.showInDialog("Result", new Label(res.result))
+                       }
+                    });
+                }
+            }
+        })
     }
 })
 workbench.addCommand({

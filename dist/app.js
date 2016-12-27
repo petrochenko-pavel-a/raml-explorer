@@ -6,6 +6,8 @@ var RegistryView = require("./registryView");
 var workbench_1 = require("./framework/workbench");
 var state = require("./state");
 var RAMLOverlayView = require("./overlayView");
+var tools = require("./core/tools");
+var controls_1 = require("./framework/controls");
 var AboutDialog = (function () {
     function AboutDialog() {
     }
@@ -18,6 +20,7 @@ var AboutDialog = (function () {
     };
     return AboutDialog;
 }());
+tools.V;
 exports.ramlView = new RAMLTreeView("");
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new RegistryView("API Registry");
@@ -101,6 +104,45 @@ workbench.addCommand({
     run: function () {
         fullSpecPerspective.title = exports.ramlView.getSpecTitle();
         state.setOption("fullScreen", "true");
+    }
+});
+workbench.addCommand({
+    id: "/commands/ramlExplorer/runTool/",
+    run: function (tool) {
+        state.registry().tools().forEach(function (x) {
+            if (x.location == tool) {
+                if (x.needsConfig) {
+                    inExpansion = true;
+                    overlay.setLib(x.libUrl);
+                    overlay.tool = x;
+                    app.openPerspective(overlayPerspective);
+                    setTimeout(function () {
+                        overlay.setInput(exports.ramlView.specRoot());
+                    }, 200);
+                    return;
+                }
+                if (x.codeToRun) {
+                    x.codeToRun(exports.ramlView.specRoot());
+                }
+                else {
+                    tools.execute(x, exports.ramlView.specRoot(), function (res) {
+                        if (res.resultUrl) {
+                            if (res.resultUrl.indexOf("http://") == 0 || res.resultUrl.indexOf("https://") == 0) {
+                                document.location = res.resultUrl;
+                                return;
+                            }
+                            var ll = x.location.indexOf('/', 7);
+                            var loc = x.location.substring(0, ll);
+                            loc += res.resultUrl;
+                            document.location = loc;
+                        }
+                        else {
+                            workbench.showInDialog("Result", new controls_1.Label(res.result));
+                        }
+                    });
+                }
+            }
+        });
     }
 });
 workbench.addCommand({

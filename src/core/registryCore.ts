@@ -1,3 +1,4 @@
+import hl=require("./hl")
 export var usages={
     usageRegistry:null
 }
@@ -73,10 +74,19 @@ export interface IRegistryObj{
     icon?:string
 }
 
+export interface ITool extends IRegistryObj{
+    redirectTo?:boolean
+    needsConfig?:boolean
+    libUrl?:string
+    codeToRun?: (v:any)=>void;
+
+}
+
 interface IRegistry{
     name:string
     apis:IRegistryObj[]
     libraries:IRegistryObj[]
+    tools?:ITool[]
 }
 
 export class GroupNode{
@@ -109,12 +119,54 @@ function groupBy(els:any[], f:(x)=>string){
 function replaceAll(target,search, replacement) {
     return target.split(search).join(replacement);
 }
+
+function injectTools(r:IRegistry){
+    var baseUrl="http://localhost:8080/home"
+    if (r.tools){
+
+        r.tools=r.tools.concat([{
+            name:"Get Swagger",
+            location: baseUrl+"/swagger",
+            redirectTo:true,
+            icon:"http://favicon.yandex.net/favicon/swagger.io",
+            category:"Download as"
+        },
+            {
+                name:"Get RAML",
+                location: baseUrl+"/raml",
+                redirectTo:true,
+                icon:"http://favicon.yandex.net/favicon/raml.org",
+                category:"Download as",
+                codeToRun(v:hl.IHighLevelNode){
+                    document.location=<any>hl.location(v);
+                }
+            }
+            ,{
+            name:"Configure Amazon API Gateway",
+            location: baseUrl+"/aws",
+            redirectTo:false,
+            needsConfig: true,
+            libUrl:"https://raw.githubusercontent.com/OnPositive/aml/master/org.aml.apigatewayimporter/apigateway-lib.raml",
+            icon:"http://favicon.yandex.net/favicon/aws.amazon.com",
+            category:"Integration"
+        },
+        ])
+    }
+}
 export class LoadedRegistry{
 
-    constructor(protected registry:IRegistry){}
+    constructor(protected registry:IRegistry){
+
+        injectTools(registry)
+    }
     _apiCount: number;
     _apis:(GroupNode|ApiWithVersions)[]
     _libs:(GroupNode|ApiWithVersions)[]
+
+
+    tools(){
+        return this.registry.tools;
+    }
 
     findNodeWithUrl(url:string){
         if (!this._apis){
@@ -236,8 +288,20 @@ export function getInstance(url:string,f:(data:LoadedRegistry,s:number)=>void){
     var usageUrl=url.substr(0,url.lastIndexOf('/'))+"/registry-usages.json";
     loadData(url,(d,s)=>{
         reportData(d);
-        var lr=new LoadedRegistry(<IRegistry>d);
-        f(lr,s);
+
+        loadData("http://localhost:8080/home/tools",(q,s)=>{
+            d.tools=q.tools
+            d.tools.forEach(x=>{
+                x.location="http://localhost:8080/home"+x.location;
+                if (x.libUrl){
+                    x.libUrl="http://localhost:8080/home"+x.libUrl;
+                }
+            });
+
+            var lr=new LoadedRegistry(<IRegistry>d);
+            f(lr,s);
+        })
+
     });
     loadData(usageUrl,(data:any,s:number)=> {
         loadedUsageData(data);

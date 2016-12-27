@@ -66,27 +66,67 @@ export class OverlayManager {
         node.children().forEach(x=>{
             var obj=childObject(ovr,x);
             if(obj){
-                this.loadDataToStore(obj,x);
-                var ToPut={};
-                Object.keys(obj).forEach(x=>{
-                    if (x.charAt(0)=='('){
-                        var oo=obj[x];
-                        if (oo===null){
-                            oo='!!!NULL_VALUE'
-                        }
-                        var key=x.substring(x.lastIndexOf('.')+1,x.length-1);
-                        ToPut[key]=oo;
 
-                    }
-                })
-                if (Object.keys(ToPut).length>0){
-                    this.overlays.set(x,ToPut)
-                }
+                this.loadDataToStore(obj,x);
+
             }
+        })
+        var ToPut={};
+        if (ovr) {
+            Object.keys(ovr).forEach(x=> {
+                if (x.charAt(0) == '(') {
+                    var oo = ovr[x];
+                    if (oo === null) {
+                        oo = '!!!NULL_VALUE'
+                    }
+                    var key = x.substring(x.lastIndexOf('.') + 1, x.length - 1);
+                    ToPut[key] = oo;
+
+                }
+            })
+            if (Object.keys(ToPut).length > 0) {
+                this.overlays.set(node, ToPut)
+            }
+        }
+    }
+
+    buildOverlayable(node:hl.IHighLevelNode){
+        node.elements().forEach(x=>{
+            var ovr=this.possibleOverlays(x);
+            if (ovr.length>0){
+                this.overlayableNodes.set(x,ovr);
+            }
+            this.buildOverlayable(x);
         })
     }
 
     overlays: Map<hl.IHighLevelNode,any> = new Map();
+
+
+    overlayableNodes: Map<hl.IHighLevelNode,any>;
+
+    canOverlay(n:hl.IHighLevelNode){
+        if (this.overlayableNodes){
+            return this.overlayableNodes.has(n);
+
+        }
+        this.overlayableNodes=new Map();
+        this.buildOverlayable(n.root());
+        return this.overlayableNodes.has(n);
+    }
+
+    hasOverlayableChildren(n:hl.IHighLevelNode){
+        if (this.canOverlay(n)){
+            return true;
+        }
+        var els=n.elements();
+        for (var i=0;i<els.length;i++){
+            if (this.hasOverlayableChildren(els[i])){
+                return true;
+            }
+        }
+        return false;
+    }
 
     possibleOverlays(target: hl.IHighLevelNode) {
         var annotations = this.root.elements().filter(x=>x.property().nameId() == "annotationTypes");
@@ -192,6 +232,14 @@ export class OverlayManager {
         return "#%RAML 1.0 Overlay\n" + res;
     }
 }
+
+export function createEmptyOverlay(url:string){
+    var objToDump = {};
+    objToDump["extends"] = url;
+    var res = dump(objToDump);
+    return "#%RAML 1.0 Overlay\n" + res;
+}
+
 
 function escapeUrl(u:string){
     var rs="";

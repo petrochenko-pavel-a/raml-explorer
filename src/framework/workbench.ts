@@ -21,7 +21,7 @@ export import IContributionItem=controls.IContributionItem;
 export import ToolbarRenderer=controls.ToolbarRenderer;
 export import Context=controls.Context;
 export import DrowpdownMenu=controls.DrowpdownMenu;
-import {IControl} from "./controls";
+import {IControl, Label} from "./controls";
 
 declare var require: any
 
@@ -531,6 +531,7 @@ export class TreeView extends ViewPart {
     input: any;
     treeNodes: INode[];
     searchable = true;
+    asyncRender:boolean;
 
     setSorter(s: IComparator) {
         this.contentProvider.sorter = s;
@@ -556,6 +557,11 @@ export class TreeView extends ViewPart {
             this.refresh();
             $('#' + this.treeId).treeview("revealNode", n);
         }
+    }
+
+    public expand(l:number){
+        var vs = $('#' + this.treeId).treeview(true);
+        vs.expandNode(0);
     }
 
     hasModel(model: any): boolean {
@@ -643,6 +649,16 @@ export class TreeView extends ViewPart {
         this.treeId = treeId;
         var view = this;
         e.innerHTML = `<div id='${treeId}' style='${this.styleString}'></div>`;
+        if (this.asyncRender){
+            setTimeout(()=>this.renderTreeControl(treeId,view),200)
+        }
+        else {
+            this.renderTreeControl(treeId, view);
+        }
+    }
+
+    autoExpand:number
+    private renderTreeControl(treeId:string, view:TreeView) {
         $('#' + treeId).treeview({
             data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
             onNodeSelected: function (x) {
@@ -658,6 +674,9 @@ export class TreeView extends ViewPart {
             collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0
         });
         var sel = $('#' + treeId).treeview("getSelected");
+        if (this.autoExpand){
+            this.expand(this.autoExpand)
+        }
         view.onSelection(sel.map(x=>x.original))
     }
 
@@ -1039,7 +1058,7 @@ export class Application implements controls.IControl {
         this.nb.setTitle(this.title());
         var tmplt = `<div style="height: 100%;display: flex;flex-direction: column">
         <div id="${nb}"></div>    
-        <div id="${main}" style="flex: 1 0 0"></div>
+        <div id="${main}" style="flex: 1 0 0;height: 100%;display: flex;flex-direction: column"></div>
         <div>
             <p class="navbar-text" id="${status}" style="margin: 0px;padding: 0px;float: right;">...</p>
         </div>
@@ -1113,9 +1132,61 @@ export class ShowDialogAction implements IContributionItem {
         }
     }
 }
-export function showInDialog(title:string,control: controls.IControl|string){
-    new ShowDialogAction(title,control).run();
+export function showInDialog(title:string,control: controls.IControl|string,btns?:IContributionItem[]){
+    new ShowDialogAction(title,control,btns).run();
 }
+export function selectDialog(title: string,description: string,func:(x:any)=>void, root:any[],lp?:ILabelProvider,cp:ITreeContentProvider=new ArrayContentProvider()){
+    if (!lp){
+        lp={
+            label(x:any){
+               if (x.name){
+                   if (typeof x.name==="function"){
+                       return x.name();
+                   }
+                   return x.name;
+               }
+                if (x.title){
+                    if (typeof x.title==="function"){
+                        return x.title();
+                    }
+                    return x.title;
+                }
+                if (x.id){
+                    if (typeof x.id==="function"){
+                        return x.id();
+                    }
+                    return x.id;
+                }
+            }
+
+        }
+    }
+    var tree=new TreeView("","");
+    tree.asyncRender=true
+    tree.autoExpand=2;
+    tree.setContentProvider(cp);
+
+    tree.setLabelProvider(lp);
+    tree.setInput(root);
+    var composite=new controls.VerticalFlex();
+    composite._style.maxHeight="700px"
+    tree.styleString+=";max-height:600px;min-height:600px"
+    composite.add(new Label(description));
+    composite.add(tree);
+    showInDialog(title,composite,[
+        {
+            title:"Ok",
+            run(){
+                func(tree.getSelection()[0]);
+            }
+        }
+        ,
+        {
+            title:"Cancel"
+        }
+    ])
+}
+
 
 interface StateRecord {
     hash: string
