@@ -14,6 +14,9 @@ class AboutDialog implements controls.IControl{
     title(){
         return "About"
     }
+    id(){
+        return "about"
+    }
     render(e:Element){
         e.innerHTML=
             `This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.
@@ -34,7 +37,6 @@ class AboutDialog implements controls.IControl{
 tools.V
 export var ramlView=new RAMLTreeView("");
 var details=new RAMLDetailsView("Details","Details");
-
 var regView=new RegistryView("API Registry")
 var overlay=new RAMLOverlayView("Overlay","Overlay");
 details.getContextMenu().add(new workbench.BackAction());
@@ -183,7 +185,6 @@ workbench.addCommand({
     run(lib:string){
         inExpansion=true;
         overlay.setLib(lib)
-
         app.openPerspective(overlayPerspective);
         setTimeout(function(){
             overlay.setInput(ramlView.specRoot())

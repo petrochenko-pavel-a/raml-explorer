@@ -25,6 +25,7 @@ export interface IType{
     isBuiltIn(): boolean
     isUnion(): boolean
     examples(): Example[]
+    allSuperTypes():IType[]
     componentType(): IType
     union():IType
     isRequired();
@@ -756,6 +757,7 @@ export function uriParameters(h:IHighLevelNode):IHighLevelNode[]{
                     nameId(){
                         return "string"
                     },
+                    allSuperTypes(){return []},
                     examples(){return []},
                     properties(){return []},
                     facets(){return []},
@@ -922,6 +924,7 @@ export function collapseValues(v:any[]){
     });
     return result;
 }
+
 
 export function label(x:IHighLevelNode&{$name?:string}){
     var a=x.attrs();

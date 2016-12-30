@@ -14,6 +14,9 @@ var AboutDialog = (function () {
     AboutDialog.prototype.title = function () {
         return "About";
     };
+    AboutDialog.prototype.id = function () {
+        return "about";
+    };
     AboutDialog.prototype.render = function (e) {
         e.innerHTML =
             "This project is devoted to building machine readable data base of API specifications in RAML 1.0 Format.\n        <p>\n        <hr>\n        All API specs contributed to project by authors are covered by the CC01.0 license.\n        All API specs acquired from public sources under the Fair use principal.\n        </p>\n        <hr>\n        Some specs are taken from Open Source projects:\n        <ul>\n        <li>darklynx/swagger-api-collection - OpenAPI(aka Swagger) spec for Instagram API</li>\n        <li>Mermade/bbcparse - OpenAPI(aka Swagger) spec for BBC Nitro API</li>\n        <li>amardeshbd/medium-api-specification - OpenAPI (aka Swagger 2.0) spec for Medium API</li>\n        </ul>";

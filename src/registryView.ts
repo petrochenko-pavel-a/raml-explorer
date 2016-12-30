@@ -6,6 +6,7 @@ import ApiWithVersions=rc.ApiWithVersions;
 import getInstance=rc.getInstance;
 import LoadedRegistry=rc.LoadedRegistry;
 import state=require("./state")
+
 class RegistryContentProvider implements workbench.ITreeContentProvider{
     elements(i:any):any[]{
         return i;
@@ -37,6 +38,9 @@ class RegistryView extends workbench.AccorditionTreeView{
                 return;
             }
             this.updatingFromState=true;
+            if (!this.registry){
+                this.registry=state.registry();
+            }
             if (state.specificationId()) {
                 var n = this.registry.findNodeWithUrl(state.specificationId());
                 if (n) {

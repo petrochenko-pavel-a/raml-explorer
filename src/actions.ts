@@ -50,6 +50,9 @@ export function renderActionsBlock(reg:rc.LoadedRegistry): string{
     }
     }))
     var groups:{ [name:string]:rc.ITool[]}={}
+    if (!reg.tools()){
+        return result;
+    }
     reg.tools().forEach(x=>{
         if (x.category){
             if (!groups[x.category]){

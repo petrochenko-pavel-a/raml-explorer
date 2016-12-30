@@ -1,4 +1,3 @@
-
 declare var require: any
 require("../../lib/bootstrap-contextmenu")
 require("../../lib/bootstrap-treeview")
@@ -7,7 +6,7 @@ export interface IControl{
     render(e:Element);
     dispose?();
     title():string;
-
+    id(): string
     controlId?:string
     contextActions?:IContributionItem[]
 
@@ -130,7 +129,7 @@ export class Context{
         })
     }
 }
-
+var c=1;
 
 export abstract class AbstractComposite implements IControl{
 
@@ -138,8 +137,15 @@ export abstract class AbstractComposite implements IControl{
 
     children:IControl[]=[]
     protected _element:Element;
+    protected _id:string;
 
-
+    id(){
+        if (this._id){
+            return this._id;
+        }
+        this._id="c"+(c++);
+        return this._id;
+    }
 
     render(e:Element){
         this._element=e;
@@ -236,6 +242,7 @@ export class Composite extends AbstractComposite{
     }
 
     protected renderContent(ch: HTMLElement) {
+        ch.id=this.id();
         if (this._styleString){
             ch.setAttribute("style",this._styleString);
         }
@@ -252,15 +259,24 @@ export class Composite extends AbstractComposite{
         if (this._text){
             ch.innerText=this._text;
         }
+        this.extraRender(ch);
+        this.renderChildren(ch);
+    }
+
+    protected renderChildren(ch: HTMLElement) {
         this.children.forEach(c=> {
-            var w=this.wrap(ch);
+            var w = this.wrap(ch,c);
             var el = c.render(w);
+
             if (el) {
                 w.appendChild(el)
             }
         })
     }
-    protected wrap(p:HTMLElement){
+    protected extraRender(ch: HTMLElement){
+
+    }
+    protected wrap(p:HTMLElement,c?:IControl){
         return p;
     }
 }
