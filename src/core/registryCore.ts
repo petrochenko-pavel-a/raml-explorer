@@ -288,19 +288,28 @@ export function getInstance(url:string,f:(data:LoadedRegistry,s:number)=>void){
     var usageUrl=url.substr(0,url.lastIndexOf('/'))+"/registry-usages.json";
     loadData(url,(d,s)=>{
         reportData(d);
+        // d.tools=q.tools
+        // d.tools.forEach(x=>{
+        //     x.location="http://localhost:8080/home"+x.location;
+        //     if (x.libUrl){
+        //         x.libUrl="http://localhost:8080/home"+x.libUrl;
+        //     }
+        // });
 
-        loadData("http://localhost:8080/home/tools",(q,s)=>{
-            d.tools=q.tools
-            d.tools.forEach(x=>{
-                x.location="http://localhost:8080/home"+x.location;
-                if (x.libUrl){
-                    x.libUrl="http://localhost:8080/home"+x.libUrl;
-                }
-            });
-
-            var lr=new LoadedRegistry(<IRegistry>d);
-            f(lr,s);
-        })
+        var lr=new LoadedRegistry(<IRegistry>d);
+        f(lr,s);
+        // loadData("http://localhost:8080/home/tools",(q,s)=>{
+        //     d.tools=q.tools
+        //     d.tools.forEach(x=>{
+        //         x.location="http://localhost:8080/home"+x.location;
+        //         if (x.libUrl){
+        //             x.libUrl="http://localhost:8080/home"+x.libUrl;
+        //         }
+        //     });
+        //
+        //     var lr=new LoadedRegistry(<IRegistry>d);
+        //     f(lr,s);
+        // })
 
     });
     loadData(usageUrl,(data:any,s:number)=> {
