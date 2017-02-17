@@ -1,15 +1,57 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
-function link(link, title) {
+function link(link, title, image) {
+    if (image) {
+        return "<a onclick='Workbench.open(\"" + link + "\")'><img src=\"" + image + "\"> " + title + "</a>";
+    }
     return "<a onclick='Workbench.open(\"" + link + "\")'>" + title + "</a>";
 }
+function category(name, icon, actions) {
+    var mn = actions.map(function (a) { return '<li>' + link(a.link, a.name, a.icon) + '</li>'; }).join("");
+    var x = "<img src=\"" + icon + "\"> " + name;
+    if (!icon) {
+        x = name;
+    }
+    return "<span class=\"dropdown\">\n    <button class=\"btn btn-sm btn-default dropdown-toggle\" style=\"margin: 3px\" type=\"button\" id=\"dropdownMenu1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"true\">\n        " + x + "\n        <span class=\"caret\"></span>\n    </button>\n    <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu1\">\n  \n    " + mn + "\n    \n    </ul>\n    </span>";
+}
+function button(link, name, icon) {
+    return "\n    <button class=\"btn btn-sm btn-default\" style=\"margin: 3px\" type=\"button\" onclick='Workbench.open(\"" + link + "\")' >\n        <img src=\"" + icon + "\">" + name + "\n        \n    </button>\n    ";
+}
 function renderActionsBlock(reg) {
-    var result = "<h4>Actions</h4>";
-    result += link("/commands/ramlExplorer/focusOnSpec", "Focus on this specification");
-    result += "<br>";
-    reg.plainLibs().forEach(function (x) {
-        result += link("/commands/ramlExplorer/overlayWithLib/" + x.location, "Overlay with " + x.name);
-        result += "<br>";
+    var result = "";
+    result += button("/commands/ramlExplorer/focusOnSpec", " View Full Size", "http://favicon.yandex.net/favicon/twillio.com");
+    result += category("Configure Overlay", "http://favicon.yandex.net/favicon/taxamo.com", reg.plainLibs().map(function (x) {
+        return {
+            link: "/commands/ramlExplorer/overlayWithLib/" + x.location,
+            name: x.name,
+            icon: x.icon
+        };
+    }));
+    var groups = {};
+    if (reg.tools()) {
+        reg.tools().forEach(function (x) {
+            if (x.category) {
+                if (!groups[x.category]) {
+                    groups[x.category] = [];
+                }
+                groups[x.category].push(x);
+            }
+            else {
+                result += button("/commands/ramlExplorer/runTool/" + x.location, x.name, x.icon);
+            }
+        });
+    }
+    Object.keys(groups).forEach(function (x) {
+        if (groups[x].length > 1) {
+            result += category(x, null, groups[x].map(function (y) {
+                return { name: y.name, icon: y.icon, link: "/commands/ramlExplorer/runTool/" + y.location };
+            }));
+        }
+    });
+    Object.keys(groups).forEach(function (x) {
+        if (groups[x].length == 1) {
+            result += button("/commands/ramlExplorer/runTool/" + groups[x][0].location, groups[x][0].name, groups[x][0].icon);
+        }
     });
     return result;
 }
@@ -24,6 +66,8 @@ var RegistryView = require("./registryView");
 var workbench_1 = require("./framework/workbench");
 var state = require("./state");
 var RAMLOverlayView = require("./overlayView");
+var tools = require("./core/tools");
+var controls_1 = require("./framework/controls");
 var AboutDialog = (function () {
     function AboutDialog() {
     }
@@ -36,6 +80,7 @@ var AboutDialog = (function () {
     };
     return AboutDialog;
 }());
+tools.V;
 exports.ramlView = new RAMLTreeView("");
 var details = new RAMLDetailsView("Details", "Details");
 var regView = new RegistryView("API Registry");
@@ -122,6 +167,45 @@ workbench.addCommand({
     }
 });
 workbench.addCommand({
+    id: "/commands/ramlExplorer/runTool/",
+    run: function (tool) {
+        state.registry().tools().forEach(function (x) {
+            if (x.location == tool) {
+                if (x.needsConfig) {
+                    inExpansion = true;
+                    overlay.setLib(x.libUrl);
+                    overlay.tool = x;
+                    app.openPerspective(overlayPerspective);
+                    setTimeout(function () {
+                        overlay.setInput(exports.ramlView.specRoot());
+                    }, 200);
+                    return;
+                }
+                if (x.codeToRun) {
+                    x.codeToRun(exports.ramlView.specRoot());
+                }
+                else {
+                    tools.execute(x, exports.ramlView.specRoot(), function (res) {
+                        if (res.resultUrl) {
+                            if (res.resultUrl.indexOf("http://") == 0 || res.resultUrl.indexOf("https://") == 0) {
+                                document.location = res.resultUrl;
+                                return;
+                            }
+                            var ll = x.location.indexOf('/', 7);
+                            var loc = x.location.substring(0, ll);
+                            loc += res.resultUrl;
+                            document.location = loc;
+                        }
+                        else {
+                            workbench.showInDialog("Result", new controls_1.Label(res.result));
+                        }
+                    });
+                }
+            }
+        });
+    }
+});
+workbench.addCommand({
     id: "/commands/ramlExplorer/overlayWithLib/",
     run: function (lib) {
         inExpansion = true;
@@ -133,7 +217,7 @@ workbench.addCommand({
     }
 });
 
-},{"./detailsView":8,"./framework/workbench":11,"./overlayView":12,"./registryView":13,"./state":19,"./treeView":20}],3:[function(require,module,exports){
+},{"./core/tools":8,"./detailsView":9,"./framework/controls":10,"./framework/workbench":12,"./overlayView":13,"./registryView":14,"./state":20,"./treeView":21}],3:[function(require,module,exports){
 "use strict";
 var keywords = require("./keywords");
 var keywords_1 = require("./keywords");
@@ -971,6 +1055,9 @@ function label(x) {
     var result = "";
     var pr = x.property();
     var mm = x;
+    if (!pr) {
+        return title(x);
+    }
     if (mm.label) {
         return mm.label;
     }
@@ -1500,22 +1587,54 @@ var OverlayManager = (function () {
             var obj = childObject(ovr, x);
             if (obj) {
                 _this.loadDataToStore(obj, x);
-                var ToPut = {};
-                Object.keys(obj).forEach(function (x) {
-                    if (x.charAt(0) == '(') {
-                        var oo = obj[x];
-                        if (oo === null) {
-                            oo = '!!!NULL_VALUE';
-                        }
-                        var key = x.substring(x.lastIndexOf('.') + 1, x.length - 1);
-                        ToPut[key] = oo;
-                    }
-                });
-                if (Object.keys(ToPut).length > 0) {
-                    _this.overlays.set(x, ToPut);
-                }
             }
         });
+        var ToPut = {};
+        if (ovr) {
+            Object.keys(ovr).forEach(function (x) {
+                if (x.charAt(0) == '(') {
+                    var oo = ovr[x];
+                    if (oo === null) {
+                        oo = '!!!NULL_VALUE';
+                    }
+                    var key = x.substring(x.lastIndexOf('.') + 1, x.length - 1);
+                    ToPut[key] = oo;
+                }
+            });
+            if (Object.keys(ToPut).length > 0) {
+                this.overlays.set(node, ToPut);
+            }
+        }
+    };
+    OverlayManager.prototype.buildOverlayable = function (node) {
+        var _this = this;
+        node.elements().forEach(function (x) {
+            var ovr = _this.possibleOverlays(x);
+            if (ovr.length > 0) {
+                _this.overlayableNodes.set(x, ovr);
+            }
+            _this.buildOverlayable(x);
+        });
+    };
+    OverlayManager.prototype.canOverlay = function (n) {
+        if (this.overlayableNodes) {
+            return this.overlayableNodes.has(n);
+        }
+        this.overlayableNodes = new Map();
+        this.buildOverlayable(n.root());
+        return this.overlayableNodes.has(n);
+    };
+    OverlayManager.prototype.hasOverlayableChildren = function (n) {
+        if (this.canOverlay(n)) {
+            return true;
+        }
+        var els = n.elements();
+        for (var i = 0; i < els.length; i++) {
+            if (this.hasOverlayableChildren(els[i])) {
+                return true;
+            }
+        }
+        return false;
     };
     OverlayManager.prototype.possibleOverlays = function (target) {
         var annotations = this.root.elements().filter(function (x) { return x.property().nameId() == "annotationTypes"; });
@@ -1613,6 +1732,13 @@ var OverlayManager = (function () {
     return OverlayManager;
 }());
 exports.OverlayManager = OverlayManager;
+function createEmptyOverlay(url) {
+    var objToDump = {};
+    objToDump["extends"] = url;
+    var res = dump(objToDump);
+    return "#%RAML 1.0 Overlay\n" + res;
+}
+exports.createEmptyOverlay = createEmptyOverlay;
 function escapeUrl(u) {
     var rs = "";
     for (var i = 0; i < u.length; i++) {
@@ -1772,8 +1898,9 @@ var AbstractProvider = (function () {
 var RequiredProvider = (function (_super) {
     __extends(RequiredProvider, _super);
     function RequiredProvider() {
-        _super.call(this);
-        this._result.caption = "General";
+        var _this = _super.call(this) || this;
+        _this._result.caption = "General";
+        return _this;
     }
     RequiredProvider.prototype.consume = function (p) {
         return p.required;
@@ -1804,8 +1931,9 @@ exports.nicerName = nicerName;
 var OtherScalar = (function (_super) {
     __extends(OtherScalar, _super);
     function OtherScalar() {
-        _super.call(this);
-        this._result.caption = "Advanced";
+        var _this = _super.call(this) || this;
+        _this._result.caption = "Advanced";
+        return _this;
     }
     OtherScalar.prototype.consume = function (p) {
         return (p.scalar);
@@ -1979,6 +2107,7 @@ exports.overlayedGroupedProperties = overlayedGroupedProperties;
 
 },{"./keywords":4}],7:[function(require,module,exports){
 "use strict";
+var hl = require("./hl");
 exports.usages = {
     usageRegistry: null
 };
@@ -2071,10 +2200,46 @@ function groupBy(els, f) {
 function replaceAll(target, search, replacement) {
     return target.split(search).join(replacement);
 }
+function injectTools(r) {
+    var baseUrl = "http://localhost:8080/home";
+    if (r.tools) {
+        r.tools = r.tools.concat([{
+                name: "Get Swagger",
+                location: baseUrl + "/swagger",
+                redirectTo: true,
+                icon: "http://favicon.yandex.net/favicon/swagger.io",
+                category: "Download as"
+            },
+            {
+                name: "Get RAML",
+                location: baseUrl + "/raml",
+                redirectTo: true,
+                icon: "http://favicon.yandex.net/favicon/raml.org",
+                category: "Download as",
+                codeToRun: function (v) {
+                    document.location = hl.location(v);
+                }
+            },
+            {
+                name: "Configure Amazon API Gateway",
+                location: baseUrl + "/aws",
+                redirectTo: false,
+                needsConfig: true,
+                libUrl: "https://raw.githubusercontent.com/OnPositive/aml/master/org.aml.apigatewayimporter/apigateway-lib.raml",
+                icon: "http://favicon.yandex.net/favicon/aws.amazon.com",
+                category: "Integration"
+            },
+        ]);
+    }
+}
 var LoadedRegistry = (function () {
     function LoadedRegistry(registry) {
         this.registry = registry;
+        injectTools(registry);
     }
+    LoadedRegistry.prototype.tools = function () {
+        return this.registry.tools;
+    };
     LoadedRegistry.prototype.findNodeWithUrl = function (url) {
         if (!this._apis) {
             this.apis();
@@ -2203,7 +2368,41 @@ function getInstance(url, f) {
 }
 exports.getInstance = getInstance;
 
-},{}],8:[function(require,module,exports){
+},{"./hl":3}],8:[function(require,module,exports){
+"use strict";
+var hl = require("./hl");
+var oc = require("./overlayCore");
+function postData(url, content, c) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.send(content);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4)
+            return;
+        var data = JSON.parse(xhr.responseText);
+        c(data, xhr.status);
+    };
+}
+function callTool() {
+}
+exports.callTool = callTool;
+exports.V = 1;
+function execute(tool, content, f) {
+    if (tool.needsConfig) {
+    }
+    else {
+        var location = hl.location(content);
+        var ovr = oc.createEmptyOverlay(location);
+        postData(tool.location, ovr, f);
+    }
+}
+exports.execute = execute;
+function executeWithConfig(tool, content, f) {
+    postData(tool.location, content, f);
+}
+exports.executeWithConfig = executeWithConfig;
+
+},{"./hl":3,"./overlayCore":5}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2218,19 +2417,20 @@ var rc = require("./core/registryCore");
 var RAMLDetailsView = (function (_super) {
     __extends(RAMLDetailsView, _super);
     function RAMLDetailsView(id, title) {
-        _super.call(this, id, title);
-        this.compact = true;
-        var v = this;
-        this.toolbar.add({
+        var _this = _super.call(this, id, title) || this;
+        _this.compact = true;
+        var v = _this;
+        _this.toolbar.add({
             title: "",
             image: "glyphicon glyphicon-asterisk",
-            checked: this.compact,
+            checked: _this.compact,
             run: function () {
                 v.compact = !v.compact;
                 v.refresh();
                 v.init(v.holder);
             }
         });
+        return _this;
     }
     RAMLDetailsView.prototype.setInput = function (v) {
         this._element = v;
@@ -2267,7 +2467,7 @@ var RAMLDetailsView = (function (_super) {
 }(workbench.ViewPart));
 module.exports = RAMLDetailsView;
 
-},{"./core/registryCore":7,"./framework/controls":9,"./framework/workbench":11,"./rendering/resourceRender":16,"./rendering/typeRender":18}],9:[function(require,module,exports){
+},{"./core/registryCore":7,"./framework/controls":10,"./framework/workbench":12,"./rendering/resourceRender":17,"./rendering/typeRender":19}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2301,7 +2501,7 @@ var ToolbarRenderer = (function () {
             copyProps(_this.style, button.style);
             button.textContent = x.title;
             if (x.image) {
-                button.innerHTML = "<span class=\"" + x.image + "\">" + x.title + "</span>";
+                button.innerHTML = "<span class=\"" + x.image + "\"></span>" + x.title;
             }
             if (x.run) {
                 button.onclick = x.run;
@@ -2423,11 +2623,12 @@ function copyProps(a, b) {
 var Composite = (function (_super) {
     __extends(Composite, _super);
     function Composite(tagName) {
-        _super.call(this);
-        this.tagName = tagName;
-        this._style = {};
-        this.attrs = {};
-        this._classNames = [];
+        var _this = _super.call(this) || this;
+        _this.tagName = tagName;
+        _this._style = {};
+        _this.attrs = {};
+        _this._classNames = [];
+        return _this;
     }
     Composite.prototype.addLabel = function (l) {
         var cnt = new Composite("span");
@@ -2491,8 +2692,9 @@ exports.Composite = Composite;
 var WrapComposite = (function (_super) {
     __extends(WrapComposite, _super);
     function WrapComposite() {
-        _super.apply(this, arguments);
-        this.wrapElement = "div";
+        var _this = _super.apply(this, arguments) || this;
+        _this.wrapElement = "div";
+        return _this;
     }
     WrapComposite.prototype.wrap = function (p) {
         var d = document.createElement(this.wrapElement);
@@ -2505,10 +2707,11 @@ exports.WrapComposite = WrapComposite;
 var HorizontalFlex = (function (_super) {
     __extends(HorizontalFlex, _super);
     function HorizontalFlex() {
-        _super.call(this, "div");
-        this.wrapStyle = {};
-        this._style.display = "flex";
-        this._style.flexDirection = "row";
+        var _this = _super.call(this, "div") || this;
+        _this.wrapStyle = {};
+        _this._style.display = "flex";
+        _this._style.flexDirection = "row";
+        return _this;
     }
     HorizontalFlex.prototype.wrap = function (p) {
         var d = document.createElement("div");
@@ -2522,10 +2725,11 @@ exports.HorizontalFlex = HorizontalFlex;
 var VerticalFlex = (function (_super) {
     __extends(VerticalFlex, _super);
     function VerticalFlex() {
-        _super.call(this, "div");
-        this.wrapStyle = {};
-        this._style.display = "flex";
-        this._style.flexDirection = "column";
+        var _this = _super.call(this, "div") || this;
+        _this.wrapStyle = {};
+        _this._style.display = "flex";
+        _this._style.flexDirection = "column";
+        return _this;
     }
     VerticalFlex.prototype.wrap = function (p) {
         var d = document.createElement("div");
@@ -2543,7 +2747,7 @@ function nextId() {
 var Loading = (function (_super) {
     __extends(Loading, _super);
     function Loading() {
-        _super.apply(this, arguments);
+        return _super.apply(this, arguments) || this;
     }
     Loading.prototype.innerRender = function (e) {
         e.innerHTML = "<div style=\"display: flex;flex: 1 1 0; flex-direction: column;justify-content: center;\"><div style=\"display: flex;flex-direction: row;justify-content: center\"><div><div>Loading...</div><img src='./lib/progress.gif'/></div></div></div>";
@@ -2554,9 +2758,10 @@ exports.Loading = Loading;
 var Label = (function (_super) {
     __extends(Label, _super);
     function Label(title, content) {
-        _super.call(this);
-        this.content = content;
-        this.setTitle(title);
+        var _this = _super.call(this) || this;
+        _this.content = content;
+        _this.setTitle(title);
+        return _this;
     }
     Label.prototype.innerRender = function (e) {
         if (this.content) {
@@ -2572,8 +2777,9 @@ exports.Label = Label;
 var Accordition = (function (_super) {
     __extends(Accordition, _super);
     function Accordition() {
-        _super.apply(this, arguments);
-        this.disabled = {};
+        var _this = _super.apply(this, arguments) || this;
+        _this.disabled = {};
+        return _this;
     }
     Accordition.prototype.expand = function (c) {
         var index = this.children.indexOf(c);
@@ -2686,7 +2892,7 @@ var Accordition = (function (_super) {
 }(AbstractComposite));
 exports.Accordition = Accordition;
 
-},{"../../lib/bootstrap-contextmenu":22,"../../lib/bootstrap-treeview":23}],10:[function(require,module,exports){
+},{"../../lib/bootstrap-contextmenu":24,"../../lib/bootstrap-treeview":25}],11:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2714,9 +2920,10 @@ exports.Status = Status;
 var Form = (function (_super) {
     __extends(Form, _super);
     function Form() {
-        _super.call(this, "form");
-        this._style.padding = "10px";
-        this._style.width = "100%";
+        var _this = _super.call(this, "form") || this;
+        _this._style.padding = "10px";
+        _this._style.width = "100%";
+        return _this;
     }
     return Form;
 }(controls.Composite));
@@ -2724,10 +2931,11 @@ exports.Form = Form;
 var InputGroup = (function (_super) {
     __extends(InputGroup, _super);
     function InputGroup() {
-        _super.call(this, "div");
-        this.addClassName("input-group");
-        this.addClassName("input-group-sm");
-        this._style.padding = "5px";
+        var _this = _super.call(this, "div") || this;
+        _this.addClassName("input-group");
+        _this.addClassName("input-group-sm");
+        _this._style.padding = "5px";
+        return _this;
     }
     return InputGroup;
 }(controls.Composite));
@@ -2735,8 +2943,9 @@ exports.InputGroup = InputGroup;
 var InputGroupAddOn = (function (_super) {
     __extends(InputGroupAddOn, _super);
     function InputGroupAddOn() {
-        _super.call(this, "div");
-        this.addClassName("input-group-addon");
+        var _this = _super.call(this, "div") || this;
+        _this.addClassName("input-group-addon");
+        return _this;
     }
     return InputGroupAddOn;
 }(controls.Composite));
@@ -2744,7 +2953,7 @@ exports.InputGroupAddOn = InputGroupAddOn;
 var BindableControl = (function (_super) {
     __extends(BindableControl, _super);
     function BindableControl() {
-        _super.apply(this, arguments);
+        return _super.apply(this, arguments) || this;
     }
     BindableControl.prototype.renderContent = function (ch) {
         _super.prototype.renderContent.call(this, ch);
@@ -2756,8 +2965,9 @@ exports.BindableControl = BindableControl;
 var Input = (function (_super) {
     __extends(Input, _super);
     function Input() {
-        _super.call(this, "input");
-        this.addClassName("form-control");
+        var _this = _super.call(this, "input") || this;
+        _this.addClassName("form-control");
+        return _this;
     }
     Input.prototype.initBinding = function (ch) {
         var _this = this;
@@ -2779,9 +2989,10 @@ exports.Input = Input;
 var Option = (function (_super) {
     __extends(Option, _super);
     function Option(value) {
-        _super.call(this, "option");
-        this._text = value;
-        this.addClassName("form-control");
+        var _this = _super.call(this, "option") || this;
+        _this._text = value;
+        _this.addClassName("form-control");
+        return _this;
     }
     return Option;
 }(controls.Composite));
@@ -2789,12 +3000,13 @@ exports.Option = Option;
 var Help = (function (_super) {
     __extends(Help, _super);
     function Help(value) {
-        _super.call(this, "span");
-        this.addClassName("glyphicon");
-        this.addClassName("glyphicon-question-sign");
-        this.attrs["data-toggle"] = "tooltip";
-        this.attrs["data-placement"] = "right";
-        this.attrs.title = value;
+        var _this = _super.call(this, "span") || this;
+        _this.addClassName("glyphicon");
+        _this.addClassName("glyphicon-question-sign");
+        _this.attrs["data-toggle"] = "tooltip";
+        _this.attrs["data-placement"] = "right";
+        _this.attrs.title = value;
+        return _this;
     }
     return Help;
 }(controls.Composite));
@@ -2802,8 +3014,9 @@ exports.Help = Help;
 var Select = (function (_super) {
     __extends(Select, _super);
     function Select() {
-        _super.call(this, "select");
-        this.addClassName("form-control");
+        var _this = _super.call(this, "select") || this;
+        _this.addClassName("form-control");
+        return _this;
     }
     Select.prototype.initBinding = function (ch) {
         var _this = this;
@@ -2821,9 +3034,10 @@ exports.Select = Select;
 var Button = (function (_super) {
     __extends(Button, _super);
     function Button(text) {
-        _super.call(this, "button");
-        this.addClassName("form-control");
-        this._text = text;
+        var _this = _super.call(this, "button") || this;
+        _this.addClassName("form-control");
+        _this._text = text;
+        return _this;
     }
     return Button;
 }(controls.Composite));
@@ -2850,9 +3064,10 @@ var SimpleColumn = (function () {
 var Toolbar = (function (_super) {
     __extends(Toolbar, _super);
     function Toolbar() {
-        _super.call(this, "span");
-        this.items = [];
-        this._styleString = "float: right";
+        var _this = _super.call(this, "span") || this;
+        _this.items = [];
+        _this._styleString = "float: right";
+        return _this;
     }
     Toolbar.prototype.renderContent = function (ch) {
         _super.prototype.renderContent.call(this, ch);
@@ -2867,24 +3082,25 @@ var Section = (function (_super) {
     __extends(Section, _super);
     function Section(title) {
         if (title === void 0) { title = ""; }
-        _super.call(this, "div");
-        this.toolbar = new Toolbar();
-        this.setTitle(title);
-        this.addClassName("panel");
-        this.addClassName("panel-default");
+        var _this = _super.call(this, "div") || this;
+        _this.toolbar = new Toolbar();
+        _this.setTitle(title);
+        _this.addClassName("panel");
+        _this.addClassName("panel-default");
         var heading = new controls.WrapComposite("div");
-        heading._text = this.title();
+        heading._text = _this.title();
         heading.wrapElement = "span";
         heading.addClassName("panel-heading");
-        heading.add(this.toolbar);
-        this._style.paddingBottom = "0px";
-        this._style.marginBottom = "0px";
-        this.heading = heading;
-        _super.prototype.add.call(this, heading);
+        heading.add(_this.toolbar);
+        _this._style.paddingBottom = "0px";
+        _this._style.marginBottom = "0px";
+        _this.heading = heading;
+        _super.prototype.add.call(_this, heading);
         var body = new controls.WrapComposite("div");
         body.addClassName("panel-body");
-        _super.prototype.add.call(this, body);
-        this.body = body;
+        _super.prototype.add.call(_this, body);
+        _this.body = body;
+        return _this;
     }
     Section.prototype.add = function (c) {
         this.body.add(c);
@@ -2895,7 +3111,7 @@ exports.Section = Section;
 var Table = (function (_super) {
     __extends(Table, _super);
     function Table() {
-        _super.apply(this, arguments);
+        return _super.apply(this, arguments) || this;
     }
     return Table;
 }(controls.Composite));
@@ -2987,11 +3203,12 @@ var ListView = (function (_super) {
     __extends(ListView, _super);
     function ListView(pd, emptyText) {
         if (emptyText === void 0) { emptyText = ""; }
-        _super.call(this, "ul");
-        this.pd = pd;
-        this.emptyText = emptyText;
-        this.selectionListeners = [];
-        this.selectedIndex = 0;
+        var _this = _super.call(this, "ul") || this;
+        _this.pd = pd;
+        _this.emptyText = emptyText;
+        _this.selectionListeners = [];
+        _this.selectedIndex = 0;
+        return _this;
     }
     ListView.prototype.addSelectionListener = function (l) {
         this.selectionListeners.push(l);
@@ -3071,24 +3288,24 @@ exports.ListView = ListView;
 var TableEditor = (function (_super) {
     __extends(TableEditor, _super);
     function TableEditor(pd) {
-        _super.call(this, "div");
-        this.pd = pd;
-        this._style.height = "100%";
-        this._style.width = "100%";
+        var _this = _super.call(this, "div") || this;
+        _this.pd = pd;
+        _this._style.height = "100%";
+        _this._style.width = "100%";
         var v = new controls.VerticalFlex();
         v._style.height = "100%";
         v._style.width = "100%";
         v.wrapStyle.flex = "1 1 0";
-        this.add(v);
+        _this.add(v);
         var tb = new controls.HorizontalFlex();
         var s = new Section(pd.displayName);
         s.body._style.padding = "0px";
-        var view = this;
-        this.content = s;
-        this.listView = new ListView(pd, "<div style='padding: 10px'>" + marked(pd.description) + "</div>");
-        s.add(this.listView);
+        var view = _this;
+        _this.content = s;
+        _this.listView = new ListView(pd, "<div style='padding: 10px'>" + marked(pd.description) + "</div>");
+        s.add(_this.listView);
         var toolbar = s.toolbar;
-        this.listView.addSelectionListener({
+        _this.listView.addSelectionListener({
             selectionChanged: function (v) {
                 if (v != null && v.length > 0) {
                     view._selection = v[0];
@@ -3102,6 +3319,7 @@ var TableEditor = (function (_super) {
         tb.wrapStyle.padding = "5px";
         tb.add(s);
         v.add(tb);
+        return _this;
     }
     TableEditor.prototype.initBinding = function () {
         this.listView._binding = this._binding;
@@ -3219,13 +3437,14 @@ var CheckBox = (function (_super) {
     __extends(CheckBox, _super);
     function CheckBox(caption) {
         if (caption === void 0) { caption = ""; }
-        _super.call(this, "div");
-        this.setTitle(caption);
-        this.addClassName("checkbox");
-        this.addClassName("checkbox-inline");
-        this._style.paddingLeft = "5px";
-        this._style.paddingRight = "2px";
-        this._style.margin = "0px";
+        var _this = _super.call(this, "div") || this;
+        _this.setTitle(caption);
+        _this.addClassName("checkbox");
+        _this.addClassName("checkbox-inline");
+        _this._style.paddingLeft = "5px";
+        _this._style.paddingRight = "2px";
+        _this._style.margin = "0px";
+        return _this;
     }
     CheckBox.prototype.initBinding = function (ch) {
         var _this = this;
@@ -3554,7 +3773,7 @@ function renderPropertyGroup(p, bridge) {
 }
 exports.renderPropertyGroup = renderPropertyGroup;
 
-},{"../core/propertyGroup":6,"../rendering/objectRender":15,"./controls":9,"./workbench":11}],11:[function(require,module,exports){
+},{"../core/propertyGroup":6,"../rendering/objectRender":16,"./controls":10,"./workbench":12}],12:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -3569,6 +3788,7 @@ function nextId() {
 exports.ToolbarRenderer = controls.ToolbarRenderer;
 exports.Context = controls.Context;
 exports.DrowpdownMenu = controls.DrowpdownMenu;
+var controls_1 = require("./controls");
 var Split = require("../../lib/Split").Split;
 var LayoutPart = (function () {
     function LayoutPart(_el) {
@@ -3941,9 +4161,10 @@ function findNode(nodes, v) {
 var TreeView = (function (_super) {
     __extends(TreeView, _super);
     function TreeView() {
-        _super.apply(this, arguments);
-        this.searchable = true;
-        this.styleString = "width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block";
+        var _this = _super.apply(this, arguments) || this;
+        _this.searchable = true;
+        _this.styleString = "width:100%;overflow: auto;flex: 1 1 0; min-height: 50px;display: block";
+        return _this;
     }
     TreeView.prototype.setSorter = function (s) {
         this.contentProvider.sorter = s;
@@ -3966,6 +4187,10 @@ var TreeView = (function (_super) {
             this.refresh();
             $('#' + this.treeId).treeview("revealNode", n);
         }
+    };
+    TreeView.prototype.expand = function (l) {
+        var vs = $('#' + this.treeId).treeview(true);
+        vs.expandNode(0);
     };
     TreeView.prototype.hasModel = function (model) {
         if (!this.treeNodes) {
@@ -4031,10 +4256,19 @@ var TreeView = (function (_super) {
         this.refresh();
     };
     TreeView.prototype.innerRender = function (e) {
+        var _this = this;
         var treeId = nextId();
         this.treeId = treeId;
         var view = this;
         e.innerHTML = "<div id='" + treeId + "' style='" + this.styleString + "'></div>";
+        if (this.asyncRender) {
+            setTimeout(function () { return _this.renderTreeControl(treeId, view); }, 200);
+        }
+        else {
+            this.renderTreeControl(treeId, view);
+        }
+    };
+    TreeView.prototype.renderTreeControl = function (treeId, view) {
         $('#' + treeId).treeview({
             data: this.getTree(), expandIcon: "glyphicon glyphicon-chevron-right",
             onNodeSelected: function (x) {
@@ -4050,6 +4284,9 @@ var TreeView = (function (_super) {
             collapseIcon: "glyphicon glyphicon-chevron-down", borderColor: "0xFFFFFF", levels: 0
         });
         var sel = $('#' + treeId).treeview("getSelected");
+        if (this.autoExpand) {
+            this.expand(this.autoExpand);
+        }
         view.onSelection(sel.map(function (x) { return x.original; }));
     };
     TreeView.prototype.getTree = function () {
@@ -4065,14 +4302,14 @@ var TreeView = (function (_super) {
     return TreeView;
 }(ViewPart));
 exports.TreeView = TreeView;
+var Relation;
 (function (Relation) {
     Relation[Relation["LEFT"] = 0] = "LEFT";
     Relation[Relation["RIGHT"] = 1] = "RIGHT";
     Relation[Relation["BOTTOM"] = 2] = "BOTTOM";
     Relation[Relation["TOP"] = 3] = "TOP";
     Relation[Relation["STACk"] = 4] = "STACk";
-})(exports.Relation || (exports.Relation = {}));
-var Relation = exports.Relation;
+})(Relation = exports.Relation || (exports.Relation = {}));
 var Page = (function () {
     function Page(r) {
         this.panes = [];
@@ -4134,9 +4371,10 @@ exports.Page = Page;
 var AccorditionTreeView = (function (_super) {
     __extends(AccorditionTreeView, _super);
     function AccorditionTreeView(title) {
-        _super.call(this, title, title);
-        this.seachable = true;
-        this.trees = [];
+        var _this = _super.call(this, title, title) || this;
+        _this.seachable = true;
+        _this.trees = [];
+        return _this;
     }
     AccorditionTreeView.prototype.createTree = function (name) {
         var tree = new TreeView(name, name);
@@ -4339,7 +4577,7 @@ var Application = (function () {
             this.nb.homeDisplay = false;
         }
         this.nb.setTitle(this.title());
-        var tmplt = "<div style=\"height: 100%;display: flex;flex-direction: column\">\n        <div id=\"" + nb + "\"></div>    \n        <div id=\"" + main + "\" style=\"flex: 1 0 0\"></div>\n        <div>\n            <p class=\"navbar-text\" id=\"" + status + "\" style=\"margin: 0px;padding: 0px;float: right;\">...</p>\n        </div>\n        </div>";
+        var tmplt = "<div style=\"height: 100%;display: flex;flex-direction: column\">\n        <div id=\"" + nb + "\"></div>    \n        <div id=\"" + main + "\" style=\"flex: 1 0 0;height: 100%;display: flex;flex-direction: column\"></div>\n        <div>\n            <p class=\"navbar-text\" id=\"" + status + "\" style=\"margin: 0px;padding: 0px;float: right;\">...</p>\n        </div>\n        </div>";
         e.innerHTML = tmplt;
         this.nb.render(document.getElementById(nb));
         this.page = new Page(main);
@@ -4410,10 +4648,60 @@ var ShowDialogAction = (function () {
     return ShowDialogAction;
 }());
 exports.ShowDialogAction = ShowDialogAction;
-function showInDialog(title, control) {
-    new ShowDialogAction(title, control).run();
+function showInDialog(title, control, btns) {
+    new ShowDialogAction(title, control, btns).run();
 }
 exports.showInDialog = showInDialog;
+function selectDialog(title, description, func, root, lp, cp) {
+    if (cp === void 0) { cp = new ArrayContentProvider(); }
+    if (!lp) {
+        lp = {
+            label: function (x) {
+                if (x.name) {
+                    if (typeof x.name === "function") {
+                        return x.name();
+                    }
+                    return x.name;
+                }
+                if (x.title) {
+                    if (typeof x.title === "function") {
+                        return x.title();
+                    }
+                    return x.title;
+                }
+                if (x.id) {
+                    if (typeof x.id === "function") {
+                        return x.id();
+                    }
+                    return x.id;
+                }
+            }
+        };
+    }
+    var tree = new TreeView("", "");
+    tree.asyncRender = true;
+    tree.autoExpand = 2;
+    tree.setContentProvider(cp);
+    tree.setLabelProvider(lp);
+    tree.setInput(root);
+    var composite = new controls.VerticalFlex();
+    composite._style.maxHeight = "700px";
+    tree.styleString += ";max-height:600px;min-height:600px";
+    composite.add(new controls_1.Label(description));
+    composite.add(tree);
+    showInDialog(title, composite, [
+        {
+            title: "Ok",
+            run: function () {
+                func(tree.getSelection()[0]);
+            }
+        },
+        {
+            title: "Cancel"
+        }
+    ]);
+}
+exports.selectDialog = selectDialog;
 var w = window;
 var handlers = [];
 function registerHandler(f) {
@@ -4510,7 +4798,7 @@ var w = window;
 w.WorkbenchUtils = {};
 w.WorkbenchUtils.getView = getView;
 
-},{"../../lib/Split":21,"./controls":9}],12:[function(require,module,exports){
+},{"../../lib/Split":23,"./controls":10}],13:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4521,18 +4809,42 @@ var workbench = require("./framework/workbench");
 var hl = require("./core/hl");
 var oc = require("./core/overlayCore");
 var controls = require("./framework/controls");
+var ui = require("./uiUtils");
+var controls_1 = require("./framework/controls");
 var forms = require("./framework/forms");
 var forms_1 = require("./framework/forms");
+var tools = require("./core/tools");
 var RAMLOverlayView = (function (_super) {
     __extends(RAMLOverlayView, _super);
     function RAMLOverlayView(id, title) {
-        _super.call(this, id, title);
-        this.compact = true;
-        this.loading = false;
-        this.libLocation = "https://raw.githubusercontent.com/OnPositive/aml/master/org.aml.apigatewayimporter/apigateway-lib.raml";
-        this.obj = {};
-        var view = this;
-        this.getToolbar().add({
+        var _this = _super.call(this, id, title) || this;
+        _this.compact = true;
+        _this.loading = false;
+        _this.libLocation = "https://raw.githubusercontent.com/OnPositive/aml/master/org.aml.apigatewayimporter/apigateway-lib.raml";
+        _this.obj = {};
+        _this.tool = {
+            name: "",
+            category: "Test",
+            location: "http://localhost:8080/home/hello"
+        };
+        var view = _this;
+        _this.getToolbar().add({
+            title: " Select node",
+            image: "glyphicon glyphicon-screenshot",
+            run: function () {
+                workbench.selectDialog("Select node", 'Please select a node to overlay from the tree of possible targets', function (x) {
+                    view.setInput(x);
+                }, [view._element.root()], ui.HLNodeLabelProvider, {
+                    elements: function (v) {
+                        return v;
+                    },
+                    children: function (c) {
+                        return c.elements().filter(function (x) { return view.manager.hasOverlayableChildren(x); });
+                    }
+                });
+            }
+        });
+        _this.getToolbar().add({
             title: "Save",
             run: function () {
                 view.manager.save(function (x) {
@@ -4540,6 +4852,30 @@ var RAMLOverlayView = (function (_super) {
                 });
             }
         });
+        _this.getToolbar().add({
+            title: "Run",
+            primary: true,
+            checked: true,
+            run: function () {
+                var ovr = view.manager.dump();
+                tools.executeWithConfig(view.tool, ovr, function (res) {
+                    if (res.resultUrl) {
+                        if (res.resultUrl.indexOf("http://") == 0 || res.resultUrl.indexOf("https://") == 0) {
+                            document.location = res.resultUrl;
+                            return;
+                        }
+                        var ll = view.tool.location.indexOf('/', 7);
+                        var loc = view.tool.location.substring(0, ll);
+                        loc += res.resultUrl;
+                        document.location = loc;
+                    }
+                    else {
+                        workbench.showInDialog("Result", new controls_1.Label(res.result));
+                    }
+                });
+            }
+        });
+        return _this;
     }
     RAMLOverlayView.prototype.setLib = function (lib) {
         this.libLocation = lib;
@@ -4581,7 +4917,12 @@ var RAMLOverlayView = (function (_super) {
         if (!this._element.property()) {
             mm = " root";
         }
-        this.setTitle("Overlays for: " + mm + " of (" + hl.title(this._element) + ")");
+        if (this.tool.name) {
+            this.setTitle("Configuring execution of " + this.tool.name + " " + mm + " of (" + hl.title(this._element) + ")");
+        }
+        else {
+            this.setTitle("Overlays for: " + mm + " of (" + hl.title(this._element) + ")");
+        }
         var f = new forms.Form();
         f._style.height = "100%";
         var vv = new controls.VerticalFlex();
@@ -4593,6 +4934,8 @@ var RAMLOverlayView = (function (_super) {
         var view = this;
         var hide = false;
         if (this._element && this.manager) {
+            var groups = [];
+            groups = groups.concat(this.manager.getOvelayProperties(this._element));
             this.obj = view.manager.overlay(this._element);
             if (true) {
                 var t = new workbench.TreeView("", "");
@@ -4605,8 +4948,6 @@ var RAMLOverlayView = (function (_super) {
                     }
                 });
                 t.setContentProvider(new workbench.ArrayContentProvider());
-                var groups = [];
-                groups = groups.concat(this.manager.getOvelayProperties(this._element));
                 t.setInput(groups);
                 t.addSelectionListener({
                     selectionChanged: function (v) {
@@ -4639,7 +4980,7 @@ var RAMLOverlayView = (function (_super) {
 }(workbench.ViewPart));
 module.exports = RAMLOverlayView;
 
-},{"./core/hl":3,"./core/overlayCore":5,"./framework/controls":9,"./framework/forms":10,"./framework/workbench":11}],13:[function(require,module,exports){
+},{"./core/hl":3,"./core/overlayCore":5,"./core/tools":8,"./framework/controls":10,"./framework/forms":11,"./framework/workbench":12,"./uiUtils":22}],14:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4667,9 +5008,10 @@ var RegistryContentProvider = (function () {
 var RegistryView = (function (_super) {
     __extends(RegistryView, _super);
     function RegistryView() {
-        _super.apply(this, arguments);
-        this.updatingFromState = false;
-        this.searchable = true;
+        var _this = _super.apply(this, arguments) || this;
+        _this.updatingFromState = false;
+        _this.searchable = true;
+        return _this;
     }
     RegistryView.prototype.load = function () {
         var _this = this;
@@ -4747,7 +5089,7 @@ var RegistryView = (function (_super) {
 }(workbench.AccorditionTreeView));
 module.exports = RegistryView;
 
-},{"./core/registryCore":7,"./framework/workbench":11,"./state":19}],14:[function(require,module,exports){
+},{"./core/registryCore":7,"./framework/workbench":12,"./state":20}],15:[function(require,module,exports){
 "use strict";
 var or = require("./objectRender");
 var hl = require("../core/hl");
@@ -4760,7 +5102,7 @@ function renderNodes(nodes) {
 }
 exports.renderNodes = renderNodes;
 function renderVersionsSwitch(h) {
-    return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return ("<li><a onclick=\"WorkbenchUtils.getView(event.target).openVersion('" + x.version + "')\">" + x.version + "</a></li>"); }).join("") + "\n                  </ul>\n    </div></h5>";
+    return "<h5>Version: <div class=\"btn-group\">\n                  <button class=\"btn btn-default btn-xs dropdown-toggle\" type=\"button\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                    " + h.version + " <span class=\"caret\"></span>\n                  </button>\n                  <ul class=\"dropdown-menu\">\n                    " + h.versions.versions.map(function (x) { return "<li><a onclick=\"WorkbenchUtils.getView(event.target).openVersion('" + x.version + "')\">" + x.version + "</a></li>"; }).join("") + "\n                  </ul>\n    </div></h5>";
 }
 ;
 var id = 12312;
@@ -4824,7 +5166,7 @@ var HeaderRenderer = (function () {
     return HeaderRenderer;
 }());
 exports.HeaderRenderer = HeaderRenderer;
-function renderNodesOverview(api, v, path) {
+function renderNodesOverview(api, ab, v, path) {
     var result = [];
     var nodes = api.attrs();
     var obj = {};
@@ -4833,6 +5175,7 @@ function renderNodesOverview(api, v, path) {
     var hr = new HeaderRenderer(v);
     nodes = hr.consume(nodes);
     result.push(hr.render());
+    result.push(ab);
     nodes.forEach(function (x) { return result.push(renderNode(x)); });
     docs.forEach(function (x) {
         var t = x.attr("title");
@@ -4845,10 +5188,6 @@ function renderNodesOverview(api, v, path) {
         }
     });
     result.push("<div>Registry id: " + hl.registryId(api) + "</div>");
-    if (path) {
-        result.push("<hr/>");
-        result.push("<a href='" + path + "'>Get RAML</a>");
-    }
     return result.join("");
 }
 exports.renderNodesOverview = renderNodesOverview;
@@ -4966,7 +5305,7 @@ function renderNode(h, small) {
 }
 exports.renderNode = renderNode;
 
-},{"../core/hl":3,"./objectRender":15}],15:[function(require,module,exports){
+},{"../core/hl":3,"./objectRender":16}],16:[function(require,module,exports){
 "use strict";
 function encode(r) {
     return r.replace(/[\x26\x0A\<>'"]/g, function (r) { return "&#" + r.charCodeAt(0) + ";"; });
@@ -5146,7 +5485,7 @@ function renderObj(v) {
 }
 exports.renderObj = renderObj;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var tr = require("./typeRender");
@@ -5291,7 +5630,7 @@ var ResponseRenderer = (function () {
 }());
 exports.ResponseRenderer = ResponseRenderer;
 
-},{"../core/hl":3,"./nodeRender":14,"./typeRender":18}],17:[function(require,module,exports){
+},{"../core/hl":3,"./nodeRender":15,"./typeRender":19}],18:[function(require,module,exports){
 "use strict";
 exports.ROOT = "https://petrochenko-pavel-a.github.io/raml-explorer/";
 exports.OBJECT_IMAGE = "<img src='" + exports.ROOT + "images/object.gif'/> ";
@@ -5312,7 +5651,7 @@ function EXPAND_IMG(id) {
 }
 exports.EXPAND_IMG = EXPAND_IMG;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 var hl = require("../core/hl");
 var or = require("./objectRender");
@@ -5436,10 +5775,10 @@ var NameColumn = (function () {
         if (p instanceof WProperty) {
             var wp = p;
             if (wp._children.length > 0) {
-                rs = ("<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span id=\"" + ("tricon" + rowId) + "\" class=\"glyphicon glyphicon-plus-sign\" ></span> ") + rs;
+                rs = "<span style=\"padding-left: " + wp.level() * 20 + "px\"></span><span id=\"" + ("tricon" + rowId) + "\" class=\"glyphicon glyphicon-plus-sign\" ></span> " + rs;
             }
             else {
-                rs = ("<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> ") + rs;
+                rs = "<span style=\"padding-left: " + (wp.level() * 20 + 15) + "px\"></span> " + rs;
             }
         }
         if (p.isRequired()) {
@@ -5977,7 +6316,7 @@ function renderParameters(name, ps, result, isMeta) {
 }
 exports.renderParameters = renderParameters;
 
-},{"../app":2,"../core/hl":3,"../core/registryCore":7,"../framework/workbench":11,"./nodeRender":14,"./objectRender":15,"./styles":17}],19:[function(require,module,exports){
+},{"../app":2,"../core/hl":3,"../core/registryCore":7,"../framework/workbench":12,"./nodeRender":15,"./objectRender":16,"./styles":18}],20:[function(require,module,exports){
 "use strict";
 var workbench = require("./framework/workbench");
 var rc = require("./core/registryCore");
@@ -6174,7 +6513,7 @@ var state = new ExplorerState();
 state.decode(location.hash);
 module.exports = state;
 
-},{"./core/hl":3,"./core/registryCore":7,"./framework/workbench":11}],20:[function(require,module,exports){
+},{"./core/hl":3,"./core/registryCore":7,"./framework/workbench":12}],21:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6184,10 +6523,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 var workbench = require("./framework/workbench");
 var hl = require("./core/hl");
 var nr = require("./rendering/nodeRender");
+var ui = require("./uiUtils");
 var controls_1 = require("./framework/controls");
 var rrend = require("./core/registryCore");
-var methodKey = hl.methodKey;
-var images = require("./rendering/styles");
 var state = require("./state");
 var actions = require("./actions");
 var RAMLTreeProvider = (function () {
@@ -6216,24 +6554,25 @@ var RAMLTreeView = (function (_super) {
     __extends(RAMLTreeView, _super);
     function RAMLTreeView(title) {
         if (title === void 0) { title = "Overview"; }
-        _super.call(this, title);
-        this.searchable = true;
-        this.hasSelection = true;
-        this.operations = true;
-        this.updatingFromState = false;
-        this.trees = [];
-        this.showInternal = true;
-        var v = this;
-        this.getToolbar().add({
+        var _this = _super.call(this, title) || this;
+        _this.searchable = true;
+        _this.hasSelection = true;
+        _this.operations = true;
+        _this.updatingFromState = false;
+        _this.trees = [];
+        _this.showInternal = true;
+        var v = _this;
+        _this.getToolbar().add({
             title: "",
             image: "glyphicon glyphicon-asterisk",
-            checked: this.devMode,
+            checked: _this.devMode,
             run: function () {
                 v.devMode = !v.devMode;
                 v.refresh();
                 v.init(v.holder);
             }
         });
+        return _this;
     }
     RAMLTreeView.prototype.openVersion = function (version) {
         state.updateVersion(version);
@@ -6243,59 +6582,7 @@ var RAMLTreeView = (function (_super) {
     };
     RAMLTreeView.prototype.customize = function (tree) {
         tree.setContentProvider(new RAMLTreeProvider());
-        tree.setLabelProvider({
-            label: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        var ss = t.id.substr(2);
-                        if (ss == "object") {
-                            return images.OBJECT_IMAGE + ss;
-                        }
-                        if (ss == "array") {
-                            return images.ARRAY_IMAGE + ss;
-                        }
-                        if (ss == "scalar") {
-                            return images.STRING_IMAGE + ss;
-                        }
-                        return images.OBJECT_IMAGE + ss;
-                    }
-                    return t.id;
-                }
-                var result = "";
-                var pr = x.property ? x.property() : null;
-                var isMethod = pr && pr.nameId() == "methods";
-                var isType = pr && pr.nameId() == "types";
-                var isAType = pr && pr.nameId() == "annotationTypes";
-                result = hl.label(x);
-                if (isMethod) {
-                    result = methodKey(x.name()) + result;
-                }
-                if (isType) {
-                    result = images.GENERIC_TYPE + result;
-                }
-                if (isAType) {
-                    result = images.ANNOTATION_TYPE + result;
-                }
-                return result;
-            },
-            icon: function (x) {
-                if (x instanceof hl.TreeLike) {
-                    var t = x;
-                    if (t.id.indexOf("!!") == 0) {
-                        return "";
-                    }
-                    return images.FOLDER_SPAN;
-                }
-                if (x instanceof hl.ProxyNode) {
-                    return images.LIBRARY_SPAN;
-                }
-                if (x.property().nameId() == "resources") {
-                    return images.RESOURCE_SPAN;
-                }
-                return "";
-            }
-        });
+        tree.setLabelProvider(ui.HLNodeLabelProvider);
     };
     RAMLTreeView.prototype.updateFromState = function () {
         var _this = this;
@@ -6458,10 +6745,11 @@ var RAMLTreeView = (function (_super) {
     RAMLTreeView.prototype.customizeAccordition = function (a, node) {
         var x = this.api.elements();
         var libs = hl.getUsedLibraries(this.api);
-        var overview = nr.renderNodesOverview(this.api, this.versions, this.path);
-        overview = overview + actions.renderActionsBlock(state.registry());
+        var ab = actions.renderActionsBlock(state.registry());
+        var overview = nr.renderNodesOverview(this.api, ab, this.versions, this.path);
+        overview = overview;
         if (overview.length > 0) {
-            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 200px'>" + overview + "</div>"));
+            a.add(new controls_1.Label("Generic Info", "<div style='min-height: 900px'>" + overview + "</div>"));
         }
         if (!this.devMode) {
             libs = [];
@@ -6505,7 +6793,69 @@ var RAMLTreeView = (function (_super) {
 }(workbench.AccorditionTreeView));
 module.exports = RAMLTreeView;
 
-},{"./actions":1,"./core/hl":3,"./core/registryCore":7,"./framework/controls":9,"./framework/workbench":11,"./rendering/nodeRender":14,"./rendering/styles":17,"./state":19}],21:[function(require,module,exports){
+},{"./actions":1,"./core/hl":3,"./core/registryCore":7,"./framework/controls":10,"./framework/workbench":12,"./rendering/nodeRender":15,"./state":20,"./uiUtils":22}],22:[function(require,module,exports){
+"use strict";
+var hl = require("./core/hl");
+var images = require("./rendering/styles");
+var methodKey = hl.methodKey;
+exports.HLNodeLabelProvider = {
+    label: function (x) {
+        if (x instanceof hl.TreeLike) {
+            var t = x;
+            if (t.id.indexOf("!!") == 0) {
+                var ss = t.id.substr(2);
+                if (ss == "object") {
+                    return images.OBJECT_IMAGE + ss;
+                }
+                if (ss == "array") {
+                    return images.ARRAY_IMAGE + ss;
+                }
+                if (ss == "scalar") {
+                    return images.STRING_IMAGE + ss;
+                }
+                return images.OBJECT_IMAGE + ss;
+            }
+            return t.id;
+        }
+        var result = "";
+        var pr = x.property ? x.property() : null;
+        var isMethod = pr && pr.nameId() == "methods";
+        var isType = pr && pr.nameId() == "types";
+        var isAType = pr && pr.nameId() == "annotationTypes";
+        result = hl.label(x);
+        if (isMethod) {
+            result = methodKey(x.name()) + result;
+        }
+        if (isType) {
+            result = images.GENERIC_TYPE + result;
+        }
+        if (isAType) {
+            result = images.ANNOTATION_TYPE + result;
+        }
+        return result;
+    },
+    icon: function (x) {
+        if (x instanceof hl.TreeLike) {
+            var t = x;
+            if (t.id.indexOf("!!") == 0) {
+                return "";
+            }
+            return images.FOLDER_SPAN;
+        }
+        if (!x.property()) {
+            return images.FOLDER_SPAN;
+        }
+        if (x instanceof hl.ProxyNode) {
+            return images.LIBRARY_SPAN;
+        }
+        if (x.property().nameId() == "resources") {
+            return images.RESOURCE_SPAN;
+        }
+        return "";
+    }
+};
+
+},{"./core/hl":3,"./rendering/styles":18}],23:[function(require,module,exports){
 
 'use strict';
 
@@ -6867,7 +7217,7 @@ if (typeof exports !== 'undefined') {
 
 }).call(window);
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /*!
  * Bootstrap Context Menu
  * Author: @sydcanem
@@ -7082,7 +7432,7 @@ var lastTime=0;
 		
 }(jQuery));
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /* =========================================================
  * bootstrap-treeview.js v1.2.0
  * =========================================================
