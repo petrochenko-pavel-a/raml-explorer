@@ -264,6 +264,7 @@ export abstract class ViewPart implements IWorkbenchPart, ISelectionProvider {
             }
         })
     }
+
     protected selectionListeners: ISelectionListener[] = []
 
     protected contentElement: Element
@@ -891,10 +892,15 @@ interface INavBarTheme {
     brandImageHeight: string
     brandImageStyle: string
 }
+var n=1;
 
 export class NavBar implements controls.IControl {
 
     _title: string = "";
+
+    id(){
+        return 'n'+(n++);
+    }
 
     _theme: INavBarTheme = {
         style: ' margin-bottom: 5px;background-image: url(https://github.com/themes/midnight/images/nav-bg.gif)',
@@ -980,11 +986,15 @@ export interface IPerspective {
 
     onOpen?: ()=>void
 }
+var a=1;
 export class Application implements controls.IControl {
 
 
     title() {
         return this._title;
+    }
+    id(){
+        return "a"+(a++);
     }
 
     private nb: NavBar = new NavBar();

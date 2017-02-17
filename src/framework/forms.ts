@@ -1,6 +1,6 @@
 import controls=require("./controls");
 import wb=require("./workbench");
-import {IControl, Label, Composite, WrapComposite} from "./controls";
+import {IControl, Label, Composite, WrapComposite, VerticalFlex} from "./controls";
 import or =require("../rendering/objectRender")
 import pg=require("../core/propertyGroup")
 import {PropertyDescription, PropertyGroup} from "../core/propertyGroup";
@@ -21,6 +21,51 @@ export class Form extends controls.Composite {
         this._style.padding = "10px";
         this._style.width = "100%"
     }
+}
+export class TabFolder extends controls.WrapComposite{
+
+    constructor(){
+        super("div")
+    }
+
+    protected extraRender(ch: HTMLElement) {
+        var rs:string[]=[];
+        var ll=document.createElement("ul");
+        ll.classList.add("nav")
+        ll.classList.add("nav-tabs");
+        var c=""
+
+        this.children.forEach((x,i)=>{
+            var t=`      
+            <li class="${i==0?'active':''}">
+            <a  href="#${"w"+x.id()}" data-toggle="tab">${x.title()}</a>
+            </li>`;
+            c+=t;
+        })
+        ll.innerHTML=c;
+        ch.appendChild(ll);
+    }
+    protected wrap(p:HTMLElement,c?:IControl){
+        var d=document.createElement(this.wrapElement);
+
+        d.id="w"+c.id();
+        d.classList.add("tab-pane")
+        if (this.children.indexOf(c)==0){
+            d.classList.add("active")
+        }
+        p.appendChild(d);
+        return d;
+    }
+
+    protected renderChildren(ch: HTMLElement) {
+        var cc=document.createElement("div");
+        cc.classList.add("tab-content")
+        cc.classList.add("clearfix")
+        ch.appendChild(cc);
+        super.renderChildren(cc);
+    }
+
+
 }
 export class InputGroup extends controls.Composite {
 
@@ -71,7 +116,26 @@ export class Input extends BindableControl {
             }
         }
     }
+}
+export class TextArea extends BindableControl {
+    constructor() {
+        super("textarea")
+        this.addClassName("form-control");
+    }
 
+    protected initBinding(ch: HTMLElement) {
+        var el: HTMLInputElement = <HTMLInputElement>ch;
+        if (this._binding) {
+            var val = this._binding.get();
+            if (!val) {
+                val = "";
+            }
+            el.value = val;
+            el.onkeyup = (e)=> {
+                this._binding.set(el.value);
+            }
+        }
+    }
 }
 export class Option extends controls.Composite {
     constructor(value: any) {
@@ -163,9 +227,9 @@ export class Toolbar extends controls.Composite {
 
 export class Section extends controls.Composite {
 
-    protected heading: Composite;
+    heading: Composite;
     toolbar: Toolbar = new Toolbar();
-    body: Composite;
+    body: Composite= new controls.WrapComposite("div");
 
 
     protected description: string;
@@ -184,27 +248,26 @@ export class Section extends controls.Composite {
         heading._text = this.title();
         heading.wrapElement = "span";
         heading.addClassName("panel-heading");
+        if (!heading._text.trim()) {
+            heading._style.minHeight="40px";
+
+        }
         heading.add(this.toolbar);
         this._style.paddingBottom="0px"
         this._style.marginBottom="0px"
         this.heading = heading;
         super.add(heading)
-        var body = new controls.WrapComposite("div");
-
-        body.addClassName("panel-body");
-
-        super.add(body);
-        this.body = body;
+        this.body.addClassName("panel-body");
+        super.add(this.body);
     }
 }
-export class Table extends controls.Composite {
 
-}
 function createControl(p: PropertyDescription, b: IBridge) {
     var cm = new controls.VerticalFlex();
 
     var group = new PropertyGroup();
-    cm.add(new Label(marked(p.description)));
+    cm.add(new Label(p.description?marked(p.description):""));
+    var groups:PropertyGroup[]=[];
     if (p.map) {
         var kd: PropertyDescription = {};
         kd.displayName = "Key";
@@ -219,7 +282,10 @@ function createControl(p: PropertyDescription, b: IBridge) {
             group.properties.push(pg.collapseInnerProps(x));
             //group.properties.push(x);
         })
+        groups=pg.groupProps(group.properties);
+        var rs:PropertyDescription[]=[];
     }
+
     else {
         var kd: PropertyDescription = {};
         kd.displayName = "Value";
@@ -227,10 +293,20 @@ function createControl(p: PropertyDescription, b: IBridge) {
         kd.required = true;
         kd.scalar = true;
         group.properties.push(kd);
+        groups=[group];
+    }
+    if (groups.length>0){
+        cm.add(renderPropertyGroup(groups[0], b))
 
     }
 
-    cm.add(renderPropertyGroup(group, b))
+    if (groups.length>1) {
+        var dd = new TabFolder();
+        for (var i=1;i<groups.length;i++){
+            dd.add(renderPropertyGroup(groups[i],b,{tabsTop:true}));
+        }
+    }
+    cm.add(dd);
     return cm;
 }
 declare var $: any
@@ -246,7 +322,6 @@ export class CreateAction {
     obj = {};
 
     constructor(private pd: PropertyDescription, private b: IBinding) {
-
     }
 
     run() {
@@ -513,7 +588,7 @@ export class TableEditor extends BindableControl {
         toolbar.refresh();
     }
 
-    constructor(private pd: pg.PropertyDescription) {
+    constructor(private pd: pg.PropertyDescription,private ctx:RenderingContext={}) {
         super("div")
         this._style.height = "100%";
         this._style.width = "100%";
@@ -523,11 +598,16 @@ export class TableEditor extends BindableControl {
         v.wrapStyle.flex = "1 1 0"
         this.add(v);
         var tb = new controls.HorizontalFlex();
-        var s = new Section(pd.displayName);
+        var s = new Section(ctx.tabsTop?" ":pd.displayName);
         s.body._style.padding = "0px"
+        if (ctx.tabsTop){
+            s._style.borderRadius="0px";
+            s.heading._style.borderTopWidth="0px";
+            s._style.borderTopWidth="0px";
+        }
         var view = this;
         this.content = s;
-        this.listView = new ListView(pd, "<div style='padding: 10px'>" + marked(pd.description) + "</div>");
+        this.listView = new ListView(pd, "<div style='padding: 10px'>" + (pd.description?marked(pd.description):"") + "</div>");
         s.add(this.listView);
         var toolbar = s.toolbar;
         this.listView.addSelectionListener({
@@ -545,7 +625,14 @@ export class TableEditor extends BindableControl {
         tb._style.height = "100%"
         //tb._style.backgroundColor="red"
         tb.wrapStyle.flex = "1 1 0"
-        tb.wrapStyle.padding = "5px"
+        if (!ctx.tabsTop) {
+
+            tb.wrapStyle.padding = "5px"
+        }
+        else{
+            tb.wrapStyle.padding = "0px"
+            s._style.padding="0px"
+        }
         tb.add(s);
         //tb.add(toolbar);
         //v.add(b)
@@ -829,9 +916,14 @@ var binding = function (bridge: IBridge, p:PropertyDescription) {
     }
     return ls;
 };
-export function renderPropertyGroup(p: PropertyGroup, bridge: IBridge) {
+export interface RenderingContext{
+    tabsTop?:boolean;
+}
+
+export function renderPropertyGroup(p: PropertyGroup, bridge: IBridge,ctx:RenderingContext={}) {
     var maxLength = 0;
     var container = new controls.VerticalFlex();
+    container.setTitle(p.caption);
     p.properties.forEach(x=> {
         if (x.scalar) {
             var dl = x.displayName.length;
@@ -872,9 +964,32 @@ export function renderPropertyGroup(p: PropertyGroup, bridge: IBridge) {
                     r.add(select);
                 }
                 else {
-                    var w = new Input();
+                    var w:TextArea|Input = new Input();
+                    if (p.multiline){
+                        w= new TextArea();
+                        w._style.minHeight="200px";
+                        w._style.borderRadius="0px";
+                        if (ctx.tabsTop){
+                            w._style.borderTopWidth="0px";
+                            container.add(w);
+                            return;
+                        }
+                        w._style.borderWidth="0px";
+                        w._binding = binding(bridge, p) ;
+
+                        var s=new Section(p.displayName)
+                        s._style.margin="5px";
+                        s.body._style.padding="0px";
+
+                        s.add(w);
+                        container.add(s);
+                        return;
+                    }
+                    //w.attrs["data-provide"]="typeahead";
+                    //w.attrs["data-source"]='["typeahead","ded"]';
                     w._binding = binding(bridge, p);
                     r.add(w);
+
                 }
                 container.add(r);
             }
@@ -882,18 +997,20 @@ export function renderPropertyGroup(p: PropertyGroup, bridge: IBridge) {
     })
     p.properties.forEach(p=> {
         if (p.map) {
-            var rs = new TableEditor(p);
+            var rs = new TableEditor(p,ctx);
             rs._binding = binding(bridge,p)
             container.add(rs);
             return;
         }
-        if (p.array) {
-            var rs = new TableEditor(p);
+        else if (p.array) {
+            var rs = new TableEditor(p,ctx);
             rs._binding = binding(bridge,p)
             container.add(rs);
             return;
         }
+        else{
 
+        }
     })
     var checks=new WrapComposite("span")
     checks.wrapElement="span"
