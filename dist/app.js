@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var workbench = require("./framework/workbench");
 var RAMLTreeView = require("./treeView");
 var RAMLDetailsView = require("./detailsView");
