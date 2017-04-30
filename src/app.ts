@@ -1,15 +1,16 @@
-import workbench=require("./framework/workbench")
-import controls=require("./framework/controls")
+import workbench=require("raml-semantic-ui/dist/workbench")
+import controls=require("raml-semantic-ui/dist/controls")
+import rt=require("raml-semantic-ui")
 import RAMLTreeView=require("./treeView")
 import RAMLDetailsView=require("./detailsView")
 import RegistryView=require("./registryView")
 import OverlayView=require("./overlayView")
 import hl=require("./core/hl")
-import {Application} from "./framework/workbench";
+import Application=workbench.Application;
 import state=require("./state")
 import RAMLOverlayView = require("./overlayView");
 import tools=require("./core/tools")
-import {Label} from "./framework/controls";
+import Label=controls.Label;
 class AboutDialog implements controls.IControl{
     title(){
         return "About"
@@ -49,23 +50,8 @@ workbench.registerHandler((x)=>{
     state.onState(x);
     return true;
 })
-state.addListener(()=>{
-    regView.updateFromState()
-    ramlView.updateFromState();
-    if (inExpansion){
-        return;
-    }
-    if (state.getOptions()["fullScreen"]=="true"){
-        if (app.currentPerspective()!=fullSpecPerspective){
-            app.openPerspective(fullSpecPerspective);
-        }
-    }
-    else{
-        if (app.currentPerspective()!=registryPerspective){
-            app.openPerspective(registryPerspective);
-        }
-    }
-});
+
+
 var registryPerspective={
 
     title:"API Registry",
@@ -128,66 +114,87 @@ var p=registryPerspective;
 if (state.getOptions()["fullScreen"]=="true"){
     p=fullSpecPerspective;
 }
-var app=new Application("API REGISTRY",registryPerspective,"app",p);
-app.home=function () {
-    inExpansion=false;
-    state.clearOptions();
-}
-
-workbench.addCommand({
-    id:"/commands/ramlExplorer/focusOnSpec",
-    run(){
-        fullSpecPerspective.title=ramlView.getSpecTitle();
-        state.setOption("fullScreen","true")
-    }
-})
-workbench.addCommand({
-    id:"/commands/ramlExplorer/runTool/",
-    run(tool:string){
-        state.registry().tools().forEach(x=>{
-            if (x.location==tool){
-                if (x.needsConfig){
-                    inExpansion=true;
-                    overlay.setLib(x.libUrl)
-                    overlay.tool=x;
-                    app.openPerspective(overlayPerspective);
-                    setTimeout(function(){
-                        overlay.setInput(ramlView.specRoot())
-                    },200)
-                    return;
-                }
-                if (x.codeToRun){
-                    x.codeToRun(ramlView.specRoot());
-                }
-                else{
-                    tools.execute(x,ramlView.specRoot(),res=>{
-                       if (res.resultUrl){
-                            if (res.resultUrl.indexOf("http://")==0||res.resultUrl.indexOf("https://")==0){
-                                document.location=res.resultUrl;
-                                return;
-                            }
-                            var ll=x.location.indexOf('/',7);
-                            var loc=x.location.substring(0,ll);
-                            loc+=res.resultUrl;
-                            document.location=<any>loc;
-                       }
-                       else {
-                           workbench.showInDialog("Result", new Label(res.result))
-                       }
-                    });
-                }
+rt.application("app","API REGISTRY",registryPerspective,p,app=>{
+    state.addListener(()=>{
+        regView.updateFromState()
+        ramlView.updateFromState();
+        if (inExpansion){
+            return;
+        }
+        if (state.getOptions()["fullScreen"]=="true"){
+            if (app.currentPerspective()!=fullSpecPerspective){
+                app.openPerspective(fullSpecPerspective);
             }
-        })
+        }
+        else{
+            if (app.currentPerspective()!=registryPerspective){
+                app.openPerspective(registryPerspective);
+            }
+        }
+    });
+    app.home=function () {
+        inExpansion=false;
+        state.clearOptions();
     }
+
+    workbench.addCommand({
+        id:"/commands/ramlExplorer/focusOnSpec",
+        run(){
+            fullSpecPerspective.title=ramlView.getSpecTitle();
+            state.setOption("fullScreen","true")
+        }
+    })
+    workbench.addCommand({
+        id:"/commands/ramlExplorer/runTool/",
+        run(tool:string){
+            state.registry().tools().forEach(x=>{
+                if (x.location==tool){
+                    if (x.needsConfig){
+                        inExpansion=true;
+                        overlay.setLib(x.libUrl)
+                        overlay.tool=x;
+                        app.openPerspective(overlayPerspective);
+                        setTimeout(function(){
+                            overlay.setInput(ramlView.specRoot())
+                        },200)
+                        return;
+                    }
+                    if (x.codeToRun){
+                        x.codeToRun(ramlView.specRoot());
+                    }
+                    else{
+                        tools.execute(x,ramlView.specRoot(),res=>{
+                            if (res.resultUrl){
+                                if (res.resultUrl.indexOf("http://")==0||res.resultUrl.indexOf("https://")==0){
+                                    document.location.assign(res.resultUrl);
+                                    return;
+                                }
+                                var ll=x.location.indexOf('/',7);
+                                var loc=x.location.substring(0,ll);
+                                loc+=res.resultUrl;
+                                document.location.assign(loc);
+                            }
+                            else {
+                                workbench.showInDialog("Result", new Label(res.result))
+                            }
+                        });
+                    }
+                }
+            })
+        }
+    })
+    workbench.addCommand({
+        id:"/commands/ramlExplorer/overlayWithLib/",
+        run(lib:string){
+            inExpansion=true;
+            overlay.setLib(lib)
+            app.openPerspective(overlayPerspective);
+            setTimeout(function(){
+                overlay.setInput(ramlView.specRoot())
+            },200)
+        }
+    })
 })
-workbench.addCommand({
-    id:"/commands/ramlExplorer/overlayWithLib/",
-    run(lib:string){
-        inExpansion=true;
-        overlay.setLib(lib)
-        app.openPerspective(overlayPerspective);
-        setTimeout(function(){
-            overlay.setInput(ramlView.specRoot())
-        },200)
-    }
-})
+//var app=new Application();
+
+

@@ -1,5 +1,6 @@
-import keywords=require("./keywords")
-import {trimDesc} from "./keywords";
+import keywords=require("raml-semantic-ui/dist/keywords")
+import trimDesc=keywords.trimDesc;
+import tp2=require("types2")
 
 export interface IProperty{
     nameId():string
@@ -407,6 +408,7 @@ export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void,setRoot:bo
         function (api) {
             var hl=api.highLevel();
             var res:IHighLevelNode=null;
+
             var tr=hl.elements().filter(x=>x.property().nameId()=="traits"||x.property().nameId()=="resourceTypes");
             if (tr.length>0) {
                 res=api.expand ? api.expand().highLevel() : api.highLevel();
@@ -421,9 +423,94 @@ export function loadApi(path:string,f:(x:IHighLevelNode,e?:any)=>void,setRoot:bo
                 }
             }
             libs=null;
-            f(res);
+            //build
+            f(res,remap(tp2.build(api),res));
         }
     )
+}
+
+export class Node{
+
+    constructor(public readonly node:IHighLevelNode,public readonly _children: Node[]){}
+
+    children(){
+        if (this._children){
+            return this._children.map(x=>x.node);
+        }
+        return [];
+    }
+}
+export interface IModule{
+
+    elements: Node[];
+}
+export function resourceForUrl(url:string,root:IHighLevelNode){
+    var node=null;
+    root.children().forEach(r=>{
+        if (r.definition().nameId()=="Resource"&&node==null) {
+            var res=resourceUrl(r, true);
+            if (res==url){
+                node=r;
+            }
+            else{
+                var m=resourceForUrl(url,r);
+                if (m){
+                    node=m;
+                }
+            }
+        }
+    })
+    return node;
+}
+export function method(url:string,root:IHighLevelNode,method:string){
+    var node=resourceForUrl(url,root);
+    var res=node;
+    if(node) {
+        node.children().forEach(r => {
+            if (true) {
+               if (r.name()==method){
+                   res=r;
+               }
+            }
+        })
+    }
+    return res;
+}
+export function typeWithName(name:string,root:IHighLevelNode){
+    var node=null;
+    root.children().forEach(r=>{
+        if (r.property().nameId()=="types"&&node==null) {
+            if (name==r.name()){
+                node=r;
+            }
+        }
+    })
+    return node;
+}
+function remap(m:tp2.IModule,n:IHighLevelNode){
+    var el:IModule={elements:[]};
+    var mapped=m.globals.map(x=>{
+        var node=method((<any>x).url
+            ,n,(<any>x).method);
+        if (node==null){
+            var node=resourceForUrl((<any>x).url
+                ,n);
+        }
+        return new Node(node,[]);
+    });
+    mapped=mapped.concat(m.resources.map(x=>{
+        var tp=typeWithName(x.primary.id,n);
+        var ch=x.methods.map(v=>{
+            var node=method((<any>v).url
+                ,n,(<any>v).method);
+            if (!node){
+                node=n;
+            }
+            return new Node(node,[]);
+        })
+        return new Node(tp,ch);
+    }))
+    return mapped;
 }
 
 export function allOps(x:IHighLevelNode){
@@ -964,6 +1051,40 @@ export function label(x:IHighLevelNode&{$name?:string}){
     }
     if (!result){
         if (isMethod){
+            var body=false;
+            x.attrs().forEach(x=>{
+                if (x.property().nameId()=="annotations"){
+                    var node:IHighLevelNode=x.value().toHighLevel();
+                    if (node) {
+                        var nm=node.name();
+                        nm=nm.substring(1,nm.length-1);
+                        if (nm.indexOf('.')!=-1){
+                            nm=nm.substring(nm.indexOf('.')+1)
+                        }
+                        if (nm=="create"){
+                            result="Create";
+                            body=true;
+                        }
+                        if (nm=="update"){
+                            result="Update";
+                            body=true;
+                        }
+                        if (nm=="details"){
+                            result="Read";
+                        }
+                        if (nm=="delete"){
+                            result="Delete";
+                        }
+                        if (nm=="list"){
+                            result="List";
+                        }
+                    }
+                }
+
+            })
+            if (result){
+                return result;
+            }
             result=resourceUrl(x.parent())
         }
         else {

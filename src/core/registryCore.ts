@@ -26,6 +26,9 @@ export function setUrl(url:string){
     gurl=url;
 }
 export function getUsages(isType:boolean,name:string):any{
+    if (!usages.usageRegistry){
+        return null;
+    }
     var iN=(isType?"T":"A")+name;
     var num=usages.usageRegistry.fileToNum[gurl];
     if (num) {
@@ -60,7 +63,6 @@ function loadData(url:string, c:(t:any,e?:number)=>void){
         if (xhr.readyState != 4) return;
         var data=JSON.parse(xhr.responseText);
         c(data,xhr.status)
-
     }
 }
 
@@ -138,7 +140,7 @@ function injectTools(r:IRegistry){
                 icon:"http://favicon.yandex.net/favicon/raml.org",
                 category:"Download as",
                 codeToRun(v:hl.IHighLevelNode){
-                    document.location=<any>hl.location(v);
+                    document.location.assign(hl.location(v));
                 }
             }
             ,{
@@ -181,6 +183,17 @@ export class LoadedRegistry{
             return f;
         }
         var f=this.find(this.libraries(),url);
+        if (!f){
+            f=new ApiWithVersions();
+            f.versions=[
+                    {
+
+                        name:"A",
+                        location: url
+                    }
+                ]
+            ;
+        }
         return f;
     }
     itemId(apis:(GroupNode|ApiWithVersions)):string{
@@ -290,23 +303,9 @@ export function getInstance(url:string,f:(data:LoadedRegistry,s:number)=>void){
         reportData(d);
         var lr=new LoadedRegistry(<IRegistry>d);
         f(lr,s);
-        // loadData("http://localhost:8080/home/tools",(q,s)=>{
-        //
-        //     d.tools=q.tools
-        //     d.tools.forEach(x=>{
-        //         x.location="http://localhost:8080/home"+x.location;
-        //         if (x.libUrl){
-        //             x.libUrl="http://localhost:8080/home"+x.libUrl;
-        //         }
-        //     });
-        //
-        //     var lr=new LoadedRegistry(<IRegistry>d);
-        //     f(lr,s);
-        // })
-
     });
     loadData(usageUrl,(data:any,s:number)=> {
-        loadedUsageData(data);
+        //loadedUsageData(data);
     })
 }
 

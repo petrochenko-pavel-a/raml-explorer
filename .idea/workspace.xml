@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f79a17c3-d95e-468d-8419-12032fdd69b1" name="Default" comment="">
+    <list default="true" id="f79a17c3-d95e-468d-8419-12032fdd69b1" name="Default" comment="moving to jquery context menu.">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/bundle.js" afterPath="" />
+      <change type="MODIFICATION" beforePath="$USER_HOME$/git/type-bindings/tests/simpleTests.ts" afterPath="$USER_HOME$/git/type-bindings/tests/simpleTests.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/typescript-compiler.xml" afterPath="$PROJECT_DIR$/.idea/typescript-compiler.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dist/app.js" afterPath="$PROJECT_DIR$/dist/app.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.html" afterPath="$PROJECT_DIR$/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions.ts" afterPath="$PROJECT_DIR$/src/actions.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/app.ts" afterPath="$PROJECT_DIR$/src/app.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/core/hl.ts" afterPath="$PROJECT_DIR$/src/core/hl.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/core/propertyGroup.ts" afterPath="$PROJECT_DIR$/src/core/propertyGroup.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/core/registryCore.ts" afterPath="$PROJECT_DIR$/src/core/registryCore.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/framework/controls.ts" afterPath="$PROJECT_DIR$/src/framework/controls.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/framework/forms.ts" afterPath="$PROJECT_DIR$/src/framework/forms.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/framework/workbench.ts" afterPath="$PROJECT_DIR$/src/framework/workbench.ts" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/registryView.ts" afterPath="$PROJECT_DIR$/src/registryView.ts" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/raml-explorer.iml" afterPath="$PROJECT_DIR$/raml-explorer.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tsconfig.json" afterPath="$PROJECT_DIR$/tsconfig.json" />
     </list>
     <ignored path="raml-explorer.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -34,154 +29,70 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="app.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app.ts">
+      <file leaf-file-name="auth.ts" pinned="false" current-in-tab="true">
+        <entry file="file://$USER_HOME$/git/rtui/src/auth.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="816">
-              <caret line="84" column="25" selection-start-line="84" selection-start-column="25" selection-end-line="84" selection-end-column="25" />
-              <folding>
-                <marker date="1483001275496" expanded="true" signature="825:834" ph="..." />
-                <marker date="1483001275496" expanded="true" signature="1105:1395" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="forms.ts" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/framework/forms.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="898">
-              <caret line="1015" column="21" selection-start-line="1015" selection-start-column="21" selection-end-line="1015" selection-end-column="21" />
-              <folding>
-                <element signature="n#InputGroup#0" expanded="false" />
-                <element signature="n#InputGroupAddOn#0" expanded="false" />
-                <element signature="n#BindableControl#0" expanded="false" />
-                <element signature="n#Input#0" expanded="false" />
-                <element signature="n#TextArea#0" expanded="false" />
-                <element signature="n#Option#0" expanded="false" />
-                <marker date="1483046629453" expanded="true" signature="1015:1106" ph="..." />
-                <marker date="1483046629453" expanded="true" signature="15968:15981" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/index.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="13" column="109" selection-start-line="13" selection-start-column="109" selection-end-line="13" selection-end-column="109" />
+            <state relative-caret-position="306">
+              <caret line="18" column="42" lean-forward="false" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="propertyGroup.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/core/propertyGroup.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-293">
-              <caret line="100" column="33" selection-start-line="100" selection-start-column="33" selection-end-line="100" selection-end-column="33" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="hl.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/core/hl.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="633">
-              <caret line="717" column="40" selection-start-line="717" selection-start-column="12" selection-end-line="717" selection-end-column="40" />
-              <folding>
-                <marker date="1482952177022" expanded="true" signature="10256:10407" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="controls.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/framework/controls.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="308">
-              <caret line="255" column="19" selection-start-line="255" selection-start-column="19" selection-end-line="255" selection-end-column="19" />
-              <folding>
-                <marker date="1483002287760" expanded="true" signature="2627:2639" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="7672:7746" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="7760:7817" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="8165:8192" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="11283:11349" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="11350:11882" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="11405:11609" ph="..." />
-                <marker date="1483002287760" expanded="false" signature="11454:11485" ph="..." />
-                <marker date="1483002287760" expanded="false" signature="11555:11567" ph="..." />
-                <marker date="1483002287760" expanded="false" signature="11649:11701" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="11718:11864" ph="..." />
-                <marker date="1483002287760" expanded="false" signature="11763:11788" ph="..." />
-                <marker date="1483002287760" expanded="false" signature="11814:11832" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="11993:12079" ph="..." />
-                <marker date="1483002287760" expanded="true" signature="12080:12137" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="lib.d.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/typescriptCompiler/external/lib.d.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3880">
-              <caret line="7012" column="13" selection-start-line="7012" selection-start-column="13" selection-end-line="7012" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="workbench.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/framework/workbench.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="513">
-              <caret line="266" column="0" selection-start-line="266" selection-start-column="0" selection-end-line="266" selection-end-column="0" />
-              <folding>
-                <marker date="1483000016475" expanded="true" signature="934:946" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="1004:1016" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="1079:1091" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="4039:4136" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="4165:4465" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="4212:4240" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="4337:4400" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="4415:4426" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="6156:6201" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="6227:6240" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="6319:6381" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="6575:6589" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="6654:6667" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="6717:6756" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="6812:6831" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25111:26317" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="25196:25213" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25214:26298" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25254:25890" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="25329:25353" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25354:25871" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25433:25539" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25614:25850" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="25716:25725" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25762:25790" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="25942:26283" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="26100:26264" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="26230:26241" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="28955:29004" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="29005:29292" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="29075:29136" ph="..." />
-                <marker date="1483000016475" expanded="true" signature="29157:29277" ph="..." />
-                <marker date="1483000016475" expanded="false" signature="29216:29254" ph="..." />
-              </folding>
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>reg</find>
+      <find>Toolbar</find>
+      <find>key</find>
+      <find>Menu</find>
+      <find>&quot;string&quot;</find>
+      <find>jqi</find>
+      <find>disabled</find>
+      <find>._type</find>
+      <find>displayName</find>
+      <find>setChildValidness</find>
+      <find>Status</find>
+      <find>syste</find>
+      <find>Split</find>
+      <find>St</find>
+      <find>componentType =</find>
+      <find>.componentType =</find>
+      <find>componentType</find>
+      <find>StatusRender</find>
+      <find>ch</find>
+      <find>Load</find>
+      <find>Loading</find>
+      <find>weapperForChild</find>
+      <find>Footer</find>
+      <find>PagingControl</find>
+      <find>noRoundBorder</find>
+      <find>document.getElementById(mm.id())</find>
+      <find>createBody</find>
+      <find>_cb</find>
+      <find>this._cb</find>
+      <find>addLabel</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>WeakMap</replace>
+      <replace>attrType</replace>
+    </replaceStrings>
+    <dirStrings>
+      <dir>C:\Users\Павел\git\type-bindings</dir>
+      <dir>C:\Users\Павел\git\rtui</dir>
+    </dirStrings>
+  </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$USER_HOME$/git/rtui" />
     <option name="PUSH_TAGS">
       <GitPushTagMode />
     </option>
@@ -197,48 +108,57 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/type.ts" />
-        <option value="$PROJECT_DIR$/test.raml" />
-        <option value="$PROJECT_DIR$/package.json" />
-        <option value="$PROJECT_DIR$/bundle.js" />
-        <option value="$PROJECT_DIR$/lib/marked.js" />
-        <option value="$PROJECT_DIR$/test1.raml" />
-        <option value="$PROJECT_DIR$/src/keywords.ts" />
-        <option value="$PROJECT_DIR$/src/hl.ts" />
-        <option value="$PROJECT_DIR$/src/nodeRender.ts" />
-        <option value="$PROJECT_DIR$/src/usagesRegistry.ts" />
-        <option value="$PROJECT_DIR$/src/controls.ts" />
-        <option value="$PROJECT_DIR$/src/registryRender.ts" />
-        <option value="$PROJECT_DIR$/src/workbench.ts" />
-        <option value="$PROJECT_DIR$/src/objectRender.ts" />
-        <option value="$PROJECT_DIR$/src/typeRender.ts" />
-        <option value="$PROJECT_DIR$/src/resourceRender.ts" />
-        <option value="$PROJECT_DIR$/dist/app.js" />
-        <option value="$PROJECT_DIR$/src/registryApp.ts" />
-        <option value="$PROJECT_DIR$/src/ramlTreeView.ts" />
-        <option value="$PROJECT_DIR$/src/rendering/images.ts" />
-        <option value="$PROJECT_DIR$/src/rendering/objectRender.ts" />
-        <option value="$PROJECT_DIR$/lib/bootstrap-treeview.js" />
-        <option value="$PROJECT_DIR$/src/rendering/resourceRender.ts" />
-        <option value="$PROJECT_DIR$/src/rendering/styles.ts" />
-        <option value="$PROJECT_DIR$/src/detailsView.ts" />
-        <option value="$PROJECT_DIR$/src/rendering/typeRender.ts" />
-        <option value="$PROJECT_DIR$/src/uiUtils.ts" />
-        <option value="$PROJECT_DIR$/src/core/tools.ts" />
-        <option value="$PROJECT_DIR$/src/treeView.ts" />
-        <option value="$PROJECT_DIR$/src/rendering/nodeRender.ts" />
-        <option value="$PROJECT_DIR$/src/core/overlayCore.ts" />
-        <option value="$PROJECT_DIR$/src/overlayView.ts" />
-        <option value="$PROJECT_DIR$/src/core/registryCore.ts" />
-        <option value="$PROJECT_DIR$/src/actions.ts" />
-        <option value="$PROJECT_DIR$/src/registryView.ts" />
         <option value="$PROJECT_DIR$/src/core/hl.ts" />
-        <option value="$PROJECT_DIR$/src/framework/workbench.ts" />
-        <option value="$PROJECT_DIR$/src/app.ts" />
-        <option value="$PROJECT_DIR$/src/framework/controls.ts" />
+        <option value="$USER_HOME$/git/rtui/src/table.ts" />
+        <option value="$USER_HOME$/git/rtui/src/render" />
+        <option value="$USER_HOME$/git/rtui/src/core.ts" />
+        <option value="$USER_HOME$/git/type-bindings/.gitignore" />
+        <option value="$USER_HOME$/git/type-bindings/typings.json" />
+        <option value="$USER_HOME$/git/rtui/src/binding.ts" />
+        <option value="$USER_HOME$/git/type-bindings/dist/tests/simpleTests.js" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/dist/binding.d.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/maps.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/labelService.ts" />
+        <option value="$USER_HOME$/git/type-bindings/dist/src/typesService.js" />
+        <option value="$USER_HOME$/git/type-bindings/src/uibindings.ts" />
+        <option value="$USER_HOME$/git/rtui/src/properties.ts" />
+        <option value="$USER_HOME$/git/rtui/tsconfig.json" />
+        <option value="$PROJECT_DIR$/src/overlayView.ts" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/dist/workbench.d.ts" />
         <option value="$PROJECT_DIR$/src/core/propertyGroup.ts" />
-        <option value="$PROJECT_DIR$/index.html" />
-        <option value="$PROJECT_DIR$/src/framework/forms.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/smpl.yaml" />
+        <option value="$USER_HOME$/git/rtui/src/layout.ts" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/dist/forms.d.ts" />
+        <option value="$USER_HOME$/git/type-bindings/package.json" />
+        <option value="$USER_HOME$/git/type-bindings/dist/src/types.js" />
+        <option value="$USER_HOME$/git/type-bindings/tests/simpleTests.ts" />
+        <option value="$USER_HOME$/git/rtui/src/actions.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/computationalEngine.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/src/types.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/types.js" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/src/typesService.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/typesService.js" />
+        <option value="$USER_HOME$/git/type-bindings/src/manager.ts" />
+        <option value="$PROJECT_DIR$/src/core/registryCore.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/types.d.ts" />
+        <option value="$USER_HOME$/git/rtui/package.json" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/typesService.d.ts" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/types.d.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/typesService.ts" />
+        <option value="$USER_HOME$/git/rtui/index.html" />
+        <option value="$USER_HOME$/git/type-bindings/src/types.ts" />
+        <option value="$USER_HOME$/git/rtui/src/demo.ts" />
+        <option value="$USER_HOME$/git/rtui/src/controls.ts" />
+        <option value="$USER_HOME$/git/rtui/src/workbench.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/storage.ts" />
+        <option value="$USER_HOME$/git/rtui/lib/split.js" />
+        <option value="$USER_HOME$/git/rtui/src/uifactory.ts" />
+        <option value="$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/metaKeys.d.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/typesService.d.ts" />
+        <option value="$USER_HOME$/git/rtui/src/forms.ts" />
+        <option value="$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/metaKeys.d.ts" />
+        <option value="$USER_HOME$/git/type-bindings/src/metaKeys.ts" />
+        <option value="$USER_HOME$/git/type-bindings/tsconfig.json" />
       </list>
     </option>
   </component>
@@ -248,12 +168,10 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="MavenImportPreferences">
-    <option name="generalSettings">
-      <MavenGeneralSettings>
-        <option name="mavenHome" value="Bundled (Maven 3)" />
-      </MavenGeneralSettings>
-    </option>
+  <component name="NodeModulesDirectoryManager">
+    <handled-path value="$USER_HOME$/git/rtui/node_modules" />
+    <handled-path value="$USER_HOME$/git/type-bindings/node_modules" />
+    <handled-path value="$PROJECT_DIR$/node_modules" />
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="-8" />
@@ -261,15 +179,57 @@
     <option name="width" value="2564" />
     <option name="height" value="1416" />
   </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
-    <OptionsSetting value="true" id="Add" />
-    <OptionsSetting value="true" id="Remove" />
-    <OptionsSetting value="true" id="Checkout" />
-    <OptionsSetting value="true" id="Update" />
-    <OptionsSetting value="true" id="Status" />
-    <OptionsSetting value="true" id="Edit" />
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Android &gt; Lint &gt; Correctness</id>
+          </State>
+          <State>
+            <id>Android &gt; Lint &gt; Correctness &gt; Messages</id>
+          </State>
+          <State>
+            <id>Android &gt; Lint &gt; Performance</id>
+          </State>
+          <State>
+            <id>Android &gt; Lint &gt; Usability &gt; Icons</id>
+          </State>
+          <State>
+            <id>Android Lint for Kotlin</id>
+          </State>
+          <State>
+            <id>Control flow issuesJava</id>
+          </State>
+          <State>
+            <id>GeneralJavaScript</id>
+          </State>
+          <State>
+            <id>Java</id>
+          </State>
+          <State>
+            <id>JavaScript</id>
+          </State>
+          <State>
+            <id>Probable bugsJava</id>
+          </State>
+          <State>
+            <id>Threading issuesJava</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>Android</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
-    <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -286,9 +246,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope">
-        <subPane subId="Project Files" />
-      </pane>
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -296,14 +253,8 @@
               <option name="myItemId" value="raml-explorer" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
-          </PATH>
-          <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
+              <option name="myItemId" value="rtui" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -313,53 +264,18 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
+              <option name="myItemId" value="rtui" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="framework" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="raml-explorer" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="core" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="PackagesPane" />
     </panes>
   </component>
@@ -368,33 +284,95 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="js-jscs-nodeInterpreter" value="C:\Program Files\nodejs\node.exe" />
     <property name="nodejs_interpreter_path" value="C:/Program Files/nodejs/node" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$USER_HOME$/git/rtuidemo" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
-    <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="js.eslint.eslintPackage" value="" />
+    <property name="nodejs.mocha.mocha_node_package_dir" value="C:\Users\Павел\git\type-bindings\node_modules\mocha" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/images" />
-      <recent name="C:\work\raml-explorer\raml-explorer" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Павел\git\rtui\lib" />
       <recent name="C:\work\raml-explorer\raml-explorer\images" />
       <recent name="C:\work\raml-explorer\raml-explorer\src\rendering" />
       <recent name="C:\work\raml-explorer\raml-explorer\src\framework" />
       <recent name="C:\work\raml-explorer\raml-explorer\src\core" />
     </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Павел\git\type-bindings" />
+      <recent name="C:\Users\Павел\git\rtui\lib" />
+      <recent name="C:\Users\Павел\git\rtui" />
+      <recent name="C:\Users\Павел\git\rtui\src" />
+      <recent name="$PROJECT_DIR$/images" />
+    </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Mocha.dist\tests\simpleTests.js">
+    <configuration default="false" name="tests\simpleTests.ts" type="mocha-javascript-test-runner" factoryName="Mocha" temporary="true" nameIsGenerated="true">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <working-directory>$USER_HOME$/git/type-bindings</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs />
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>TEST_FILE</test-kind>
+      <test-file>$USER_HOME$/git/type-bindings/tests/simpleTests.ts</test-file>
+      <method />
+    </configuration>
+    <configuration default="false" name="dist\tests\simpleTests.js" type="mocha-javascript-test-runner" factoryName="Mocha" temporary="true" nameIsGenerated="true">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <working-directory>$USER_HOME$/git/type-bindings</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs />
+      <ui>bdd</ui>
+      <extra-mocha-options />
+      <test-kind>TEST_FILE</test-kind>
+      <test-file>$USER_HOME$/git/type-bindings/dist/tests/simpleTests.js</test-file>
+      <method />
+    </configuration>
+    <configuration default="false" name="Simple bindings tests.schema with reference, example is valid" type="mocha-javascript-test-runner" factoryName="Mocha" temporary="true" nameIsGenerated="true">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <working-directory>$USER_HOME$/git/type-bindings</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs />
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>TEST</test-kind>
+      <test-file>$USER_HOME$/git/type-bindings/tests/simpleTests.ts</test-file>
+      <test-names>
+        <name value="Simple bindings tests" />
+        <name value="schema with reference, example is valid" />
+      </test-names>
+      <method />
+    </configuration>
+    <configuration default="false" name="Simple bindings tests.Nested binding" type="mocha-javascript-test-runner" factoryName="Mocha" temporary="true" nameIsGenerated="true">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <working-directory>$USER_HOME$/git/type-bindings</working-directory>
+      <pass-parent-env>true</pass-parent-env>
+      <envs />
+      <ui>bdd</ui>
+      <extra-mocha-options>--require ts-node/register</extra-mocha-options>
+      <test-kind>TEST</test-kind>
+      <test-file>$USER_HOME$/git/type-bindings/tests/simpleTests.ts</test-file>
+      <test-names>
+        <name value="Simple bindings tests" />
+        <name value="Nested binding" />
+      </test-names>
+      <method />
+    </configuration>
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
       <module name="" />
       <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
       <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file id="idea.log" enabled="true" />
       <method />
     </configuration>
-    <configuration default="true" type="AndroidRunConfigurationType" factoryName="Android Application">
+    <configuration default="true" type="AndroidRunConfigurationType" factoryName="Android App">
       <module name="" />
       <option name="DEPLOY" value="true" />
       <option name="ARTIFACT_NAME" value="" />
@@ -404,7 +382,7 @@
       <option name="TARGET_SELECTION_MODE" value="SHOW_DIALOG" />
       <option name="PREFERRED_AVD" value="" />
       <option name="CLEAR_LOGCAT" value="false" />
-      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
       <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
       <option name="FORCE_STOP_RUNNING_APP" value="true" />
       <option name="DEBUGGER_TYPE" value="Java" />
@@ -412,7 +390,11 @@
       <option name="PREFERRED_AVD" value="" />
       <Java />
       <Profilers>
+        <option name="ENABLE_ADVANCED_PROFILING" value="true" />
+        <option name="GAPID_ENABLED" value="false" />
         <option name="GAPID_DISABLE_PCS" value="false" />
+        <option name="SUPPORT_LIB_ENABLED" value="true" />
+        <option name="INSTRUMENTATION_ENABLED" value="true" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
@@ -437,7 +419,11 @@
       <option name="PREFERRED_AVD" value="" />
       <Java />
       <Profilers>
+        <option name="ENABLE_ADVANCED_PROFILING" value="true" />
+        <option name="GAPID_ENABLED" value="false" />
         <option name="GAPID_DISABLE_PCS" value="false" />
+        <option name="SUPPORT_LIB_ENABLED" value="true" />
+        <option name="INSTRUMENTATION_ENABLED" value="true" />
       </Profilers>
       <method />
     </configuration>
@@ -615,6 +601,7 @@
       <setting name="cmdLine" value="run-app" />
       <setting name="passParentEnv" value="true" />
       <setting name="launchBrowser" value="true" />
+      <setting name="launchBrowserUrl" value="" />
       <setting name="depsClasspath" value="false" />
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <method />
@@ -631,27 +618,6 @@
       <option name="VM_PARAMETERS" value="-ea" />
       <option name="PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
-      </option>
-      <envs />
-      <patterns />
-      <method />
-    </configuration>
-    <configuration default="true" type="JUnitTestDiscovery" factoryName="JUnit Test Discovery" changeList="All">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="METHOD_NAME" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" />
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
       <option name="TEST_SEARCH_SCOPE">
@@ -679,6 +645,12 @@
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
       <module name="" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerProtractor" factoryName="Protractor">
+      <config-file value="" />
+      <node-interpreter value="project" />
       <envs />
       <method />
     </configuration>
@@ -755,34 +727,6 @@
       <listeners />
       <method />
     </configuration>
-    <configuration default="true" type="TestNGTestDiscovery" factoryName="TestNG Test Discovery" changeList="All">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="SUITE_NAME" />
-      <option name="PACKAGE_NAME" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="METHOD_NAME" />
-      <option name="GROUP_NAME" />
-      <option name="TEST_OBJECT" value="CLASS" />
-      <option name="VM_PARAMETERS" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" />
-      <option name="OUTPUT_DIRECTORY" />
-      <option name="ANNOTATION_TYPE" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
-      </option>
-      <option name="USE_DEFAULT_REPORTERS" value="false" />
-      <option name="PROPERTIES_FILE" />
-      <envs />
-      <properties />
-      <listeners />
-      <method />
-    </configuration>
     <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
       <node-interpreter>project</node-interpreter>
       <node-options />
@@ -793,7 +737,7 @@
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.npm" factoryName="npm">
-      <command value="run-script" />
+      <command value="run" />
       <scripts />
       <node-interpreter value="project" />
       <envs />
@@ -816,6 +760,44 @@
       <method />
     </configuration>
     <configuration default="true" type="osgi.bnd.run" factoryName="Test Launcher (JUnit)">
+      <method />
+    </configuration>
+    <list size="4">
+      <item index="0" class="java.lang.String" itemvalue="Mocha.tests\simpleTests.ts" />
+      <item index="1" class="java.lang.String" itemvalue="Mocha.dist\tests\simpleTests.js" />
+      <item index="2" class="java.lang.String" itemvalue="Mocha.Simple bindings tests.schema with reference, example is valid" />
+      <item index="3" class="java.lang.String" itemvalue="Mocha.Simple bindings tests.Nested binding" />
+    </list>
+    <recent_temporary>
+      <list size="4">
+        <item index="0" class="java.lang.String" itemvalue="Mocha.dist\tests\simpleTests.js" />
+        <item index="1" class="java.lang.String" itemvalue="Mocha.tests\simpleTests.ts" />
+        <item index="2" class="java.lang.String" itemvalue="Mocha.Simple bindings tests.Nested binding" />
+        <item index="3" class="java.lang.String" itemvalue="Mocha.Simple bindings tests.schema with reference, example is valid" />
+      </list>
+    </recent_temporary>
+    <configuration default="true" type="AndroidRunConfigurationType" factoryName="Android Application">
+      <module name="" />
+      <option name="DEPLOY" value="true" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="TARGET_SELECTION_MODE" value="SHOW_DIALOG" />
+      <option name="PREFERRED_AVD" value="" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
+      <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
+      <option name="FORCE_STOP_RUNNING_APP" value="true" />
+      <option name="DEBUGGER_TYPE" value="Java" />
+      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
+      <option name="PREFERRED_AVD" value="" />
+      <Java />
+      <Profilers>
+        <option name="GAPID_DISABLE_PCS" value="false" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
       <method />
     </configuration>
   </component>
@@ -848,35 +830,28 @@
       <workItem from="1479645008085" duration="7269000" />
       <workItem from="1481656506825" duration="26480000" />
       <workItem from="1482836287604" duration="138000" />
-      <workItem from="1482837260305" duration="32122000" />
-    </task>
-    <task id="LOCAL-00001" summary="tes">
-      <created>1474927592716</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1474927592716</updated>
-    </task>
-    <task id="LOCAL-00002" summary="tes">
-      <created>1475014033984</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1475014033984</updated>
-    </task>
-    <task id="LOCAL-00003" summary="fixing overflow">
-      <created>1475018856193</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1475018856193</updated>
-    </task>
-    <task id="LOCAL-00004" summary="fixing overflow">
-      <created>1475019027964</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1475019027964</updated>
+      <workItem from="1482837260305" duration="33174000" />
+      <workItem from="1483079404034" duration="13247000" />
+      <workItem from="1483095990549" duration="20339000" />
+      <workItem from="1483393362622" duration="9000" />
+      <workItem from="1483431136705" duration="33918000" />
+      <workItem from="1483702052974" duration="122789000" />
+      <workItem from="1484123472900" duration="49542000" />
+      <workItem from="1484294804222" duration="66314000" />
+      <workItem from="1484804468284" duration="146900000" />
+      <workItem from="1485470948829" duration="590000" />
+      <workItem from="1485472180171" duration="18000" />
+      <workItem from="1485553680294" duration="390000" />
+      <workItem from="1485687348966" duration="11000" />
+      <workItem from="1486035735152" duration="17000" />
+      <workItem from="1486035808472" duration="7000" />
+      <workItem from="1489136929467" duration="12000" />
+      <workItem from="1490245643889" duration="762000" />
+      <workItem from="1490615509199" duration="586000" />
+      <workItem from="1490892824859" duration="12000" />
+      <workItem from="1493056185275" duration="2628000" />
+      <workItem from="1493255873059" duration="38000" />
+      <workItem from="1493262866967" duration="36000" />
     </task>
     <task id="LOCAL-00005" summary="most of rendering works fine, still need few adjustments to be complete.">
       <created>1475421325594</created>
@@ -1074,72 +1049,276 @@
       <option name="project" value="LOCAL" />
       <updated>1479611238425</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="adding about box.">
+      <created>1483078353952</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1483078353952</updated>
+    </task>
+    <task id="LOCAL-00034" summary="initial contribution">
+      <created>1483083031878</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1483083031878</updated>
+    </task>
+    <task id="LOCAL-00035" summary="initial contribution">
+      <created>1483083110071</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1483083110071</updated>
+    </task>
+    <task id="LOCAL-00036" summary="initial contribution">
+      <created>1483095596784</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1483095596784</updated>
+    </task>
+    <task id="LOCAL-00037" summary="initial contribution">
+      <created>1483101670854</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1483101670854</updated>
+    </task>
+    <task id="LOCAL-00038" summary="initial contribution">
+      <created>1483101973317</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1483101973317</updated>
+    </task>
+    <task id="LOCAL-00039" summary="on the way.">
+      <created>1483530605812</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1483530605812</updated>
+    </task>
+    <task id="LOCAL-00040" summary="on the way.">
+      <created>1484015069025</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1484015069025</updated>
+    </task>
+    <task id="LOCAL-00041" summary="working on type bindings.">
+      <created>1484123040113</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1484123040113</updated>
+    </task>
+    <task id="LOCAL-00042" summary="on the way.">
+      <created>1484123077767</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1484123077767</updated>
+    </task>
+    <task id="LOCAL-00043" summary="return  null for null target">
+      <created>1484151626899</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1484151626899</updated>
+    </task>
+    <task id="LOCAL-00044" summary="on the way.">
+      <created>1484151667693</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1484151667693</updated>
+    </task>
+    <task id="LOCAL-00045" summary="restorinv views, context menus.">
+      <created>1484177104580</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1484177104580</updated>
+    </task>
+    <task id="LOCAL-00046" summary="instance validators.">
+      <created>1484193077972</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1484193077972</updated>
+    </task>
+    <task id="LOCAL-00047" summary="validator fixes, ui improvements">
+      <created>1484193807853</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1484193807853</updated>
+    </task>
+    <task id="LOCAL-00048" summary="uniquiness validators.">
+      <created>1484224371943</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1484224371943</updated>
+    </task>
+    <task id="LOCAL-00049" summary="working on union types UI.">
+      <created>1484294832872</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1484294832872</updated>
+    </task>
+    <task id="LOCAL-00050" summary="map and arrays validation, map working copy caching, other updates.">
+      <created>1484908631586</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1484908631587</updated>
+    </task>
+    <task id="LOCAL-00051" summary="on the way.">
+      <created>1485348396125</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1485348396125</updated>
+    </task>
+    <task id="LOCAL-00052" summary="on the way.">
+      <created>1485348415886</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1485348415886</updated>
+    </task>
+    <task id="LOCAL-00053" summary="splitter fixes, on the way.">
+      <created>1485426991546</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1485426991546</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
+  <component name="TestHistory">
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 00m 05s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 00m 24s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 00m 25s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 00m 26s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 00m 57s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 05m 32s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 05m 53s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.16 at 18h 23m 15s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="dist_tests_simpleTests_js - 2017.01.23 at 01h 54m 36s.xml">
+      <configuration name="dist\tests\simpleTests.js" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+    <history-entry file="tests_simpleTests_ts - 2017.01.23 at 01h 54m 30s.xml">
+      <configuration name="tests\simpleTests.ts" configurationId="mocha-javascript-test-runner" />
+    </history-entry>
+  </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="387372000" />
+    <option name="totallyTimeSpent" value="846589000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="2564" height="1416" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
-      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40997663" sideWeight="0.52424484" order="1" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Nl-Palette" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32346064" sideWeight="0.5471246" order="1" side_tool="true" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31644583" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31644583" sideWeight="0.46979332" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="TypeScript" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1909587" sideWeight="0.47575516" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14536741" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="7" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25253314" sideWeight="0.48887122" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27279812" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Properties" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26373628" sideWeight="0.4528754" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="TypeScript" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.26968044" sideWeight="0.47575516" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17971246" sideWeight="0.5" order="5" side_tool="false" content_ui="combo" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.30709276" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.10183706" sideWeight="0.5" order="9" side_tool="false" content_ui="combo" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="TypeScript Compiler" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32920355" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.42700157" sideWeight="0.48083067" order="6" side_tool="false" content_ui="tabs" />
     </layout>
-    <layout-to-restore>
-      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="TypeScript" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32967034" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="7" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22291994" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.14899598" sideWeight="0.5" order="3" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32969603" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-    </layout-to-restore>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="processedProjectFiles" value="true" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/src/core/propertyGroup.js" />
+        <option value="$PROJECT_DIR$/src/core/hl.js" />
+        <option value="$PROJECT_DIR$/src/core/registryCore.js" />
+        <option value="$PROJECT_DIR$/src/core/overlayCore.js" />
+        <option value="$PROJECT_DIR$/src/core/tools.js" />
+        <option value="$PROJECT_DIR$/src/rendering/objectRender.js" />
+        <option value="$PROJECT_DIR$/src/rendering/nodeRender.js" />
+        <option value="$PROJECT_DIR$/src/rendering/resourceRender.js" />
+        <option value="$PROJECT_DIR$/src/rendering/styles.js" />
+        <option value="$PROJECT_DIR$/src/rendering/typeRender.js" />
+        <option value="$PROJECT_DIR$/src/detailsView.js" />
+        <option value="$PROJECT_DIR$/src/app.js" />
+        <option value="$PROJECT_DIR$/src/actions.js" />
+        <option value="$PROJECT_DIR$/src/state.js" />
+        <option value="$PROJECT_DIR$/src/overlayView.js" />
+        <option value="$PROJECT_DIR$/src/registryView.js" />
+        <option value="$PROJECT_DIR$/src/uiUtils.js" />
+        <option value="$PROJECT_DIR$/src/treeView.js" />
+      </list>
+    </option>
+    <option name="configsExcludedFiles">
+      <set>
+        <option value="$USER_HOME$/git/rtui/dist" />
+        <option value="$PROJECT_DIR$/dist" />
+      </set>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
@@ -1166,11 +1345,31 @@
     <MESSAGE value="updating published version." />
     <MESSAGE value="optimizing project layout." />
     <MESSAGE value="adding about box." />
-    <option name="LAST_COMMIT_MESSAGE" value="adding about box." />
+    <MESSAGE value="initial contribution" />
+    <MESSAGE value="working on type bindings." />
+    <MESSAGE value="return  null for null target" />
+    <MESSAGE value="moving to jquery context menu." />
+    <MESSAGE value="restorinv views, context menus." />
+    <MESSAGE value="instance validators." />
+    <MESSAGE value="validator fixes, ui improvements" />
+    <MESSAGE value="uniquiness validators." />
+    <MESSAGE value="working on union types UI." />
+    <MESSAGE value="map and arrays validation, map working copy caching, other updates." />
+    <MESSAGE value="on the way." />
+    <MESSAGE value="splitter fixes, on the way." />
+    <option name="LAST_COMMIT_MESSAGE" value="splitter fixes, on the way." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="4" />
+      <breakpoints-dialog>
+        <breakpoints-dialog />
+      </breakpoints-dialog>
+      <default-breakpoints>
+        <breakpoint enabled="true" type="javascript-exception">
+          <properties />
+        </breakpoint>
+      </default-breakpoints>
+      <option name="time" value="71" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -1179,390 +1378,343 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/images/derivedtype.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/annotation_obj.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/array.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/date.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/expand.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/objects_co.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/typedef_obj.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/app.js">
+    <entry file="file://$USER_HOME$/git/type-bindings/src/smpl.yaml" />
+    <entry file="file://$USER_HOME$/git/rtui/src/table.ts" />
+    <entry file="file://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/typescriptCompiler/external/lib.es6.d.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="12" column="0" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
+        <state relative-caret-position="314">
+          <caret line="5363" column="46" lean-forward="false" selection-start-line="5363" selection-start-column="46" selection-end-line="5363" selection-end-column="46" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bundle.js">
+    <entry file="file://$PROJECT_DIR$/node_modules/raml-semantic-ui/dist/forms.d.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="455">
-          <caret line="2307" column="28" selection-start-line="2307" selection-start-column="28" selection-end-line="2307" selection-end-column="28" />
+        <state relative-caret-position="421">
+          <caret line="46" column="14" lean-forward="false" selection-start-line="46" selection-start-column="14" selection-end-line="46" selection-end-column="14" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/dist/registryApp.js" />
-    <entry file="file://$PROJECT_DIR$/src/registryApp.ts" />
-    <entry file="file://$PROJECT_DIR$/src/ramlTreeView.ts" />
-    <entry file="file://$PROJECT_DIR$/dist/rendering/nodeRender.js" />
-    <entry file="file://$PROJECT_DIR$/LICENSE">
+    <entry file="file://$USER_HOME$/git/type-bindings/dist/src/uibindings.d.ts" />
+    <entry file="file://$USER_HOME$/git/rtui/src/layout.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="68">
+          <caret line="4" column="16" lean-forward="false" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tsconfig.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/framework/workbench.js" />
-    <entry file="file://$PROJECT_DIR$/dist/framework/controls.js" />
-    <entry file="file://$PROJECT_DIR$/dist/registryView.js" />
-    <entry file="file://$PROJECT_DIR$/dist/ramlTreeView.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rendering/objectRender.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="34" column="1" selection-start-line="34" selection-start-column="1" selection-end-line="34" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rendering/resourceRender.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="848">
-          <caret line="136" column="1" selection-start-line="136" selection-start-column="1" selection-end-line="136" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/package.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="19" column="1" selection-start-line="19" selection-start-column="1" selection-end-line="19" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/bootstrap-contextmenu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1136">
-          <caret line="212" column="11" selection-start-line="212" selection-start-column="11" selection-end-line="212" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/bootstrap-treeview.min.css" />
-    <entry file="file://$PROJECT_DIR$/lib/marked.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1816">
-          <caret line="1255" column="19" selection-start-line="1255" selection-start-column="19" selection-end-line="1255" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/split.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="371">
-          <caret line="314" column="32" selection-start-line="314" selection-start-column="32" selection-end-line="314" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rendering/styles.ts">
+    <entry file="file://$USER_HOME$/git/rtui/src/keywords.ts">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
-          <caret line="16" column="1" selection-start-line="16" selection-start-column="1" selection-end-line="16" selection-end-column="1" />
+          <caret line="76" column="13" lean-forward="false" selection-start-line="76" selection-start-column="13" selection-end-line="76" selection-end-column="13" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/rendering/typeRender.ts">
+    <entry file="file://$USER_HOME$/git/rtui/src/actions.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6390">
-          <caret line="426" column="11" selection-start-line="426" selection-start-column="11" selection-end-line="426" selection-end-column="11" />
+        <state relative-caret-position="-611">
+          <caret line="72" column="65" lean-forward="false" selection-start-line="72" selection-start-column="65" selection-end-line="72" selection-end-column="65" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/images/ApplicationElement.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/bootstrap-treeview.js">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/src/types.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="269">
-          <caret line="926" column="31" selection-start-line="926" selection-start-column="19" selection-end-line="926" selection-end-column="31" />
+        <state relative-caret-position="465">
+          <caret line="404" column="18" lean-forward="false" selection-start-line="404" selection-start-column="18" selection-end-line="404" selection-end-column="18" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/rendering/nodeRender.ts">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/types.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="353">
-          <caret line="101" column="0" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
+        <state relative-caret-position="917">
+          <caret line="344" column="11" lean-forward="false" selection-start-line="344" selection-start-column="11" selection-end-line="344" selection-end-column="11" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/overlayCore.ts">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/src/typesService.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-502">
-          <caret line="89" column="9" selection-start-line="89" selection-start-column="9" selection-end-line="89" selection-end-column="9" />
+        <state relative-caret-position="924">
+          <caret line="964" column="52" lean-forward="false" selection-start-line="964" selection-start-column="52" selection-end-line="964" selection-end-column="52" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/tools.ts">
+    <entry file="file://$USER_HOME$/git/rtui/dist/uifactory.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="11" column="14" selection-start-line="11" selection-start-column="14" selection-end-line="11" selection-end-column="14" />
-          <folding />
+        <state relative-caret-position="212">
+          <caret line="113" column="33" lean-forward="false" selection-start-line="113" selection-start-column="33" selection-end-line="113" selection-end-column="33" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/actions.ts">
+    <entry file="file://$USER_HOME$/git/rtui/dist/demo.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="918">
-          <caret line="54" column="5" selection-start-line="54" selection-start-column="5" selection-end-line="54" selection-end-column="5" />
-          <folding>
-            <marker date="1482899072198" expanded="true" signature="655:999" ph="..." />
-            <marker date="1482899072198" expanded="false" signature="723:734" ph="..." />
-            <marker date="1482899072198" expanded="true" signature="833:896" ph="..." />
-            <marker date="1482899072198" expanded="true" signature="959:987" ph="..." />
-            <marker date="1482899072198" expanded="false" signature="1123:1134" ph="..." />
-            <marker date="1482899072198" expanded="true" signature="1185:1244" ph="..." />
-          </folding>
+        <state relative-caret-position="212">
+          <caret line="596" column="16" lean-forward="false" selection-start-line="596" selection-start-column="16" selection-end-line="596" selection-end-column="16" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/keywords.ts">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/typesService.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-17">
-          <caret line="23" column="7" selection-start-line="23" selection-start-column="7" selection-end-line="23" selection-end-column="7" />
-          <folding />
+        <state relative-caret-position="365">
+          <caret line="894" column="19" lean-forward="false" selection-start-line="894" selection-start-column="19" selection-end-line="894" selection-end-column="19" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/registryView.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="30" column="24" selection-start-line="30" selection-start-column="24" selection-end-line="30" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/registryCore.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="753">
-          <caret line="304" column="12" selection-start-line="304" selection-start-column="12" selection-end-line="304" selection-end-column="12" />
-          <folding />
+        <state relative-caret-position="357">
+          <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/detailsView.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="838">
-          <caret line="62" column="9" selection-start-line="62" selection-start-column="9" selection-end-line="62" selection-end-column="9" />
-          <folding />
+        <state relative-caret-position="255">
+          <caret line="15" column="25" lean-forward="false" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/treeView.ts">
+    <entry file="file://$PROJECT_DIR$/cd">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="912">
-          <caret line="302" column="22" selection-start-line="302" selection-start-column="22" selection-end-line="302" selection-end-column="22" />
-          <folding>
-            <marker date="1482837253998" expanded="true" signature="3887:3961" ph="..." />
-            <marker date="1482837253998" expanded="true" signature="3975:4032" ph="..." />
-            <marker date="1482837253998" expanded="true" signature="7628:7645" ph="..." />
-          </folding>
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/state.ts">
+    <entry file="file://$USER_HOME$/git/type-bindings/src/computationalEngine.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-51">
-          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-          <folding />
+        <state relative-caret-position="238">
+          <caret line="14" column="9" lean-forward="false" selection-start-line="14" selection-start-column="9" selection-end-line="14" selection-end-column="9" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/uiUtils.ts">
+    <entry file="file://$USER_HOME$/git/type-bindings/src/manager.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="816">
-          <caret line="48" column="9" selection-start-line="48" selection-start-column="9" selection-end-line="48" selection-end-column="9" />
-          <folding />
+        <state relative-caret-position="183">
+          <caret line="19" column="33" lean-forward="false" selection-start-line="19" selection-start-column="33" selection-end-line="19" selection-end-column="33" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/overlayView.ts">
+    <entry file="file://$USER_HOME$/git/type-bindings/dist/src/types.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="658">
+          <caret line="334" column="53" lean-forward="false" selection-start-line="334" selection-start-column="53" selection-end-line="334" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/node_modules/pluralize/pluralize.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="301">
+          <caret line="138" column="22" lean-forward="false" selection-start-line="138" selection-start-column="22" selection-end-line="138" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/tests/simpleTests.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="301">
+          <caret line="161" column="7" lean-forward="false" selection-start-line="161" selection-start-column="7" selection-end-line="161" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/types.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="334">
+          <caret line="233" column="15" lean-forward="false" selection-start-line="233" selection-start-column="4" selection-end-line="233" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/core/registryCore.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="54" column="0" lean-forward="false" selection-start-line="54" selection-start-column="0" selection-end-line="63" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/moment/moment.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="891">
+          <caret line="708" column="0" lean-forward="false" selection-start-line="708" selection-start-column="0" selection-end-line="708" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="14" column="4" lean-forward="false" selection-start-line="14" selection-start-column="4" selection-end-line="14" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/typesService.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="33" column="4" lean-forward="false" selection-start-line="33" selection-start-column="4" selection-end-line="33" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/javascript-detect-element-resize/detect-element-resize.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="323">
-          <caret line="19" column="0" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
-          <folding />
+          <caret line="19" column="8" lean-forward="false" selection-start-line="19" selection-start-column="8" selection-end-line="19" selection-end-column="8" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/framework/workbench.ts">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/javascript-detect-element-resize/jquery.resize.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="513">
-          <caret line="266" column="0" selection-start-line="266" selection-start-column="0" selection-end-line="266" selection-end-column="0" />
-          <folding>
-            <marker date="1483000016475" expanded="true" signature="934:946" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="1004:1016" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="1079:1091" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="4039:4136" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="4165:4465" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="4212:4240" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="4337:4400" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="4415:4426" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="6156:6201" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="6227:6240" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="6319:6381" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="6575:6589" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="6654:6667" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="6717:6756" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="6812:6831" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25111:26317" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="25196:25213" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25214:26298" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25254:25890" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="25329:25353" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25354:25871" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25433:25539" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25614:25850" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="25716:25725" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25762:25790" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="25942:26283" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="26100:26264" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="26230:26241" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="28955:29004" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="29005:29292" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="29075:29136" ph="..." />
-            <marker date="1483000016475" expanded="true" signature="29157:29277" ph="..." />
-            <marker date="1483000016475" expanded="false" signature="29216:29254" ph="..." />
-          </folding>
+        <state relative-caret-position="20">
+          <caret line="36" column="8" lean-forward="false" selection-start-line="36" selection-start-column="8" selection-end-line="36" selection-end-column="8" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/hl.ts">
+    <entry file="file://$USER_HOME$/git/type-bindings/node_modules/@types/chai/index.d.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="633">
-          <caret line="717" column="40" selection-start-line="717" selection-start-column="12" selection-end-line="717" selection-end-column="40" />
-          <folding>
-            <marker date="1482952177022" expanded="true" signature="10256:10407" ph="..." />
-          </folding>
+        <state relative-caret-position="1093">
+          <caret line="413" column="10" lean-forward="false" selection-start-line="413" selection-start-column="10" selection-end-line="413" selection-end-column="10" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/raml-1-parser.js">
+    <entry file="file://$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/types.d.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="75665" column="30" selection-start-line="75665" selection-start-column="30" selection-end-line="75665" selection-end-column="30" />
-          <folding />
+        <state relative-caret-position="400">
+          <caret line="147" column="17" lean-forward="false" selection-start-line="147" selection-start-column="4" selection-end-line="147" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/src/typesService.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="8" column="0" lean-forward="false" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="561">
+          <caret line="33" column="7" lean-forward="false" selection-start-line="33" selection-start-column="7" selection-end-line="33" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/demo.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="736">
+          <caret line="730" column="10" lean-forward="false" selection-start-line="730" selection-start-column="10" selection-end-line="730" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/workbench.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="677">
+          <caret line="56" column="24" lean-forward="false" selection-start-line="56" selection-start-column="24" selection-end-line="56" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/controls.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="227" column="25" lean-forward="false" selection-start-line="227" selection-start-column="4" selection-end-line="227" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/lib/split.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="388">
+          <caret line="217" column="78" lean-forward="false" selection-start-line="217" selection-start-column="67" selection-end-line="217" selection-end-column="78" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/typesService.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="35" column="35" lean-forward="false" selection-start-line="35" selection-start-column="35" selection-end-line="35" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/src/storage.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="425">
+          <caret line="184" column="31" lean-forward="false" selection-start-line="184" selection-start-column="31" selection-end-line="184" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/raml-semantic-ui/node_modules/raml-type-bindings/dist/src/metaKeys.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="4" lean-forward="false" selection-start-line="16" selection-start-column="4" selection-end-line="16" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/src/types.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="362">
+          <caret line="430" column="29" lean-forward="false" selection-start-line="430" selection-start-column="29" selection-end-line="430" selection-end-column="29" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/core/propertyGroup.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-293">
-          <caret line="100" column="33" selection-start-line="100" selection-start-column="33" selection-end-line="100" selection-end-column="33" />
-          <folding />
+        <state relative-caret-position="102">
+          <caret line="6" column="44" lean-forward="false" selection-start-line="6" selection-start-column="44" selection-end-line="6" selection-end-column="44" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/index.html">
+    <entry file="file://$USER_HOME$/git/rtui/node_modules/raml-type-bindings/dist/src/metaKeys.d.ts">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
-          <caret line="13" column="109" selection-start-line="13" selection-start-column="109" selection-end-line="13" selection-end-column="109" />
+          <caret line="13" column="17" lean-forward="false" selection-start-line="13" selection-start-column="17" selection-end-line="13" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/src/metaKeys.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="4" lean-forward="false" selection-start-line="16" selection-start-column="4" selection-end-line="16" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="10" lean-forward="false" selection-start-line="12" selection-start-column="10" selection-end-line="12" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="425">
+          <caret line="25" column="10" lean-forward="false" selection-start-line="25" selection-start-column="10" selection-end-line="25" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/tsconfig.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="4" lean-forward="false" selection-start-line="6" selection-start-column="4" selection-end-line="6" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/type-bindings/node_modules/@types/superagent/index.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1275">
+          <caret line="78" column="11" lean-forward="false" selection-start-line="78" selection-start-column="11" selection-end-line="78" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/uifactory.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="298">
+          <caret line="144" column="15" lean-forward="false" selection-start-line="144" selection-start-column="15" selection-end-line="144" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/forms.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="279">
+          <caret line="1065" column="17" lean-forward="true" selection-start-line="1065" selection-start-column="17" selection-end-line="1065" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/git/rtui/src/auth.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="18" column="42" lean-forward="false" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/framework/controls.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="308">
-          <caret line="255" column="19" selection-start-line="255" selection-start-column="19" selection-end-line="255" selection-end-column="19" />
-          <folding>
-            <marker date="1483002287760" expanded="true" signature="2627:2639" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="7672:7746" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="7760:7817" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="8165:8192" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="11283:11349" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="11350:11882" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="11405:11609" ph="..." />
-            <marker date="1483002287760" expanded="false" signature="11454:11485" ph="..." />
-            <marker date="1483002287760" expanded="false" signature="11555:11567" ph="..." />
-            <marker date="1483002287760" expanded="false" signature="11649:11701" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="11718:11864" ph="..." />
-            <marker date="1483002287760" expanded="false" signature="11763:11788" ph="..." />
-            <marker date="1483002287760" expanded="false" signature="11814:11832" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="11993:12079" ph="..." />
-            <marker date="1483002287760" expanded="true" signature="12080:12137" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/typescriptCompiler/external/lib.d.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3880">
-          <caret line="7012" column="13" selection-start-line="7012" selection-start-column="13" selection-end-line="7012" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="816">
-          <caret line="84" column="25" selection-start-line="84" selection-start-column="25" selection-end-line="84" selection-end-column="25" />
-          <folding>
-            <marker date="1483001275496" expanded="true" signature="825:834" ph="..." />
-            <marker date="1483001275496" expanded="true" signature="1105:1395" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/framework/forms.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="898">
-          <caret line="1015" column="21" selection-start-line="1015" selection-start-column="21" selection-end-line="1015" selection-end-column="21" />
-          <folding>
-            <element signature="n#InputGroup#0" expanded="false" />
-            <element signature="n#InputGroupAddOn#0" expanded="false" />
-            <element signature="n#BindableControl#0" expanded="false" />
-            <element signature="n#Input#0" expanded="false" />
-            <element signature="n#TextArea#0" expanded="false" />
-            <element signature="n#Option#0" expanded="false" />
-            <marker date="1483046629453" expanded="true" signature="1015:1106" ph="..." />
-            <marker date="1483046629453" expanded="true" signature="15968:15981" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1617,7 +1769,7 @@
       </state>
       <state key="ModuleStructureConfigurable.UI">
         <settings>
-          <last-edited>core</last-edited>
+          <last-edited>rtui</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>

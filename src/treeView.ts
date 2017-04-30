@@ -1,8 +1,10 @@
-import workbench=require("./framework/workbench")
+import workbench=require("raml-semantic-ui/dist/workbench")
+import controls=require("raml-semantic-ui/dist/controls")
+import {IControl,Accordition, Label} from "raml-semantic-ui/dist/controls";
 import hl=require("./core/hl")
 import nr=require("./rendering/nodeRender")
 import ui=require("./uiUtils")
-import {IControl,Accordition, Label} from "./framework/controls";
+import t2=require("types2");
 import rrend=require("./core/registryCore")
 import IHighLevelNode=hl.IHighLevelNode;
 import methodKey=hl.methodKey;
@@ -15,6 +17,9 @@ class RAMLTreeProvider implements workbench.ITreeContentProvider{
         if (x instanceof hl.TreeLike){
             var c:hl.TreeLike=<any>x;
             return c.allChildren();
+        }
+        if (x instanceof hl.Node){
+            return x.children();
         }
         if (x instanceof hl.ProxyNode){
             var pn=<hl.ProxyNode>x;
@@ -35,6 +40,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
     protected api:hl.IHighLevelNode;
     protected versions:rrend.ApiWithVersions;
     protected devMode: boolean
+    protected module: hl.Node[];
 
     constructor(title:string="Overview")
     {
@@ -92,7 +98,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                 else{
                     this.selectNodeFromState();
                 }
-            },n=>{
+            },(n,e)=>{
                 if (!n){
                     this.hasSelection=false;
                 }
@@ -102,6 +108,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
                 rrend.setUrl(this.path)
                 this.node=n;
                 this.api=n;
+                this.module=e;
                 this.refresh();
                 this.selectNodeFromState();
             })
@@ -146,8 +153,12 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
         if (!this.updatingFromState&&v[0]){
             this.updatingFromState=true;
             try {
-
-                var node: hl.IHighLevelNode = v[0];
+                var c=v[0];
+                if (c instanceof hl.Node){
+                    c=c.node;
+                    v=[c];
+                }
+                var node: hl.IHighLevelNode = c;
                 if (node.id) {
                     if (typeof node.id=="function") {
                         state.propogateNode(node.id());
@@ -161,6 +172,20 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
     }
 
     showInternal:boolean=true;
+
+    protected renderTypeSection(id:string,label:string,groups:hl.Node[]){
+        var toRender=[];
+
+        var v=this;
+        if (true){
+            var at=groups
+            var types=this.createTree(label);
+
+            types.setInput(at);
+            this.control.add(types)
+            this.trees.push(types)
+        };
+    }
 
     protected renderArraySection(id:string,label:string,groups:any,libs:IHighLevelNode[],always:boolean=false){
         var toRender=[];
@@ -252,6 +277,7 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
     protected customizeAccordition(a: Accordition, node: any) {
 
         var x=this.api.elements();
+
         var libs=hl.getUsedLibraries(this.api);
         var ab=actions.renderActionsBlock(state.registry());
         var overview:string=nr.renderNodesOverview(this.api,ab,this.versions,this.path);
@@ -294,6 +320,8 @@ class RAMLTreeView extends workbench.AccorditionTreeView{
             this.renderArraySection("resources", "Resources", groups, libs);
         }
         this.renderArraySection("types","Data Types",groups,libs,original&&original.length>0);
+
+        this.renderTypeSection("Type Bindings","Type Bindings",<any>this.module);
         var lt=null;
     }
     protected  load(){

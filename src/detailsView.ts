@@ -1,6 +1,7 @@
-import workbench=require("./framework/workbench")
+import workbench=require("raml-semantic-ui/dist/workbench")
+import controls=require("raml-semantic-ui/dist/controls")
+import {IControl,Accordition, Label} from "raml-semantic-ui/dist/controls";
 import hl=require("./core/hl")
-import {Label, Accordition} from "./framework/controls";
 import  tr=require("./rendering/typeRender")
 import  rr=require("./rendering/resourceRender")
 import  rc=require("./core/registryCore")

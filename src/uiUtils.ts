@@ -1,9 +1,13 @@
 import hl=require("./core/hl")
 import images=require("./rendering/styles")
 import methodKey=hl.methodKey;
+import {label} from "./core/hl";
 
 export const HLNodeLabelProvider={
     label(x:any){
+        if (x instanceof hl.Node){
+            return this.label(x.node);
+        }
         if (x instanceof hl.TreeLike){
             var t:hl.TreeLike=x;
             if (t.id.indexOf("!!")==0){
@@ -40,6 +44,9 @@ export const HLNodeLabelProvider={
         return result;
     },
     icon(x:any){
+        if (x instanceof hl.Node){
+            return this.icon(x.node);
+        }
         if (x instanceof hl.TreeLike){
             var t:hl.TreeLike=x;
             if (t.id.indexOf("!!")==0){

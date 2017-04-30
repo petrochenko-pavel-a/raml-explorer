@@ -106,7 +106,7 @@ export class MethodRenderer{
         tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result,this.meta)
         var rs=h.elements().filter(x=>x.property().nameId()=="body")
         if (rs.length>0) {
-            result.push(renderTabFolder("Body",rs, new tr.TypeRenderer(this.meta,"Body",rs.length==1)))
+            result.push(renderTabFolder("Body",rs, new tr.TypeRenderer(this.meta,"Body",rs.length==1,false,h.name(),true,true)))
         }
         var rs=h.elements().filter(x=>x.property().nameId()=="responses")
 
@@ -131,7 +131,7 @@ export class ResponseRenderer{
             result.push(nr.renderNode(x,false));
         });
         tr.renderParameters("Headers",h.elements().filter(x=>x.property().nameId()=="headers"),result,this.meta)
-        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(this.meta,rs.length>=1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1)))
+        result.push(renderTabFolder(null,rs,new tr.TypeRenderer(this.meta,rs.length>=1&&this.isSingle?"Response("+h.name()+") payload":"Payload",rs.length==1,false,"",false,true)))
         return result.join("");
     }
 }

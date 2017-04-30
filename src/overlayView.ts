@@ -1,15 +1,14 @@
-import workbench=require("./framework/workbench")
+import workbench=require("raml-semantic-ui/dist/workbench")
+import controls=require("raml-semantic-ui/dist/controls")
+import {IControl,Accordition, Label} from "raml-semantic-ui/dist/controls";
 import hl=require("./core/hl")
 import oc=require("./core/overlayCore")
-import controls=require("./framework/controls");
 import ui=require("./uiUtils")
-import {Label, Accordition} from "./framework/controls";
-import forms=require("./framework/forms")
+import forms=require("raml-semantic-ui/dist/forms")
 import  tr=require("./rendering/typeRender")
 import  rr=require("./rendering/resourceRender")
 import  rc=require("./core/registryCore")
 import nr=require("./rendering/nodeRender")
-import {ObjectBridge} from "./framework/forms";
 import pg=require("./core/propertyGroup")
 import {OverlayManager} from "./core/overlayCore";
 import tools=require("./core/tools")
@@ -53,7 +52,6 @@ class RAMLOverlayView extends workbench.ViewPart{
                this.refresh();
             }
         }
-
     }
     constructor(id:string,title:string){
         super(id,title);
@@ -93,13 +91,13 @@ class RAMLOverlayView extends workbench.ViewPart{
                 tools.executeWithConfig(view.tool,ovr,res=>{
                     if (res.resultUrl){
                         if (res.resultUrl.indexOf("http://")==0||res.resultUrl.indexOf("https://")==0){
-                            document.location=res.resultUrl;
+                            document.location.assign(res.resultUrl);
                             return;
                         }
                         var ll=view.tool.location.indexOf('/',7);
                         var loc=view.tool.location.substring(0,ll);
                         loc+=res.resultUrl;
-                        document.location=<any>loc;
+                        document.location.assign(loc);
                     }
                     else {
                         workbench.showInDialog("Result", new Label(res.result))
@@ -136,7 +134,7 @@ class RAMLOverlayView extends workbench.ViewPart{
         else {
             this.setTitle("Overlays for: " + mm + " of (" + hl.title(this._element) + ")")
         }
-        var f=new forms.Form();
+        var f=new controls.Form();
         f._style.height="100%"
         var vv=new controls.VerticalFlex();
         vv.wrapStyle.height="100%";
@@ -163,15 +161,14 @@ class RAMLOverlayView extends workbench.ViewPart{
                     }
                 })
                 t.setContentProvider(new workbench.ArrayContentProvider())
-
                 t.setInput(groups)
                 t.addSelectionListener({
                     selectionChanged(v:any[]){
                         if (v.length==1){
                             f.children=[]
-                            var p:pg.PropertyGroup =v[0]
-                            var b=new ObjectBridge(view.obj);
-                            f.add(forms.renderPropertyGroup(p,b));
+                            // var p:pg.PropertyGroup =v[0]
+                            // var b=new ObjectBridge(view.obj);
+                            // f.add(forms.renderPropertyGroup(p,b));
                             f.refresh();
                             $('[data-toggle="tooltip"]').tooltip();
                         }

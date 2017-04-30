@@ -1,0 +1,54 @@
+{
+  "name" : "Registry",
+  "title" : "Registry",
+  "version" : "v1",
+  "apis" : [
+   {
+    "name" : "Issue tracker",
+    "org" : null,
+    "product" : null,
+    "version" : null,
+    "description" : null,
+    "icon" : null,
+    "location" : "github-example\\api.raml",
+    "kind" : null,
+    "originalLocation" : null,
+    "originalSpecLanguage" : null,
+    "tags" : [ ],
+    "localRegistry" : null
+  },
+    {
+      "name" : "Blogger (orig)",
+      "org" : null,
+      "product" : null,
+      "version" : null,
+      "description" : null,
+      "icon" : null,
+      "location" : "blogger\\api.raml",
+      "kind" : null,
+      "originalLocation" : null,
+      "originalSpecLanguage" : null,
+      "tags" : [ ],
+      "localRegistry" : null
+    }
+  ,
+    {
+      "name" : "Blogger (changed)",
+      "org" : null,
+      "product" : null,
+      "version" : null,
+      "description" : null,
+      "icon" : null,
+      "location" : "blogger\\apiChanged.raml",
+      "kind" : null,
+      "originalLocation" : null,
+      "originalSpecLanguage" : null,
+      "tags" : [ ],
+      "localRegistry" : null
+    }
+
+  ],
+  "tools" : [ ],
+  "libraries" : [ ],
+  "includes" : [ ]
+}

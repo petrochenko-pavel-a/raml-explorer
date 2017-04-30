@@ -1,10 +1,10 @@
-import workbench=require("./framework/workbench")
+import workbench=require("raml-semantic-ui/dist/workbench")
 import rc=require("./core/registryCore")
 import hl=require("./core/hl")
 
 class ExplorerState {
 
-    private _registryUrl: string = "https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json"
+    private _registryUrl: string = "registry.json"//https://raw.githubusercontent.com/apiregistry/registry/gh-pages/registry-resolved.json"
 
     private specificationLink: string
 
@@ -38,28 +38,37 @@ class ExplorerState {
 
     private options:{ [name:string]:string}={}
 
-    getApiInstance(current:any,resC:(n:any,path:string)=>void,cb:(n:hl.IHighLevelNode)=>void){
+    getApiInstance(current:any,resC:(n:any,path:string)=>void,cb:(n:hl.IHighLevelNode,w:any)=>void){
         this.getRegistryInstance((r,c)=>{
-            var n = r.findNodeWithUrl(this.specificationId());
+            if (this.specificationId()) {
+                var n = r.findNodeWithUrl(this.specificationId());
 
-            if (n) {
-                if (n instanceof rc.ApiWithVersions){
-                    var aw:rc.ApiWithVersions=n;
+                if (n) {
+                    if (n instanceof rc.ApiWithVersions) {
+                        var aw: rc.ApiWithVersions = n;
 
-                    var sel:rc.IRegistryObj=aw.versions[aw.versions.length-1];
-                    if (this.version){
-                        sel=aw.versions.filter(x=>x.version==this.version)[0];
-                        if (!sel){
-                            sel=aw.versions[aw.versions.length-1];
+                        var sel: rc.IRegistryObj = aw.versions[aw.versions.length - 1];
+                        if (this.version) {
+                            sel = aw.versions.filter(x => x.version == this.version)[0];
+                            if (!sel) {
+                                sel = aw.versions[aw.versions.length - 1];
+                            }
                         }
+                        resC(n, sel.location)
+                        if (current == sel.location) {
+                            return;
+                        }
+                        var ll=sel.location;
+                        if (ll.indexOf("http://")==-1&&ll.indexOf("https://")==-1){
+                            ll=window.location.protocol+"//"+window.location.host+"/"+ll;
+                        }
+                        hl.loadApi(ll, (x, w) => {
+                            cb(x, w)
+                        })
                     }
-                    resC(n,sel.location)
-                    if (current==sel.location){
-                        return;
-                    }
-                    hl.loadApi(sel.location,x=>{
-                        cb(x)
-                    })
+                }
+                else {
+                    resC(null,null)
                 }
             }
             else {

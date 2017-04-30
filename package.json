@@ -14,7 +14,8 @@
     "typescript": "^1.8.10"
   },
   "dependencies": {
-    "browser-request": "^0.3.3"
+    "browser-request": "^0.3.3",
+    "raml-semantic-ui":"0.0.6"
 
   }
 }

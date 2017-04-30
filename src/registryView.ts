@@ -1,5 +1,6 @@
-import workbench=require("./framework/workbench")
-import {Accordition} from "./framework/controls";
+import workbench=require("raml-semantic-ui/dist/workbench")
+import controls=require("raml-semantic-ui/dist/controls")
+import {IControl,Accordition, Label} from "raml-semantic-ui/dist/controls";
 import rc=require("./core/registryCore")
 import GroupNode=rc.GroupNode;
 import ApiWithVersions=rc.ApiWithVersions;

@@ -3,7 +3,7 @@ import {IHighLevelNode, IType, IProperty} from "../core/hl";
 import or=require("./objectRender")
 import nr=require("./nodeRender")
 import usages=require("../core/registryCore")
-import workbench=require("../framework/workbench")
+import workbench=require("raml-semantic-ui/dist/workbench")
 import rtv=require("../app")
 import images=require("./styles")
 export function renderTypeList(t: hl.IType[]) {
@@ -365,7 +365,7 @@ var renderClicableLink = function (root: IHighLevelNode, result: string[], label
 };
 export class TypeRenderer {
 
-    constructor(private meta: boolean, private extraCaption: string, private isSingle: boolean, private isAnnotationType: boolean = false) {
+    constructor(private meta: boolean, private extraCaption: string, private isSingle: boolean, private isAnnotationType: boolean = false,private role:string="",private isBody: boolean=false,private isResponse: boolean=false) {
 
     }
 
@@ -445,6 +445,40 @@ export class TypeRenderer {
                         ps = ts[0].allProperties();
                     }
                 }
+            }
+            if (this.isBody||this.isResponse){
+                ps=ps.filter(x=>{
+                    var decl = hl.getDeclaration(x.range(), false);
+                    var rs: string[] = [];
+                    var res=true;
+                    if (decl) {
+                        hl.prepareNodes(decl.attrs()).forEach(a=> {
+                            if (a.property().nameId()=="annotations"){
+
+                                  var nm=a.name();
+                                  nm=nm.substring(1,nm.length-1);
+                                  if (nm.indexOf('.')!=-1){
+                                      nm=nm.substring(nm.indexOf('.')+1);
+                                  }
+                                  if (nm=="readonly"){
+                                        if (this.isBody){
+                                            res=false;
+                                        }
+                                  }
+                                  if (nm=="visibleWhen"){
+                                    var obj=a.lowLevel().dumpToObject();
+                                    var val=obj[Object.keys(obj)[0]];
+                                    var mn=val.split(",");
+                                    mn.forEach(s=>{
+                                        s=s.trim();
+                                        console.log(s);
+                                    })
+                                  }
+                            }
+                        });
+                    }
+                    return res;
+                })
             }
             renderPropertyTable("Properties", ps, result, at, this.meta)
         }
