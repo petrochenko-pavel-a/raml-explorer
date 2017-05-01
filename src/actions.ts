@@ -50,21 +50,20 @@ export function renderActionsBlock(reg:rc.LoadedRegistry): string{
     }
     }))
     var groups:{ [name:string]:rc.ITool[]}={}
-    if (!reg.tools()){
-        return result;
-    }
-    reg.tools().forEach(x=>{
-        if (x.category){
-            if (!groups[x.category]){
-                groups[x.category]=[]
+    if (reg.tools()) {
+        reg.tools().forEach(x => {
+            if (x.category) {
+                if (!groups[x.category]) {
+                    groups[x.category] = []
+                }
+                groups[x.category].push(x);
             }
-            groups[x.category].push(x);
-        }
-        else {
-            result += button("/commands/ramlExplorer/runTool/" + x.location, x.name, x.icon);
-        }
-        //result+="<br>"
-    });
+            else {
+                result += button("/commands/ramlExplorer/runTool/" + x.location, x.name, x.icon);
+            }
+            //result+="<br>"
+        });
+    }
     Object.keys(groups).forEach(x=>{
         if (groups[x].length>1) {
             result += category(x, null, groups[x].map(y=> {
